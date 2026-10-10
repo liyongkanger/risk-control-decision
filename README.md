@@ -4,11 +4,11 @@
 
 ## 本地配置
 
-连接参数从环境变量读取。`application.yml` 中的默认值仅供本地开发使用。
+默认启用 `local` profile。参考 `collection-agent` 的配置组织方式，MySQL 和 Redis 的本地连接参数放在 `application.yml` 的 `local` 配置段中；真实连接参数仍从环境变量读取，不在仓库保存凭据。其他环境需提供自己的 profile 配置。
 
 | 环境变量 | 默认值 |
 |---|---|
-| `RISK_DB_URL` | `jdbc:mysql://localhost:3306/risk_control_decision` |
+| `RISK_DB_URL` | `jdbc:mysql://localhost:3306/risk_control_decision?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai` |
 | `RISK_DB_USERNAME` | `root` |
 | `RISK_DB_PASSWORD` | 空 |
 | `RISK_REDIS_HOST` | `localhost` |

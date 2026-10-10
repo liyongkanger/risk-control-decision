@@ -1,8 +1,23 @@
 spring:
   application:
     name: risk-control-decision
+  profiles:
+    default: local
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
   datasource:
-    url: ${RISK_DB_URL:jdbc:mysql://localhost:3306/risk_control_decision}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${RISK_DB_URL:jdbc:mysql://localhost:3306/risk_control_decision?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai}
     username: ${RISK_DB_USERNAME:root}
     password: ${RISK_DB_PASSWORD:}
   data:
@@ -11,9 +26,3 @@ spring:
       port: ${RISK_REDIS_PORT:6379}
       password: ${RISK_REDIS_PASSWORD:}
       database: ${RISK_REDIS_DATABASE:0}
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
