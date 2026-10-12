@@ -2,6 +2,10 @@
 
 项目使用 Java 21、Spring Boot 4.1、LiteFlow 和 React/X6。当前可编辑结构化场景流程、保存草稿、发布版本并同步执行示例组件。
 
+## 代码结构
+
+`policy` 和 `decision` 按业务领域划分，领域内分别组织 `controller`、`service`、`mapper`、`vo` 等职责。`orchestrator` 负责流程图校验与编译；`component.liteflow` 将节点、上下文和注册表封装在框架包内，通过 `service` 向业务模块提供能力。HTTP 通用异常处理放在 `shared.web`。具体写法见[项目开发规范](docs/standards/project-conventions.md)和[分层开发规范](docs/standards/mvc-layer-conventions.md)。
+
 ## 本地配置
 
 默认启用 `local` profile。参考 `collection-agent` 的配置组织方式，MySQL 和 Redis 的本地连接参数放在 `application.yml` 的 `local` 配置段中；真实连接参数仍从环境变量读取，不在仓库保存凭据。其他环境需提供自己的 profile 配置。

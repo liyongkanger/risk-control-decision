@@ -1,20 +1,20 @@
 package com.dmp.riskdecision.decision;
 
-import com.dmp.riskdecision.policy.FlowPublicationService;
-import com.dmp.riskdecision.policy.FlowVersion;
-import com.dmp.riskdecision.policy.SceneFlowRepository;
+import com.dmp.riskdecision.component.liteflow.service.LiteFlowChainService;
+import com.dmp.riskdecision.component.liteflow.service.LiteFlowExecutionService;
+import com.dmp.riskdecision.component.liteflow.service.LiteFlowRunResult;
+import com.dmp.riskdecision.decision.model.ExecutionResult;
+import com.dmp.riskdecision.decision.service.DecisionExecutionService;
+import com.dmp.riskdecision.decision.service.impl.DecisionExecutionServiceImpl;
 import com.dmp.riskdecision.orchestrator.graph.FailurePolicy;
 import com.dmp.riskdecision.orchestrator.graph.GraphDefinition;
 import com.dmp.riskdecision.orchestrator.graph.GraphEdge;
 import com.dmp.riskdecision.orchestrator.graph.GraphNode;
 import com.dmp.riskdecision.orchestrator.graph.NodeKind;
-import com.dmp.riskdecision.orchestrator.LiteFlowChainRegistry;
-import com.yomahub.liteflow.core.FlowExecutor;
-import com.yomahub.liteflow.flow.LiteflowResponse;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-
+import com.dmp.riskdecision.policy.model.FlowVersion;
+import com.dmp.riskdecision.policy.repository.SceneFlowRepository;
+import com.dmp.riskdecision.policy.service.FlowPublicationService;
+import jakarta.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,6 +22,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -33,11 +35,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/** 决策执行与版本固定行为验证。 */
 @SpringBootTest
 class DecisionExecutionServiceTest {
-    @Autowired SceneFlowRepository repository;
-    @Autowired FlowPublicationService publication;
-    @Autowired DecisionExecutionService execution;
+    @Resource
+    private SceneFlowRepository repository;
+    @Resource
+    private FlowPublicationService publication;
+    @Resource
+    private DecisionExecutionService execution;
 
     @Test
     void executesThePublishedVersionAndReturnsNodeTrace() {
@@ -53,13 +59,13 @@ class DecisionExecutionServiceTest {
 
         ExecutionResult result = execution.evaluate("request-1", "execute", Map.of());
 
-        assertThat(result.status()).isEqualTo("SUCCEEDED");
-        assertThat(result.versionId()).isEqualTo(published.id());
-        assertThat(result.nodeResults()).containsEntry("emit", "accepted");
-        assertThat(result.trace()).extracting("nodeId").contains("emit");
-        assertThat(result.trace().getFirst().requestId()).isEqualTo("request-1");
-        assertThat(result.trace().getFirst().sceneCode()).isEqualTo("execute");
-        assertThat(result.trace().getFirst().flowVersion()).isEqualTo(1);
+        assertThat(result.getStatus()).isEqualTo("SUCCEEDED");
+        assertThat(result.getVersionId()).isEqualTo(published.getId());
+        assertThat(result.getNodeResults()).containsEntry("emit", "accepted");
+        assertThat(result.getTrace()).extracting("nodeId").contains("emit");
+        assertThat(result.getTrace().getFirst().getRequestId()).isEqualTo("request-1");
+        assertThat(result.getTrace().getFirst().getSceneCode()).isEqualTo("execute");
+        assertThat(result.getTrace().getFirst().getFlowVersion()).isEqualTo(1);
     }
 
     @Test
@@ -89,33 +95,33 @@ class DecisionExecutionServiceTest {
 
         ExecutionResult result = execution.evaluate("parallel-request", "parallel", Map.of());
 
-        assertThat(result.status()).isEqualTo("SUCCEEDED");
-        assertThat(result.nodeResults()).containsEntry("left", 1).containsEntry("right", 2).containsEntry("after", 3);
-        assertThat(result.trace().stream().filter(item -> item.nodeId().equals("after"))).hasSize(1);
+        assertThat(result.getStatus()).isEqualTo("SUCCEEDED");
+        assertThat(result.getNodeResults()).containsEntry("left", 1).containsEntry("right", 2).containsEntry("after", 3);
+        assertThat(result.getTrace().stream().filter(item -> item.getNodeId().equals("after"))).hasSize(1);
     }
 
     @Test
     void pinsOneVersionEvenWhenPublishedPointerChangesDuringExecution() throws Exception {
         SceneFlowRepository storage = mock(SceneFlowRepository.class);
-        LiteFlowChainRegistry chainRegistry = mock(LiteFlowChainRegistry.class);
-        FlowExecutor flowExecutor = mock(FlowExecutor.class);
-        LiteflowResponse response = mock(LiteflowResponse.class);
+        LiteFlowChainService chainRegistry = mock(LiteFlowChainService.class);
+        LiteFlowExecutionService flowExecutor = mock(LiteFlowExecutionService.class);
+        LiteFlowRunResult response = new LiteFlowRunResult(true, null, Map.of(), List.of());
         FlowVersion first = new FlowVersion(1, "pin", 1, graphFor(1),
                 "scene_pin_v1", "THEN(emitValue.tag(\"emit\"))");
         FlowVersion second = new FlowVersion(2, "pin", 2, graphFor(2),
                 "scene_pin_v2", "THEN(emitValue.tag(\"emit\"))");
         AtomicReference<FlowVersion> pointer = new AtomicReference<>(first);
         when(storage.findPublished("pin")).thenAnswer(call -> Optional.of(pointer.get()));
-        when(chainRegistry.contains(first.chainId())).thenReturn(true);
-        when(response.isSuccess()).thenReturn(true);
+        when(chainRegistry.contains(first.getChainId())).thenReturn(true);
         CountDownLatch started = new CountDownLatch(1);
         CountDownLatch proceed = new CountDownLatch(1);
         doAnswer(call -> {
             started.countDown();
             assertThat(proceed.await(5, TimeUnit.SECONDS)).isTrue();
             return response;
-        }).when(flowExecutor).execute2Resp(eq(first.chainId()), isNull(), any(Object.class));
-        DecisionExecutionService service = new DecisionExecutionService(storage, chainRegistry, flowExecutor);
+        }).when(flowExecutor).execute(eq(first.getChainId()), eq("pin-request"), eq("pin"),
+                eq(1L), any(Map.class), any(Map.class));
+        DecisionExecutionService service = new DecisionExecutionServiceImpl(storage, chainRegistry, flowExecutor);
 
         CompletableFuture<ExecutionResult> pending = CompletableFuture.supplyAsync(
                 () -> service.evaluate("pin-request", "pin", Map.of()));
@@ -123,29 +129,29 @@ class DecisionExecutionServiceTest {
         pointer.set(second);
         proceed.countDown();
 
-        assertThat(pending.get(5, TimeUnit.SECONDS).versionId()).isEqualTo(first.id());
+        assertThat(pending.get(5, TimeUnit.SECONDS).getVersionId()).isEqualTo(first.getId());
         verify(storage).findPublished("pin");
     }
 
     @Test
     void returnsFailedStatusWhenLiteFlowStopsOnComponentError() {
         SceneFlowRepository storage = mock(SceneFlowRepository.class);
-        LiteFlowChainRegistry chainRegistry = mock(LiteFlowChainRegistry.class);
-        FlowExecutor flowExecutor = mock(FlowExecutor.class);
-        LiteflowResponse failed = mock(LiteflowResponse.class);
+        LiteFlowChainService chainRegistry = mock(LiteFlowChainService.class);
+        LiteFlowExecutionService flowExecutor = mock(LiteFlowExecutionService.class);
+        LiteFlowRunResult failed = new LiteFlowRunResult(false, null, Map.of(), List.of());
         FlowVersion version = new FlowVersion(7, "failureScene", 2, graphFor(1),
                 "scene_failureScene_v2", "THEN(emitValue.tag(\"emit\"))");
         when(storage.findPublished("failureScene")).thenReturn(Optional.of(version));
-        when(chainRegistry.contains(version.chainId())).thenReturn(true);
-        when(failed.isSuccess()).thenReturn(false);
-        when(flowExecutor.execute2Resp(eq(version.chainId()), isNull(), any(Object.class))).thenReturn(failed);
+        when(chainRegistry.contains(version.getChainId())).thenReturn(true);
+        when(flowExecutor.execute(eq(version.getChainId()), eq("failed-request"), eq("failureScene"),
+                eq(2L), any(Map.class), any(Map.class))).thenReturn(failed);
 
-        ExecutionResult result = new DecisionExecutionService(storage, chainRegistry, flowExecutor)
+        ExecutionResult result = new DecisionExecutionServiceImpl(storage, chainRegistry, flowExecutor)
                 .evaluate("failed-request", "failureScene", Map.of());
 
-        assertThat(result.status()).isEqualTo("FAILED");
-        assertThat(result.errorCode()).isEqualTo("FLOW_EXECUTION_FAILED");
-        assertThat(result.versionId()).isEqualTo(7);
+        assertThat(result.getStatus()).isEqualTo("FAILED");
+        assertThat(result.getErrorCode()).isEqualTo("FLOW_EXECUTION_FAILED");
+        assertThat(result.getVersionId()).isEqualTo(7);
     }
 
     private static GraphDefinition graphFor(int value) {

@@ -14,6 +14,7 @@ policy/
 ├── service/            对外业务用例接口
 │   └── impl/           用例实现
 ├── mapper/             MyBatis 接口
+├── repository/         多表读写及持久化对象转换（需要时）
 ├── vo/
 │   ├── req/            HTTP 请求
 │   └── resp/           HTTP 响应
@@ -27,7 +28,7 @@ policy/
 | 层 | 负责 | 不负责 |
 | --- | --- | --- |
 | Controller | HTTP 参数接收、调用业务用例、返回接口响应 | 编排流程、写 SQL、直接操作 LiteFlow |
-| Service | 校验业务条件、组织用例、调用数据访问和基础组件、确定业务结果 | 解析 HTTP 细节、拼装 HTTP 错误响应 |
+| Service | 校验业务条件、组织用例、调用 Repository 或 Mapper 和基础组件、确定业务结果 | 解析 HTTP 细节、拼装 HTTP 错误响应 |
 | Mapper | SQL 与数据库字段映射 | 业务决策、远程调用、对象的 HTTP 展示格式 |
 
 ## 2. 依赖注入
@@ -76,11 +77,11 @@ Controller 方法不固定写两层 `try-catch`。当前项目已有 `ApiErrorHa
 
 - 对外业务用例采用 `service/XxxService` 接口与 `service/impl/XxxServiceImpl` 实现；接口写中文职责和关键方法契约，实现使用 `@Service`。内部辅助类和简单算法类无需为了形式创建接口。
 - Service 方法按“校验业务条件 → 获取所需数据 → 执行业务动作 → 构造业务结果”组织。复杂步骤提取为有业务含义的私有方法，如 `validatePublishRevision`、`buildExecutionContext`。
-- Service 可以调用 Mapper 或基础组件的公开 `service`；不直接依赖 `component.liteflow.node`、`registry` 等内部实现。流程发布、执行等用例的边界保持清楚。
+- Service 可以调用 Repository、Mapper 或基础组件的公开 `service`；不直接依赖 `component.liteflow.node`、`registry` 等内部实现。流程发布、执行等用例的边界保持清楚。
 - 业务失败抛出有明确语义的异常，由统一异常入口转换为接口错误；不捕获后原样包装。确需补偿或转换异常时，在捕获处说明处理结果。
 - 入口和关键状态变化记录必要标识及结果。不要在 Controller、Service 两层重复打印整个请求对象。
 
-目前 `FlowPublicationService`、`DecisionExecutionService` 等为具体类，尚未拆出接口；本规范不表示本次已改动这些类。
+当前 `FlowPublicationService`、`DecisionExecutionService` 已拆为接口和 `impl` 实现；只在业务用例边界使用这种分离方式。
 
 ## 5. Mapper 与持久化对象
 
@@ -122,4 +123,4 @@ Redis、HTTP/Feign 等基础能力经 `component.<能力名>.service` 暴露给�
 
 ## 10. 应用顺序
 
-本文件确定新增代码的分层、命名、依赖注入、异常入口及日志边界。现有 Controller、Service、Mapper 仍有旧写法，需在对应功能调整时按用例迁移并验证。统一成功响应、业务错误码、Lombok、MapStruct 和远程客户端的具体实现尚未确定，不能将文中的结构示例当作已存在的项目 API。
+本文件确定新增代码的分层、命名、依赖注入、异常入口及日志边界。当前场景流程与同步决策代码已完成一轮分包和接口对象迁移；统一成功响应、业务错误码、Lombok、MapStruct 和远程客户端的具体实现仍需后续设计。

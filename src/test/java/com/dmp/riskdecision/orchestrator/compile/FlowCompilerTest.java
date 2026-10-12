@@ -1,28 +1,30 @@
 package com.dmp.riskdecision.orchestrator.compile;
 
+import com.dmp.riskdecision.component.liteflow.registry.ComponentRegistry;
+import com.dmp.riskdecision.component.liteflow.service.ComponentCatalogService;
 import com.dmp.riskdecision.orchestrator.graph.FailurePolicy;
 import com.dmp.riskdecision.orchestrator.graph.GraphDefinition;
 import com.dmp.riskdecision.orchestrator.graph.GraphEdge;
 import com.dmp.riskdecision.orchestrator.graph.GraphNode;
 import com.dmp.riskdecision.orchestrator.graph.NodeKind;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+/** 流程图到 LiteFlow EL 的编译行为验证。 */
 class FlowCompilerTest {
 
-    private final FlowCompiler compiler = new FlowCompiler();
+    private final FlowCompiler compiler = new FlowCompiler(new ComponentCatalogService(new ComponentRegistry()));
 
     @Test
     void wrapsASingleComponentInAChainExpression() {
         GraphDefinition graph = graph(List.of(node("start", NodeKind.START), component("only"), node("end", NodeKind.END)),
                 edge("a", "start", "only"), edge("b", "only", "end"));
 
-        assertThat(compiler.compile("payment", 1, graph).el())
+        assertThat(compiler.compile("payment", 1, graph).getEl())
                 .isEqualTo("THEN(emitValue.tag(\"only\"))");
     }
 
@@ -37,9 +39,9 @@ class FlowCompilerTest {
                 edge("e", "left", "join"), edge("f", "right", "join"),
                 edge("g", "join", "decide"), edge("h", "decide", "end")));
 
-        assertThat(flow.chainId()).isEqualTo("scene_payment_v3");
-        assertThat(flow.el()).contains("WHEN(").contains("emitValue.tag(\"prepare\")");
-        assertThat(flow.el().split("decide", -1)).hasSize(2);
+        assertThat(flow.getChainId()).isEqualTo("scene_payment_v3");
+        assertThat(flow.getEl()).contains("WHEN(").contains("emitValue.tag(\"prepare\")");
+        assertThat(flow.getEl().split("decide", -1)).hasSize(2);
     }
 
     @Test
@@ -51,7 +53,7 @@ class FlowCompilerTest {
                 edge("c", "condition", "no", "false"), edge("d", "yes", "join"),
                 edge("e", "no", "join"), edge("f", "join", "after"), edge("g", "after", "end"));
 
-        assertThat(compiler.compile("login", 1, graph).el()).contains("IF(").contains("after");
+        assertThat(compiler.compile("login", 1, graph).getEl()).contains("IF(").contains("after");
     }
 
     @Test
@@ -105,7 +107,7 @@ class FlowCompilerTest {
                 edge("h", "conditionJoin", "parallelJoin"), edge("i", "right", "parallelJoin"),
                 edge("j", "parallelJoin", "after"), edge("k", "after", "end"));
 
-        assertThat(compiler.compile("payment", 2, graph).el()).contains("WHEN(IF(").contains("after");
+        assertThat(compiler.compile("payment", 2, graph).getEl()).contains("WHEN(IF(").contains("after");
     }
 
     private static GraphDefinition graph(List<GraphNode> nodes, GraphEdge... edges) {

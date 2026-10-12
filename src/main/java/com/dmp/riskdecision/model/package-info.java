@@ -1,2 +1,2 @@
-/** Owns model scoring capabilities used by decisions. */
+/** 预留模型领域能力。 */
 package com.dmp.riskdecision.model;

@@ -1,2 +1,2 @@
-/** Owns rule definitions and expression evaluation. */
+/** 预留规则领域能力。 */
 package com.dmp.riskdecision.rule;

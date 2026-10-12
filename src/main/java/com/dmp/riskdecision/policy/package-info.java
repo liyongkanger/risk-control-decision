@@ -1,2 +1,2 @@
-/** Defines scenes, policy sets, versions, and publication concepts. */
+/** 维护场景、草稿、版本及发布流程。 */
 package com.dmp.riskdecision.policy;

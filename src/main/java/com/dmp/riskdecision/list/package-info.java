@@ -1,2 +1,2 @@
-/** Owns list lookup capabilities used by decisions. */
+/** 预留名单领域能力。 */
 package com.dmp.riskdecision.list;

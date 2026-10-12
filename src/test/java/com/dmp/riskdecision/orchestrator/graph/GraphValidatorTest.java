@@ -1,45 +1,45 @@
 package com.dmp.riskdecision.orchestrator.graph;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/** 流程图结构校验行为验证。 */
 class GraphValidatorTest {
 
     private final GraphValidator validator = new GraphValidator();
 
     @Test
     void acceptsACompleteSerialGraph() {
-        assertThat(validator.validateForPublish(serialGraph()).valid()).isTrue();
+        assertThat(validator.validateForPublish(serialGraph()).isValid()).isTrue();
     }
 
     @Test
     void identifiesDuplicateIdsAndMissingEndpoints() {
         GraphDefinition base = serialGraph();
-        List<GraphNode> nodes = new ArrayList<>(base.nodes());
+        List<GraphNode> nodes = new ArrayList<>(base.getNodes());
         nodes.add(component("work"));
-        List<GraphEdge> edges = new ArrayList<>(base.edges());
+        List<GraphEdge> edges = new ArrayList<>(base.getEdges());
         edges.add(new GraphEdge("dangling", "work", "absent", null));
 
-        assertThat(validator.validateForPublish(new GraphDefinition(1, nodes, edges, Map.of())).issues())
-                .extracting(GraphIssue::code)
+        assertThat(validator.validateForPublish(new GraphDefinition(1, nodes, edges, Map.of())).getIssues())
+                .extracting(GraphIssue::getCode)
                 .contains("DUPLICATE_NODE_ID", "EDGE_TARGET_MISSING");
     }
 
     @Test
     void rejectsCycleAndUnreachableNode() {
         GraphDefinition base = serialGraph();
-        List<GraphNode> nodes = new ArrayList<>(base.nodes());
+        List<GraphNode> nodes = new ArrayList<>(base.getNodes());
         nodes.add(component("isolated"));
-        List<GraphEdge> edges = new ArrayList<>(base.edges());
+        List<GraphEdge> edges = new ArrayList<>(base.getEdges());
         edges.add(new GraphEdge("cycle", "work", "work", null));
 
-        assertThat(validator.validateForPublish(new GraphDefinition(1, nodes, edges, Map.of())).issues())
-                .extracting(GraphIssue::code)
+        assertThat(validator.validateForPublish(new GraphDefinition(1, nodes, edges, Map.of())).getIssues())
+                .extracting(GraphIssue::getCode)
                 .contains("GRAPH_CYCLE", "NODE_UNREACHABLE");
     }
 
@@ -52,8 +52,8 @@ class GraphValidatorTest {
                 new GraphNode("end", NodeKind.END, null, null, Map.of()));
         List<GraphEdge> edges = List.of(new GraphEdge("a", "start", "work", null));
 
-        assertThat(validator.validateForPublish(new GraphDefinition(1, nodes, edges, base.layout())).issues())
-                .extracting(GraphIssue::code)
+        assertThat(validator.validateForPublish(new GraphDefinition(1, nodes, edges, base.getLayout())).getIssues())
+                .extracting(GraphIssue::getCode)
                 .contains("INVALID_DEGREE", "FAILURE_POLICY_REQUIRED");
     }
 
@@ -63,9 +63,9 @@ class GraphValidatorTest {
                 List.of(new GraphNode("start", NodeKind.START, null, null, Map.of())),
                 List.of(), Map.of());
 
-        assertThat(validator.validateDraft(draft).valid()).isTrue();
-        assertThat(validator.validateForPublish(draft).issues())
-                .extracting(GraphIssue::code).contains("END_COUNT");
+        assertThat(validator.validateDraft(draft).isValid()).isTrue();
+        assertThat(validator.validateForPublish(draft).getIssues())
+                .extracting(GraphIssue::getCode).contains("END_COUNT");
     }
 
     @Test
@@ -83,8 +83,8 @@ class GraphValidatorTest {
                         new GraphEdge("e", "no", "join", null),
                         new GraphEdge("f", "join", "end", null)), Map.of());
 
-        assertThat(validator.validateForPublish(graph).issues())
-                .extracting(GraphIssue::code).contains("CONDITION_BRANCHES", "FAILURE_POLICY_REQUIRED");
+        assertThat(validator.validateForPublish(graph).getIssues())
+                .extracting(GraphIssue::getCode).contains("CONDITION_BRANCHES", "FAILURE_POLICY_REQUIRED");
     }
 
     @Test
@@ -97,8 +97,8 @@ class GraphValidatorTest {
                 List.of(new GraphEdge("a", "start", "work", null),
                         new GraphEdge("b", "work", "end", null)), Map.of());
 
-        assertThat(validator.validateDraft(graph).issues())
-                .extracting(GraphIssue::code).contains("GRAPH_TOO_LARGE");
+        assertThat(validator.validateDraft(graph).getIssues())
+                .extracting(GraphIssue::getCode).contains("GRAPH_TOO_LARGE");
     }
 
     static GraphDefinition serialGraph() {
