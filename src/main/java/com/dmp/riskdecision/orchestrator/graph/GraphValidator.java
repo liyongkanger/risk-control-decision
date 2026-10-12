@@ -27,7 +27,8 @@ public class GraphValidator {
 
         Map<String, GraphNode> nodeById = new HashMap<>();
         for (GraphNode node : nodes) {
-            if (node == null || blank(node.id()) || node.kind() == null) {
+            if (node == null || blank(node.id()) || node.kind() == null
+                    || !node.id().matches("[A-Za-z][A-Za-z0-9_-]{0,63}")) {
                 issues.add(issue("INVALID_NODE", node == null ? null : node.id(), null, "Node ID and kind are required"));
                 continue;
             }

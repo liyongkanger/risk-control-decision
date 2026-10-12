@@ -1,5 +1,6 @@
 package com.dmp.riskdecision.orchestrator.compile;
 
+import com.dmp.riskdecision.component.ComponentRegistry;
 import com.dmp.riskdecision.orchestrator.graph.GraphDefinition;
 import com.dmp.riskdecision.orchestrator.graph.GraphEdge;
 import com.dmp.riskdecision.orchestrator.graph.GraphIssue;
@@ -18,6 +19,15 @@ import java.util.Set;
 
 public class FlowCompiler {
     private final GraphValidator validator = new GraphValidator();
+    private final ComponentRegistry components;
+
+    public FlowCompiler() {
+        this(new ComponentRegistry());
+    }
+
+    public FlowCompiler(ComponentRegistry components) {
+        this.components = components;
+    }
 
     public CompiledFlow compile(String sceneCode, long version, GraphDefinition graph) {
         if (sceneCode == null || !sceneCode.matches("[A-Za-z][A-Za-z0-9_-]{0,63}") || version < 1) {
@@ -25,7 +35,7 @@ public class FlowCompiler {
         }
         var validation = validator.validateForPublish(graph);
         if (!validation.valid()) throw new GraphCompilationException(validation.issues());
-        Parser parser = new Parser(graph);
+        Parser parser = new Parser(graph, components);
         String start = graph.nodes().stream().filter(n -> n.kind() == NodeKind.START).findFirst().orElseThrow().id();
         String end = graph.nodes().stream().filter(n -> n.kind() == NodeKind.END).findFirst().orElseThrow().id();
         String el = parser.sequence(parser.onlyNext(start), end);
@@ -50,8 +60,10 @@ public class FlowCompiler {
         private final Map<String, GraphNode> nodes = new HashMap<>();
         private final Map<String, List<GraphEdge>> outgoing = new HashMap<>();
         private final Set<String> seen = new HashSet<>();
+        private final ComponentRegistry components;
 
-        Parser(GraphDefinition graph) {
+        Parser(GraphDefinition graph, ComponentRegistry components) {
+            this.components = components;
             for (GraphNode node : graph.nodes()) {
                 nodes.put(node.id(), node);
                 outgoing.put(node.id(), new ArrayList<>());
@@ -75,7 +87,7 @@ public class FlowCompiler {
                 switch (node.kind()) {
                     case COMPONENT -> {
                         if (!seen.add(current)) throw problem("SHARED_NODE", current, "Node appears in more than one branch");
-                        parts.add(current);
+                        parts.add(componentExpression(node));
                         current = onlyNext(current);
                     }
                     case PARALLEL_SPLIT, CONDITION -> {
@@ -90,7 +102,7 @@ public class FlowCompiler {
                         if (node.kind() == NodeKind.PARALLEL_SPLIT) {
                             parts.add("WHEN(" + String.join(",", branchExpressions) + ")");
                         } else {
-                            parts.add("IF(" + current + "," + String.join(",", branchExpressions) + ")");
+                            parts.add("IF(" + componentExpression(node) + "," + String.join(",", branchExpressions) + ")");
                         }
                         current = onlyNext(join);
                     }
@@ -99,6 +111,11 @@ public class FlowCompiler {
             }
             if (parts.isEmpty()) throw problem("EMPTY_BRANCH", first, "Branch must contain a component");
             return parts.size() == 1 ? parts.getFirst() : "THEN(" + String.join(",", parts) + ")";
+        }
+
+        private String componentExpression(GraphNode node) {
+            String liteFlowNodeId = components.require(node.componentKey()).liteFlowNodeId();
+            return liteFlowNodeId + ".tag(\"" + node.id() + "\")";
         }
 
         private void checkBranches(GraphNode node, List<GraphEdge> branches) {

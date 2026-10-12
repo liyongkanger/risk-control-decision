@@ -29,7 +29,7 @@ class FlowCompilerTest {
                 edge("g", "join", "decide"), edge("h", "decide", "end")));
 
         assertThat(flow.chainId()).isEqualTo("scene_payment_v3");
-        assertThat(flow.el()).contains("WHEN(").contains("prepare");
+        assertThat(flow.el()).contains("WHEN(").contains("emitValue.tag(\"prepare\")");
         assertThat(flow.el().split("decide", -1)).hasSize(2);
     }
 
