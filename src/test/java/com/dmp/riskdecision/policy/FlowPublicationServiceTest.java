@@ -24,6 +24,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.inOrder;
 
 @SpringBootTest
 class FlowPublicationServiceTest {
@@ -82,6 +83,11 @@ class FlowPublicationServiceTest {
         when(storage.findDraft("failure")).thenReturn(java.util.Optional.of(
                 new FlowDraft("failure", simpleGraph(3), 1)));
         when(storage.nextVersionNumber("failure")).thenReturn(1L);
+        when(storage.createVersion(org.mockito.ArgumentMatchers.eq("failure"),
+                org.mockito.ArgumentMatchers.eq(1L), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString()))
+                .thenReturn(new FlowVersion(10, "failure", 1, simpleGraph(3),
+                        "scene_failure_v1", "THEN(emitValue.tag(\"emit\"))"));
         doThrow(new IllegalStateException("load failed")).when(failingChains)
                 .load("scene_failure_v1", "THEN(emitValue.tag(\"emit\"))");
         FlowPublicationService service = new FlowPublicationService(storage, new GraphValidator(),
@@ -89,8 +95,26 @@ class FlowPublicationServiceTest {
 
         assertThatThrownBy(() -> service.publish("failure", 1))
                 .isInstanceOf(IllegalStateException.class).hasMessage("load failed");
+        var order = inOrder(storage, failingChains);
+        order.verify(storage).createVersion(org.mockito.ArgumentMatchers.eq("failure"),
+                org.mockito.ArgumentMatchers.eq(1L), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
+        order.verify(failingChains).load("scene_failure_v1", "THEN(emitValue.tag(\"emit\"))");
         verify(storage, never()).switchPublished(org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyLong());
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyLong());
+    }
+
+    @Test
+    void refusesPointerSwitchWhenDraftRevisionAdvanced() {
+        repository.saveDraft("revisionRace", simpleGraph(1), 0);
+        FlowVersion candidate = repository.createVersion("revisionRace", 1, simpleGraph(1),
+                "scene_revisionRace_v1", "THEN(emitValue.tag(\"emit\"))");
+        repository.saveDraft("revisionRace", simpleGraph(2), 1);
+
+        assertThatThrownBy(() -> repository.switchPublished("revisionRace", null, candidate.id(), 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(repository.findPublished("revisionRace")).isEmpty();
     }
 
     static GraphDefinition simpleGraph(int value) {

@@ -14,7 +14,6 @@ import com.yomahub.liteflow.core.FlowExecutor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -42,7 +41,6 @@ public class FlowPublicationService {
         this.executor = executor;
     }
 
-    @Transactional
     public FlowVersion publish(String sceneCode, long expectedRevision) {
         FlowDraft draft = repository.findDraft(sceneCode)
                 .orElseThrow(() -> new IllegalArgumentException("Draft not found"));
@@ -53,11 +51,11 @@ public class FlowPublicationService {
         validateComponents(graph);
         long number = repository.nextVersionNumber(sceneCode);
         var compiled = compiler.compile(sceneCode, number, graph);
-        chains.load(compiled.chainId(), compiled.el());
-        verifyWithDemoInput(sceneCode, number, graph, compiled.chainId());
         Long previous = repository.findPublished(sceneCode).map(FlowVersion::id).orElse(null);
         FlowVersion version = repository.createVersion(sceneCode, number, graph, compiled.chainId(), compiled.el());
-        repository.switchPublished(sceneCode, previous, version.id());
+        chains.load(compiled.chainId(), compiled.el());
+        verifyWithDemoInput(sceneCode, number, graph, compiled.chainId());
+        repository.switchPublished(sceneCode, previous, version.id(), expectedRevision);
         return version;
     }
 
@@ -88,7 +86,7 @@ public class FlowPublicationService {
                         "Component kind does not match node kind")));
             }
             Map<String, Object> config = node.config();
-            if (config == null || (node.kind() == NodeKind.COMPONENT && !config.containsKey("value"))
+            if (config == null || (node.kind() == NodeKind.COMPONENT && config.get("value") == null)
                     || (node.kind() == NodeKind.CONDITION && !(config.get("inputKey") instanceof String))) {
                 throw new GraphCompilationException(List.of(new GraphIssue("COMPONENT_CONFIG_INVALID", node.id(), null,
                         "Component configuration is invalid")));

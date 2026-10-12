@@ -57,12 +57,41 @@ class DecisionExecutionServiceTest {
         assertThat(result.versionId()).isEqualTo(published.id());
         assertThat(result.nodeResults()).containsEntry("emit", "accepted");
         assertThat(result.trace()).extracting("nodeId").contains("emit");
+        assertThat(result.trace().getFirst().requestId()).isEqualTo("request-1");
+        assertThat(result.trace().getFirst().sceneCode()).isEqualTo("execute");
+        assertThat(result.trace().getFirst().flowVersion()).isEqualTo(1);
     }
 
     @Test
     void unknownSceneDoesNotRunAProcess() {
         assertThatThrownBy(() -> execution.evaluate("request-2", "missing", Map.of()))
                 .isInstanceOf(java.util.NoSuchElementException.class);
+    }
+
+    @Test
+    void parallelJoinRunsTheSharedSuccessorOnce() {
+        GraphDefinition graph = new GraphDefinition(1, List.of(
+                new GraphNode("start", NodeKind.START, null, null, Map.of()),
+                new GraphNode("split", NodeKind.PARALLEL_SPLIT, null, null, Map.of()),
+                valueNode("left", 1), valueNode("right", 2),
+                new GraphNode("join", NodeKind.PARALLEL_JOIN, null, null, Map.of()),
+                valueNode("after", 3),
+                new GraphNode("end", NodeKind.END, null, null, Map.of())),
+                List.of(new GraphEdge("a", "start", "split", null),
+                        new GraphEdge("b", "split", "left", null),
+                        new GraphEdge("c", "split", "right", null),
+                        new GraphEdge("d", "left", "join", null),
+                        new GraphEdge("e", "right", "join", null),
+                        new GraphEdge("f", "join", "after", null),
+                        new GraphEdge("g", "after", "end", null)), Map.of());
+        repository.saveDraft("parallel", graph, 0);
+        publication.publish("parallel", 1);
+
+        ExecutionResult result = execution.evaluate("parallel-request", "parallel", Map.of());
+
+        assertThat(result.status()).isEqualTo("SUCCEEDED");
+        assertThat(result.nodeResults()).containsEntry("left", 1).containsEntry("right", 2).containsEntry("after", 3);
+        assertThat(result.trace().stream().filter(item -> item.nodeId().equals("after"))).hasSize(1);
     }
 
     @Test
@@ -98,6 +127,27 @@ class DecisionExecutionServiceTest {
         verify(storage).findPublished("pin");
     }
 
+    @Test
+    void returnsFailedStatusWhenLiteFlowStopsOnComponentError() {
+        SceneFlowRepository storage = mock(SceneFlowRepository.class);
+        LiteFlowChainRegistry chainRegistry = mock(LiteFlowChainRegistry.class);
+        FlowExecutor flowExecutor = mock(FlowExecutor.class);
+        LiteflowResponse failed = mock(LiteflowResponse.class);
+        FlowVersion version = new FlowVersion(7, "failureScene", 2, graphFor(1),
+                "scene_failureScene_v2", "THEN(emitValue.tag(\"emit\"))");
+        when(storage.findPublished("failureScene")).thenReturn(Optional.of(version));
+        when(chainRegistry.contains(version.chainId())).thenReturn(true);
+        when(failed.isSuccess()).thenReturn(false);
+        when(flowExecutor.execute2Resp(eq(version.chainId()), isNull(), any(Object.class))).thenReturn(failed);
+
+        ExecutionResult result = new DecisionExecutionService(storage, chainRegistry, flowExecutor)
+                .evaluate("failed-request", "failureScene", Map.of());
+
+        assertThat(result.status()).isEqualTo("FAILED");
+        assertThat(result.errorCode()).isEqualTo("FLOW_EXECUTION_FAILED");
+        assertThat(result.versionId()).isEqualTo(7);
+    }
+
     private static GraphDefinition graphFor(int value) {
         return new GraphDefinition(1, List.of(
                 new GraphNode("start", NodeKind.START, null, null, Map.of()),
@@ -106,5 +156,9 @@ class DecisionExecutionServiceTest {
                 new GraphNode("end", NodeKind.END, null, null, Map.of())),
                 List.of(new GraphEdge("a", "start", "emit", null),
                         new GraphEdge("b", "emit", "end", null)), Map.of());
+    }
+
+    private static GraphNode valueNode(String id, int value) {
+        return new GraphNode(id, NodeKind.COMPONENT, "emit-value", FailurePolicy.FAIL_FAST, Map.of("value", value));
     }
 }

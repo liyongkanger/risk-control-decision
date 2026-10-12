@@ -81,6 +81,19 @@ class FlowCompilerTest {
     }
 
     @Test
+    void rejectsAnEdgeCrossingParallelBranches() {
+        GraphDefinition graph = graph(List.of(node("start", NodeKind.START), node("split", NodeKind.PARALLEL_SPLIT),
+                        component("left"), component("right"), node("join", NodeKind.PARALLEL_JOIN),
+                        node("end", NodeKind.END)),
+                edge("a", "start", "split"), edge("b", "split", "left"), edge("c", "split", "right"),
+                edge("d", "left", "join"), edge("e", "right", "join"),
+                edge("f", "join", "end"), edge("cross", "left", "right"));
+
+        assertThatThrownBy(() -> compiler.compile("payment", 1, graph))
+                .isInstanceOf(GraphCompilationException.class);
+    }
+
+    @Test
     void nestsConditionInsideParallelBranch() {
         GraphDefinition graph = graph(List.of(node("start", NodeKind.START), node("split", NodeKind.PARALLEL_SPLIT),
                         condition("condition"), component("yes"), component("no"),
@@ -108,7 +121,7 @@ class FlowCompilerTest {
     }
 
     private static GraphNode condition(String id) {
-        return new GraphNode(id, NodeKind.CONDITION, "is-positive", null, Map.of());
+        return new GraphNode(id, NodeKind.CONDITION, "is-positive", FailurePolicy.FAIL_FAST, Map.of());
     }
 
     private static GraphEdge edge(String id, String source, String target) {

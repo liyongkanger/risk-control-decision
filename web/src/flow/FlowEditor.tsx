@@ -67,15 +67,19 @@ export default function FlowEditor() {
   const [selected, setSelected] = useState<{ id: string; type: 'node' | 'edge' } | null>(null)
   const [configText, setConfigText] = useState('{}')
   const [validation, setValidation] = useState<FlowValidation | null>(null)
+  const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null)
+  const [validatedSnapshot, setValidatedSnapshot] = useState<string | null>(null)
   const [message, setMessage] = useState('从节点右侧连接点拖到下一节点左侧连接点。')
   const [nodeCount, setNodeCount] = useState(3)
   const [edgeCount, setEdgeCount] = useState(2)
   const [busy, setBusy] = useState(false)
+  const [, forceRender] = useState(0)
 
   const refresh = (graph: Graph) => {
     setNodeCount(graph.getNodes().length)
     setEdgeCount(graph.getEdges().length)
     setValidation(null)
+    setValidatedSnapshot(null)
   }
 
   const render = (graph: Graph, definition: GraphDefinition) => {
@@ -97,6 +101,7 @@ export default function FlowEditor() {
     graphRef.current = graph
     graph.on('cell:added', () => refresh(graph))
     graph.on('cell:removed', () => refresh(graph))
+    graph.on('node:change:position', () => { setValidation(null); setValidatedSnapshot(null) })
     graph.on('cell:click', ({ cell }) => {
       const type = cell.isNode() ? 'node' : 'edge'
       setSelected({ id: cell.id, type })
@@ -127,10 +132,12 @@ export default function FlowEditor() {
   }
 
   const addKind = (kind: NodeKind) => {
-    const id = `${kind.toLowerCase().replaceAll('_', '')}${nextId.current++}`
+    const prefix = kind.toLowerCase().replaceAll('_', '')
+    let id = `${prefix}${nextId.current++}`
+    while (graph().getCellById(id)) id = `${prefix}${nextId.current++}`
     drawNode(graph(), {
       id, kind, componentKey: kind === 'COMPONENT' ? 'emit-value' : kind === 'CONDITION' ? 'is-positive' : null,
-      failurePolicy: kind === 'COMPONENT' ? 'FAIL_FAST' : null,
+      failurePolicy: kind === 'COMPONENT' || kind === 'CONDITION' ? 'FAIL_FAST' : null,
       config: kind === 'COMPONENT' ? { value: 'demo' } : kind === 'CONDITION' ? { inputKey: 'positive' } : {},
     }, { x: 190 + (nextId.current % 4) * 85, y: 80 + (nextId.current % 5) * 90 })
   }
@@ -143,6 +150,8 @@ export default function FlowEditor() {
     cell.setData(next)
     cell.attr('label/text', `${labels[next.kind]} · ${next.id}`)
     setValidation(null)
+    setValidatedSnapshot(null)
+    forceRender((value) => value + 1)
   }
 
   const updateBranch = (branch: FlowEdge['branch']) => {
@@ -152,6 +161,8 @@ export default function FlowEditor() {
     cell.setData({ branch })
     cell.setLabels(branch ? [branch] : [])
     setValidation(null)
+    setValidatedSnapshot(null)
+    forceRender((value) => value + 1)
   }
 
   const cell = selected ? graphRef.current?.getCellById(selected.id) : null
@@ -160,12 +171,12 @@ export default function FlowEditor() {
 
   return <main className="page">
     <header className="header"><div><p className="eyebrow">RISK CONTROL DECISION</p><h1>场景流程编辑器</h1><p className="subtitle">X6 编辑 · LiteFlow 执行</p></div>
-      <div className="scene"><label htmlFor="sceneCode">场景码</label><input id="sceneCode" value={sceneCode} onChange={(event) => { setSceneCode(event.target.value); setRevision(0); setValidation(null) }} /></div></header>
+      <div className="scene"><label htmlFor="sceneCode">场景码</label><input id="sceneCode" value={sceneCode} onChange={(event) => { setSceneCode(event.target.value); setRevision(0); setValidation(null); setSavedSnapshot(null); setValidatedSnapshot(null) }} /></div></header>
     <section className="toolbar"><div className="actions">
-      <button disabled={busy} onClick={() => run(async () => { const draft = await loadDraft(sceneCode); if (!draft) { setMessage('该场景没有草稿'); return }; render(graph(), draft.graph); setRevision(draft.revision); setMessage(`已加载草稿 r${draft.revision}`) })}>加载草稿</button>
-      <button disabled={busy} onClick={() => run(async () => { const saved = await saveDraft(sceneCode, toGraphDefinition(graph()), revision); setRevision(saved.revision); setMessage(`已保存草稿 r${saved.revision}`) })}>保存草稿</button>
-      <button disabled={busy} onClick={() => run(async () => { const result = await validateFlow(sceneCode, toGraphDefinition(graph())); setValidation(result); highlight(result); setMessage(result.valid ? '图校验通过' : `发现 ${result.issues.length} 个问题`) })}>校验流程</button>
-      <button disabled={busy || !validation?.valid || revision === 0} onClick={() => run(async () => { const published = await publishFlow(sceneCode, revision); setMessage(`已发布版本 ${published.versionNumber} · ${published.chainId}`) })}>发布版本</button>
+      <button disabled={busy} onClick={() => run(async () => { const draft = await loadDraft(sceneCode); if (!draft) { setMessage('该场景没有草稿'); return }; render(graph(), draft.graph); setRevision(draft.revision); setSavedSnapshot(JSON.stringify(toGraphDefinition(graph()))); setMessage(`已加载草稿 r${draft.revision}`) })}>加载草稿</button>
+      <button disabled={busy} onClick={() => run(async () => { const current = toGraphDefinition(graph()); const snapshot = JSON.stringify(current); const saved = await saveDraft(sceneCode, current, revision); setRevision(saved.revision); setSavedSnapshot(snapshot); if (validatedSnapshot !== snapshot) setValidation(null); setMessage(`已保存草稿 r${saved.revision}`) })}>保存草稿</button>
+      <button disabled={busy} onClick={() => run(async () => { const current = toGraphDefinition(graph()); const result = await validateFlow(sceneCode, current); setValidatedSnapshot(JSON.stringify(current)); setValidation(result); highlight(result); setMessage(result.valid ? '图校验通过' : `发现 ${result.issues.length} 个问题`) })}>校验流程</button>
+      <button disabled={busy || !validation?.valid || revision === 0 || savedSnapshot !== validatedSnapshot} onClick={() => run(async () => { if (JSON.stringify(toGraphDefinition(graph())) !== savedSnapshot) throw new Error('当前画布与已保存草稿不同，请先保存并重新校验'); const published = await publishFlow(sceneCode, revision); setMessage(`已发布版本 ${published.versionNumber} · ${published.chainId}`) })}>发布版本</button>
       <button disabled={busy} onClick={() => run(async () => { const result = await evaluateFlow(sceneCode, { positive: true }); setMessage(`执行 ${result.status} · 版本 ${result.versionId} · ${JSON.stringify(result.nodeResults)}`) })}>执行示例</button>
     </div><span className="stats">草稿 r{revision} · {nodeCount} 节点 · {edgeCount} 连线</span></section>
     <div className="workspace">

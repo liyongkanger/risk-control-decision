@@ -8,8 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import tools.jackson.databind.ObjectMapper;
+
 @org.springframework.stereotype.Component
 public class GraphValidator {
+    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final int MAX_GRAPH_BYTES = 1_048_576;
 
     public GraphValidationResult validateDraft(GraphDefinition graph) {
         List<GraphIssue> issues = new ArrayList<>();
@@ -24,6 +28,12 @@ public class GraphValidator {
         List<GraphEdge> edges = graph.edges() == null ? List.of() : graph.edges();
         if (nodes.size() > 200 || edges.size() > 500) {
             issues.add(issue("GRAPH_TOO_LARGE", null, null, "Graph exceeds 200 nodes or 500 edges"));
+        }
+        if (graph.layout() != null && graph.layout().size() > 200) {
+            issues.add(issue("GRAPH_TOO_LARGE", null, null, "Graph layout exceeds 200 entries"));
+        }
+        if (JSON.writeValueAsBytes(graph).length > MAX_GRAPH_BYTES) {
+            issues.add(issue("GRAPH_TOO_LARGE", null, null, "Graph exceeds 1 MiB"));
         }
 
         Map<String, GraphNode> nodeById = new HashMap<>();
@@ -109,6 +119,9 @@ public class GraphValidator {
             if (node.kind() == NodeKind.CONDITION) {
                 if (in != 1 || out != 2) issues.add(issue("INVALID_DEGREE", node.id(), null, "Condition needs one input and two outputs"));
                 if (blank(node.componentKey())) issues.add(issue("COMPONENT_KEY_REQUIRED", node.id(), null, "Condition component key is required"));
+                if (node.failurePolicy() != FailurePolicy.FAIL_FAST) {
+                    issues.add(issue("FAILURE_POLICY_REQUIRED", node.id(), null, "FAIL_FAST is required"));
+                }
                 List<GraphEdge> branches = outgoingEdges.get(node.id());
                 if (branches.stream().filter(e -> "true".equals(e.branch())).count() != 1
                         || branches.stream().filter(e -> "false".equals(e.branch())).count() != 1) {

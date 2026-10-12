@@ -19,7 +19,10 @@ public interface SceneMapper {
             WHERE scene_code=#{sceneCode}
               AND ((published_version_id IS NULL AND #{expectedId,jdbcType=BIGINT} IS NULL)
                    OR published_version_id=#{expectedId,jdbcType=BIGINT})
+              AND EXISTS (SELECT 1 FROM flow_draft d
+                          WHERE d.scene_code=#{sceneCode} AND d.revision=#{expectedRevision})
             """)
     int switchPublished(@Param("sceneCode") String sceneCode,
-                        @Param("expectedId") Long expectedId, @Param("newId") long newId);
+                        @Param("expectedId") Long expectedId, @Param("newId") long newId,
+                        @Param("expectedRevision") long expectedRevision);
 }

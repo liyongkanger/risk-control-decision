@@ -63,6 +63,22 @@ class FlowApiTest {
         assertThat(response.body()).contains("COMPONENT_CONFIG_INVALID").contains("\"nodeId\":\"bad\"");
     }
 
+    @Test
+    void rejectsAnOversizedRequestBeforeGraphDeserialization() throws Exception {
+        GraphDefinition graph = new GraphDefinition(1, List.of(
+                new GraphNode("start", NodeKind.START, null, null, Map.of()),
+                new GraphNode("large", NodeKind.COMPONENT, "emit-value", FailurePolicy.FAIL_FAST,
+                        Map.of("value", "x".repeat(1_100_000))),
+                new GraphNode("end", NodeKind.END, null, null, Map.of())),
+                List.of(new GraphEdge("a", "start", "large", null),
+                        new GraphEdge("b", "large", "end", null)), Map.of());
+
+        var response = send("PUT", "/api/scenes/tooLarge/draft?expectedRevision=0", json.writeValueAsString(graph));
+
+        assertThat(response.statusCode()).isEqualTo(413);
+        assertThat(response.body()).contains("PAYLOAD_TOO_LARGE");
+    }
+
     private HttpResponse<String> send(String method, String path, String body) throws Exception {
         return client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
                 .header("Content-Type", "application/json")

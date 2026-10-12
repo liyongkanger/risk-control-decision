@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 class LiteFlowDynamicChainTest {
@@ -34,5 +35,15 @@ class LiteFlowDynamicChainTest {
         assertThat(response.isSuccess()).isTrue();
         assertThat(context.nodeResults()).containsEntry("first", 1).containsEntry("second", 2)
                 .containsEntry("yes", "Y").doesNotContainKey("no");
+
+        ExecutionContext negative = new ExecutionContext("req-2", "test", 1,
+                Map.of("positive", false), new ConcurrentHashMap<>(), new ConcurrentLinkedQueue<>(),
+                context.nodeConfigs());
+        var negativeResponse = executor.execute2Resp(chainId, null, negative);
+        assertThat(negativeResponse.isSuccess()).isTrue();
+        assertThat(negative.nodeResults()).containsEntry("no", "N").doesNotContainKey("yes");
+
+        assertThatThrownBy(() -> registry.load(chainId, "THEN(emitValue.tag(\"changed\"))"))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

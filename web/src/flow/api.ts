@@ -30,7 +30,11 @@ export async function validateFlow(sceneCode: string, graph: GraphDefinition): P
   const response = await fetch(`${base}/scenes/${encodeURIComponent(sceneCode)}/validate`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graph),
   })
-  if (response.status === 422) return response.json() as Promise<FlowValidation>
+  if (response.status === 422) {
+    const body = await response.json()
+    if (typeof body.valid === 'boolean' && Array.isArray(body.issues)) return body as FlowValidation
+    throw new Error(body.message || '流程校验请求无效')
+  }
   return readJson(response)
 }
 

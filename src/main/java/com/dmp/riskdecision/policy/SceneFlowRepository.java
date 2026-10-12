@@ -47,6 +47,7 @@ public class SceneFlowRepository {
 
     public long nextVersionNumber(String sceneCode) { return versions.latestVersionNumber(sceneCode) + 1; }
 
+    @org.springframework.transaction.annotation.Transactional
     public FlowVersion createVersion(String sceneCode, long number, GraphDefinition graph,
                                      String chainId, String compiledEl) {
         versions.insert(sceneCode, number, json.writeValueAsString(graph), chainId, compiledEl);
@@ -64,10 +65,11 @@ public class SceneFlowRepository {
         return id == null ? Optional.empty() : findVersion(id);
     }
 
-    public void switchPublished(String sceneCode, Long expectedId, long newId) {
+    @org.springframework.transaction.annotation.Transactional
+    public void switchPublished(String sceneCode, Long expectedId, long newId, long expectedRevision) {
         scenes.insertIfMissing(sceneCode);
-        if (scenes.switchPublished(sceneCode, expectedId, newId) != 1) {
-            throw new IllegalStateException("Published version conflict");
+        if (scenes.switchPublished(sceneCode, expectedId, newId, expectedRevision) != 1) {
+            throw new IllegalStateException("Published version or draft revision conflict");
         }
     }
 

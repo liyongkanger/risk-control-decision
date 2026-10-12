@@ -20,9 +20,11 @@ public class LiteFlowComponentAdapter extends NodeComponent {
                 throw new IllegalArgumentException("Missing value for node " + nodeId);
             }
             context.nodeResults().put(nodeId, config.get("value"));
-            context.traces().add(new NodeTrace(nodeId, started, Instant.now(), "SUCCEEDED", null));
+            context.traces().add(new NodeTrace(context.requestId(), context.sceneCode(), context.version(),
+                    nodeId, started, Instant.now(), "SUCCEEDED", null));
         } catch (RuntimeException error) {
-            context.traces().add(new NodeTrace(nodeId, started, Instant.now(), "FAILED", "COMPONENT_ERROR"));
+            context.traces().add(new NodeTrace(context.requestId(), context.sceneCode(), context.version(),
+                    nodeId, started, Instant.now(), "FAILED", "COMPONENT_ERROR"));
             throw error;
         }
     }

@@ -21,10 +21,12 @@ public class LiteFlowConditionAdapter extends NodeBooleanComponent {
             }
             Object value = context.input().get(key);
             boolean answer = value instanceof Boolean b ? b : value instanceof Number n && n.doubleValue() > 0;
-            context.traces().add(new NodeTrace(nodeId, started, Instant.now(), "SUCCEEDED", null));
+            context.traces().add(new NodeTrace(context.requestId(), context.sceneCode(), context.version(),
+                    nodeId, started, Instant.now(), "SUCCEEDED", null));
             return answer;
         } catch (RuntimeException error) {
-            context.traces().add(new NodeTrace(nodeId, started, Instant.now(), "FAILED", "COMPONENT_ERROR"));
+            context.traces().add(new NodeTrace(context.requestId(), context.sceneCode(), context.version(),
+                    nodeId, started, Instant.now(), "FAILED", "COMPONENT_ERROR"));
             throw error;
         }
     }

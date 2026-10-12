@@ -84,7 +84,21 @@ class GraphValidatorTest {
                         new GraphEdge("f", "join", "end", null)), Map.of());
 
         assertThat(validator.validateForPublish(graph).issues())
-                .extracting(GraphIssue::code).contains("CONDITION_BRANCHES");
+                .extracting(GraphIssue::code).contains("CONDITION_BRANCHES", "FAILURE_POLICY_REQUIRED");
+    }
+
+    @Test
+    void capsSerializedDraftSizeEvenWithFewNodes() {
+        GraphDefinition graph = new GraphDefinition(1, List.of(
+                new GraphNode("start", NodeKind.START, null, null, Map.of()),
+                new GraphNode("work", NodeKind.COMPONENT, "emit-value", FailurePolicy.FAIL_FAST,
+                        Map.of("value", "x".repeat(1_100_000))),
+                new GraphNode("end", NodeKind.END, null, null, Map.of())),
+                List.of(new GraphEdge("a", "start", "work", null),
+                        new GraphEdge("b", "work", "end", null)), Map.of());
+
+        assertThat(validator.validateDraft(graph).issues())
+                .extracting(GraphIssue::code).contains("GRAPH_TOO_LARGE");
     }
 
     static GraphDefinition serialGraph() {
