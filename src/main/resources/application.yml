@@ -4,6 +4,9 @@ spring:
   profiles:
     default: local
 
+liteflow:
+  rule-source: flow.el.xml
+
 management:
   endpoints:
     web:
