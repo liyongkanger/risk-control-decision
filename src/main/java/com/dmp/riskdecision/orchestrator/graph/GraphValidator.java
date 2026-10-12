@@ -67,14 +67,17 @@ public class GraphValidator {
         Map<String, GraphNode> nodeById = new HashMap<>();
         Map<String, List<String>> outgoing = new HashMap<>();
         Map<String, List<String>> incoming = new HashMap<>();
+        Map<String, List<GraphEdge>> outgoingEdges = new HashMap<>();
         for (GraphNode node : nodes) {
             nodeById.put(node.id(), node);
             outgoing.put(node.id(), new ArrayList<>());
             incoming.put(node.id(), new ArrayList<>());
+            outgoingEdges.put(node.id(), new ArrayList<>());
         }
         for (GraphEdge edge : edges) {
             outgoing.get(edge.source()).add(edge.target());
             incoming.get(edge.target()).add(edge.source());
+            outgoingEdges.get(edge.source()).add(edge);
         }
 
         List<GraphNode> starts = nodes.stream().filter(n -> n.kind() == NodeKind.START).toList();
@@ -94,6 +97,27 @@ public class GraphValidator {
                 if (node.failurePolicy() != FailurePolicy.FAIL_FAST) {
                     issues.add(issue("FAILURE_POLICY_REQUIRED", node.id(), null, "FAIL_FAST is required"));
                 }
+            }
+            if (node.kind() == NodeKind.PARALLEL_SPLIT) {
+                if (in != 1 || out < 2) issues.add(issue("INVALID_DEGREE", node.id(), null, "Parallel split needs one input and at least two outputs"));
+                if (outgoingEdges.get(node.id()).stream().anyMatch(e -> e.branch() != null)) {
+                    issues.add(issue("PARALLEL_BRANCHES", node.id(), null, "Parallel edges must not have branch labels"));
+                }
+            }
+            if (node.kind() == NodeKind.CONDITION) {
+                if (in != 1 || out != 2) issues.add(issue("INVALID_DEGREE", node.id(), null, "Condition needs one input and two outputs"));
+                if (blank(node.componentKey())) issues.add(issue("COMPONENT_KEY_REQUIRED", node.id(), null, "Condition component key is required"));
+                List<GraphEdge> branches = outgoingEdges.get(node.id());
+                if (branches.stream().filter(e -> "true".equals(e.branch())).count() != 1
+                        || branches.stream().filter(e -> "false".equals(e.branch())).count() != 1) {
+                    issues.add(issue("CONDITION_BRANCHES", node.id(), null, "Condition needs true and false edges"));
+                }
+            }
+            if (node.kind() == NodeKind.PARALLEL_JOIN && (in < 2 || out != 1)) {
+                issues.add(issue("INVALID_DEGREE", node.id(), null, "Parallel join needs at least two inputs and one output"));
+            }
+            if (node.kind() == NodeKind.CONDITION_JOIN && (in != 2 || out != 1)) {
+                issues.add(issue("INVALID_DEGREE", node.id(), null, "Condition join needs two inputs and one output"));
             }
         }
 

@@ -68,6 +68,25 @@ class GraphValidatorTest {
                 .extracting(GraphIssue::code).contains("END_COUNT");
     }
 
+    @Test
+    void requiresConditionBranchLabelsAndJoinDegree() {
+        GraphDefinition graph = new GraphDefinition(1,
+                List.of(new GraphNode("start", NodeKind.START, null, null, Map.of()),
+                        new GraphNode("condition", NodeKind.CONDITION, "is-positive", null, Map.of()),
+                        component("yes"), component("no"),
+                        new GraphNode("join", NodeKind.CONDITION_JOIN, null, null, Map.of()),
+                        new GraphNode("end", NodeKind.END, null, null, Map.of())),
+                List.of(new GraphEdge("a", "start", "condition", null),
+                        new GraphEdge("b", "condition", "yes", "true"),
+                        new GraphEdge("c", "condition", "no", "true"),
+                        new GraphEdge("d", "yes", "join", null),
+                        new GraphEdge("e", "no", "join", null),
+                        new GraphEdge("f", "join", "end", null)), Map.of());
+
+        assertThat(validator.validateForPublish(graph).issues())
+                .extracting(GraphIssue::code).contains("CONDITION_BRANCHES");
+    }
+
     static GraphDefinition serialGraph() {
         return new GraphDefinition(1,
                 List.of(new GraphNode("start", NodeKind.START, null, null, Map.of()),
