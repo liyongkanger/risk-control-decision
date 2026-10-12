@@ -18,6 +18,15 @@ class FlowCompilerTest {
     private final FlowCompiler compiler = new FlowCompiler();
 
     @Test
+    void wrapsASingleComponentInAChainExpression() {
+        GraphDefinition graph = graph(List.of(node("start", NodeKind.START), component("only"), node("end", NodeKind.END)),
+                edge("a", "start", "only"), edge("b", "only", "end"));
+
+        assertThat(compiler.compile("payment", 1, graph).el())
+                .isEqualTo("THEN(emitValue.tag(\"only\"))");
+    }
+
+    @Test
     void compilesSerialAndParallelJoinOnce() {
         CompiledFlow flow = compiler.compile("payment", 3, graph(
                 List.of(node("start", NodeKind.START), component("prepare"), node("split", NodeKind.PARALLEL_SPLIT),

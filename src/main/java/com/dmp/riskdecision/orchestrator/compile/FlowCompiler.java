@@ -17,17 +17,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@org.springframework.stereotype.Component
 public class FlowCompiler {
     private final GraphValidator validator = new GraphValidator();
     private final ComponentRegistry components;
 
-    public FlowCompiler() {
-        this(new ComponentRegistry());
-    }
-
+    @org.springframework.beans.factory.annotation.Autowired
     public FlowCompiler(ComponentRegistry components) {
         this.components = components;
     }
+
+    public FlowCompiler() { this(new ComponentRegistry()); }
 
     public CompiledFlow compile(String sceneCode, long version, GraphDefinition graph) {
         if (sceneCode == null || !sceneCode.matches("[A-Za-z][A-Za-z0-9_-]{0,63}") || version < 1) {
@@ -39,6 +39,9 @@ public class FlowCompiler {
         String start = graph.nodes().stream().filter(n -> n.kind() == NodeKind.START).findFirst().orElseThrow().id();
         String end = graph.nodes().stream().filter(n -> n.kind() == NodeKind.END).findFirst().orElseThrow().id();
         String el = parser.sequence(parser.onlyNext(start), end);
+        if (!el.startsWith("THEN(") && !el.startsWith("WHEN(") && !el.startsWith("IF(")) {
+            el = "THEN(" + el + ")";
+        }
         if (parser.seen.size() != graph.nodes().stream().filter(n -> n.kind() == NodeKind.COMPONENT
                 || n.kind() == NodeKind.CONDITION).count()) {
             throw problem("UNCONSUMED_NODE", null, "Graph contains nodes outside the compiled structure");
