@@ -61,10 +61,28 @@ public class FlowPublicationService {
         return version;
     }
 
+    public FlowValidation validate(String sceneCode, GraphDefinition graph) {
+        var base = validator.validateForPublish(graph);
+        if (!base.valid()) return new FlowValidation(false, base.issues(), null);
+        try {
+            validateComponents(graph);
+            String el = compiler.compile(sceneCode, 1, graph).el();
+            return new FlowValidation(true, List.of(), el);
+        } catch (GraphCompilationException error) {
+            return new FlowValidation(false, error.issues(), null);
+        }
+    }
+
     private void validateComponents(GraphDefinition graph) {
         for (GraphNode node : graph.nodes()) {
             if (node.kind() != NodeKind.COMPONENT && node.kind() != NodeKind.CONDITION) continue;
-            var definition = components.require(node.componentKey());
+            com.dmp.riskdecision.component.ComponentDefinition definition;
+            try {
+                definition = components.require(node.componentKey());
+            } catch (IllegalArgumentException error) {
+                throw new GraphCompilationException(List.of(new GraphIssue("COMPONENT_UNKNOWN", node.id(), null,
+                        "Component is not registered")));
+            }
             if (definition.condition() != (node.kind() == NodeKind.CONDITION)) {
                 throw new GraphCompilationException(List.of(new GraphIssue("COMPONENT_KIND_MISMATCH", node.id(), null,
                         "Component kind does not match node kind")));
