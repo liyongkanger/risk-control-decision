@@ -1,6 +1,6 @@
 # 风控决策平台
 
-项目使用 Java 21 和 Spring Boot 4.1。当前包含启动类、MyBatis、MySQL、Redis 和 Actuator 的基础接线，尚未定义业务接口与数据库表。
+项目使用 Java 21、Spring Boot 4.1、LiteFlow 和 React/X6。当前可编辑结构化场景流程、保存草稿、发布版本并同步执行示例组件。
 
 ## 本地配置
 
@@ -18,4 +18,34 @@
 
 当前由 Spring Boot 管理的 MySQL Connector/J 为 9.7，目标 MySQL Server 8.0 及以上；部署版本确定后再核对驱动兼容性。
 
-准备好 MySQL 数据库和 Redis 后，使用 JDK 21 运行 `mvn spring-boot:run`。Actuator 提供 `/actuator/health` 和 `/actuator/info`。没有业务接口、策略配置或数据库迁移脚本。
+准备好 MySQL 数据库后，使用 JDK 21 运行 `mvn spring-boot:run`。Flyway 会执行 `V1__scene_flow.sql` 创建场景、草稿和版本表。Redis 已配置，但当前流程切片不依赖 Redis。Actuator 提供 `/actuator/health` 和 `/actuator/info`。
+
+## 前端开发
+
+```powershell
+cd web
+npm ci
+npm run dev
+```
+
+打开 `http://localhost:5173/`。Vite 将 `/api` 请求转发到本地 `8080` 端口。页面初始提供一条 `开始 → emit-value → 结束` 示例流程。输入场景码后，可以校验、保存草稿、发布版本和执行示例。
+
+## 场景流程
+
+图数据契约见[设计文档](docs/superpowers/specs/2026-10-12-scene-flow-model-design.md)。首期支持 `START`、`END`、`COMPONENT`、`PARALLEL_SPLIT`、`PARALLEL_JOIN`、`CONDITION` 和 `CONDITION_JOIN`。并行汇合等待所有分支。组件节点和条件节点的失败策略只能是 `FAIL_FAST`。草稿可暂不完整，发布时必须通过全部校验；单图限制为 200 个节点、500 条边和 1 MiB JSON。HTTP 写入请求也限制为 1 MiB。
+
+首期组件目录只有无外部副作用的 `emit-value`（配置 `{"value": 任意非空值}`）和 `is-positive`（配置 `{"inputKey": "输入字段名"}`）。场景码必须以字母开头，只包含字母、数字、下划线和连字符，最长 64 位。执行接口返回流程状态、节点结果和轨迹；业务决策值尚未定义。
+
+发布流程先写入不可变版本，再加载和验证 LiteFlow 链，最后在数据库中按草稿修订号与旧发布指针进行条件切换。加载或验证失败的版本保留为未发布记录，不会被场景请求选中；重试会生成新的版本号。
+
+| 方法 | 路径 | 用途 |
+|---|---|---|
+| `GET` | `/api/scenes/{sceneCode}/draft` | 读取草稿及修订号 |
+| `PUT` | `/api/scenes/{sceneCode}/draft?expectedRevision=0` | 保存草稿并检查修订号 |
+| `POST` | `/api/scenes/{sceneCode}/validate` | 校验图并预览 EL |
+| `POST` | `/api/scenes/{sceneCode}/publish` | 用 `{"expectedRevision":1}` 发布不可变版本 |
+| `POST` | `/api/decisions/evaluate` | 用 `{"sceneCode":"demoScene","input":{}}` 同步执行 |
+
+## 验证范围
+
+后端 `mvn test` 使用 H2 的 MySQL 兼容模式验证数据库操作；前端使用 `npm test` 与 `npm run build`。浏览器已验证校验、保存、发布、执行及错误定位。真实 MySQL 联调尚未完成，H2 测试不能证明 MySQL 版本兼容。当前发布与执行设计针对单个应用实例，管理接口尚无鉴权，暂不用于生产环境。
