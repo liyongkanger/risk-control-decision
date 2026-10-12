@@ -1,5 +1,6 @@
 /target/
 /hs_err_pid*.log
 /replay_pid*.log
+/.playwright-cli/
 /web/node_modules/
 /web/dist/

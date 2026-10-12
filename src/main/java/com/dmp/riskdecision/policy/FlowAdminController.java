@@ -6,6 +6,7 @@ import com.dmp.riskdecision.orchestrator.graph.GraphValidator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,6 +34,12 @@ public class FlowAdminController {
         var result = validator.validateDraft(graph);
         if (!result.valid()) throw new GraphCompilationException(result.issues());
         return repository.saveDraft(sceneCode, graph, expectedRevision);
+    }
+
+    @GetMapping("/draft")
+    public FlowDraft getDraft(@PathVariable String sceneCode) {
+        return repository.findDraft(sceneCode)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Draft not found: " + sceneCode));
     }
 
     @PostMapping("/validate")

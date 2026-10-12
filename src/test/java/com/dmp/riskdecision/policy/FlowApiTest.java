@@ -35,6 +35,10 @@ class FlowApiTest {
 
         var draft = send("PUT", "/api/scenes/apiScene/draft?expectedRevision=0", json.writeValueAsString(graph));
         assertThat(draft.statusCode()).isEqualTo(200);
+        var loaded = client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/scenes/apiScene/draft"))
+                .GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertThat(loaded.statusCode()).isEqualTo(200);
+        assertThat(loaded.body()).contains("\"revision\":1").contains("\"id\":\"emit\"");
         var publish = send("POST", "/api/scenes/apiScene/publish", "{\"expectedRevision\":1}");
         assertThat(publish.statusCode()).isEqualTo(200);
         var evaluation = send("POST", "/api/decisions/evaluate",
