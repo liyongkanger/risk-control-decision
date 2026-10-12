@@ -11,7 +11,7 @@
 - 保持偏 Java 8 的显式类和变量写法：不用 `record`、`var`、`instanceof` 模式变量等简写。新式 `switch` 可以使用。
 - 数据对象使用普通类，清楚声明字段、构造方法和访问方法。是否使用 Lombok 按具体模块统一选择；本规范不强制引入 Lombok。
 - 类名使用 `UpperCamelCase`，方法和变量使用 `lowerCamelCase`，常量使用 `UPPER_SNAKE_CASE`。包名全小写，按职责分包。
-- 优先使用构造方法注入。公共逻辑集中在明确的服务或工具类中，避免散落复制。
+- 依赖注入方式及 Controller、Service、Mapper 的具体写法遵循[分层开发规范](mvc-layer-conventions.md)。公共逻辑集中在明确的服务或工具类中，避免散落复制。
 
 ### 1.2 注释与 Javadoc
 
