@@ -63,6 +63,8 @@ component/
 - 其他模块通过 `component.liteflow.service` 调用能力，不直接操作 LiteFlow 的注册表、上下文实现或节点类。
 - 后续引入其他框架能力时沿用“框架包 → `service` 对外方法 → 内部按职责分包”的方式；各框架内部结构可按实际能力调整。
 
+跨领域的通用能力放在 `common` 包：`common.response` 定义接口响应及结果码，`common.exception` 处理全局异常，`common.web` 放通用 Web 过滤器。业务领域不复制这些公共类型。
+
 ## 3. MySQL 业务表规范
 
 ### 3.1 命名与公共字段

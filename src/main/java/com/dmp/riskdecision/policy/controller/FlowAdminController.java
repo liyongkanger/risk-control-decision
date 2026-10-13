@@ -1,5 +1,7 @@
 package com.dmp.riskdecision.policy.controller;
 
+import com.dmp.riskdecision.common.response.ApiResponse;
+import com.dmp.riskdecision.common.response.ResultCode;
 import com.dmp.riskdecision.policy.assembler.FlowAdminAssembler;
 import com.dmp.riskdecision.policy.service.FlowPublicationService;
 import com.dmp.riskdecision.policy.vo.req.FlowGraphReq;
@@ -34,33 +36,35 @@ public class FlowAdminController {
     private FlowAdminAssembler assembler;
 
     @PutMapping("/draft")
-    public FlowDraftResp saveDraft(@PathVariable String sceneCode, @RequestParam long expectedRevision,
+    public ApiResponse<FlowDraftResp> saveDraft(@PathVariable String sceneCode, @RequestParam long expectedRevision,
                                    @RequestBody FlowGraphReq request) {
         LOG.info("[FlowAdminController][saveDraft] sceneCode:{} expectedRevision:{}", sceneCode, expectedRevision);
-        return assembler.toDraftResp(publication.saveDraft(sceneCode,
-                assembler.toGraphDefinition(request), expectedRevision));
+        return ApiResponse.success(assembler.toDraftResp(publication.saveDraft(sceneCode,
+                assembler.toGraphDefinition(request), expectedRevision)));
     }
 
     @GetMapping("/draft")
-    public FlowDraftResp getDraft(@PathVariable String sceneCode) {
+    public ApiResponse<FlowDraftResp> getDraft(@PathVariable String sceneCode) {
         LOG.info("[FlowAdminController][getDraft] sceneCode:{}", sceneCode);
-        return assembler.toDraftResp(publication.getDraft(sceneCode));
+        return ApiResponse.success(assembler.toDraftResp(publication.getDraft(sceneCode)));
     }
 
     @PostMapping("/validate")
-    public ResponseEntity<FlowValidationResp> validate(@PathVariable String sceneCode,
+    public ResponseEntity<ApiResponse<FlowValidationResp>> validate(@PathVariable String sceneCode,
                                                        @RequestBody FlowGraphReq request) {
         LOG.info("[FlowAdminController][validate] sceneCode:{}", sceneCode);
         FlowValidationResp result = assembler.toValidationResp(publication.validate(sceneCode,
                 assembler.toGraphDefinition(request)));
-        return result.isValid() ? ResponseEntity.ok(result)
-                : ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(result);
+        return result.isValid() ? ResponseEntity.ok(ApiResponse.success(result))
+                : ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT)
+                        .body(ApiResponse.failure(ResultCode.GRAPH_INVALID, ResultCode.GRAPH_INVALID.getMessage(), result));
     }
 
     @PostMapping("/publish")
-    public PublishFlowResp publish(@PathVariable String sceneCode, @RequestBody PublishFlowReq request) {
+    public ApiResponse<PublishFlowResp> publish(@PathVariable String sceneCode, @RequestBody PublishFlowReq request) {
         LOG.info("[FlowAdminController][publish] sceneCode:{} expectedRevision:{}",
                 sceneCode, request.getExpectedRevision());
-        return assembler.toPublishResp(publication.publish(sceneCode, request.getExpectedRevision()));
+        return ApiResponse.success(assembler.toPublishResp(publication.publish(sceneCode,
+                request.getExpectedRevision())));
     }
 }

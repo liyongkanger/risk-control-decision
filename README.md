@@ -4,7 +4,7 @@
 
 ## 代码结构
 
-`policy` 和 `decision` 按业务领域划分，领域内分别组织 `controller`、`service`、`mapper`、`vo` 等职责。`orchestrator` 负责流程图校验与编译；`component.liteflow` 将节点、上下文和注册表封装在框架包内，通过 `service` 向业务模块提供能力。HTTP 通用异常处理放在 `shared.web`。具体写法见[项目开发规范](docs/standards/project-conventions.md)和[分层开发规范](docs/standards/mvc-layer-conventions.md)。
+`policy` 和 `decision` 按业务领域划分，领域内分别组织 `controller`、`service`、`mapper`、`vo` 等职责。`orchestrator` 负责流程图校验与编译；`component.liteflow` 将节点、上下文和注册表封装在框架包内，通过 `service` 向业务模块提供能力。公共响应结构、结果码和全局异常处理放在 `common` 包。具体写法见[项目开发规范](docs/standards/project-conventions.md)和[分层开发规范](docs/standards/mvc-layer-conventions.md)。
 
 ## 本地配置
 
@@ -49,6 +49,8 @@ npm run dev
 | `POST` | `/api/scenes/{sceneCode}/validate` | 校验图并预览 EL |
 | `POST` | `/api/scenes/{sceneCode}/publish` | 用 `{"expectedRevision":1}` 发布不可变版本 |
 | `POST` | `/api/decisions/evaluate` | 用 `{"sceneCode":"demoScene","input":{}}` 同步执行 |
+
+业务接口统一返回 `{ "code": "SUCCESS", "message": "成功", "data": ... }`；失败时保留对应 HTTP 状态，`code` 为稳定结果码，`data` 可为空。`/validate` 的图校验结果在 `data.issues`，其他操作抛出的图结构错误在 `data` 问题列表中，均提供节点和连线定位信息。
 
 ## 验证范围
 

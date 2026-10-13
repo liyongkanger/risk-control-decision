@@ -1,5 +1,8 @@
-package com.dmp.riskdecision.shared.web;
+package com.dmp.riskdecision.common.web;
 
+import com.dmp.riskdecision.common.response.ApiResponse;
+import com.dmp.riskdecision.common.response.ResultCode;
+import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletException;
@@ -11,11 +14,15 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import tools.jackson.databind.ObjectMapper;
 
 /** 限制接口请求体大小，避免超大流程图在反序列化前占用内存。 */
 @Component
 public class ApiRequestSizeFilter extends OncePerRequestFilter {
     private static final int MAX_BODY_BYTES = 1_048_576;
+
+    @Resource
+    private ObjectMapper json;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -37,10 +44,10 @@ public class ApiRequestSizeFilter extends OncePerRequestFilter {
         chain.doFilter(new CachedBodyRequest(request, body), response);
     }
 
-    private static void reject(HttpServletResponse response) throws IOException {
+    private void reject(HttpServletResponse response) throws IOException {
         response.setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"code\":\"PAYLOAD_TOO_LARGE\",\"message\":\"Request body exceeds 1 MiB\"}");
+        response.getWriter().write(json.writeValueAsString(ApiResponse.failure(ResultCode.PAYLOAD_TOO_LARGE)));
     }
 
     /** 缓存已经完成大小检查的请求体，供后续反序列化使用。 */

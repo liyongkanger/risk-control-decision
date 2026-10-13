@@ -1,5 +1,6 @@
 package com.dmp.riskdecision.decision.controller;
 
+import com.dmp.riskdecision.common.response.ApiResponse;
 import com.dmp.riskdecision.decision.assembler.DecisionAssembler;
 import com.dmp.riskdecision.decision.service.DecisionExecutionService;
 import com.dmp.riskdecision.decision.vo.req.EvaluateDecisionReq;
@@ -25,10 +26,10 @@ public class DecisionController {
     private DecisionAssembler assembler;
 
     @PostMapping("/evaluate")
-    public EvaluateDecisionResp evaluate(@RequestBody EvaluateDecisionReq request) {
+    public ApiResponse<EvaluateDecisionResp> evaluate(@RequestBody EvaluateDecisionReq request) {
         LOG.info("[DecisionController][evaluate] requestId:{} sceneCode:{}",
                 request.getRequestId(), request.getSceneCode());
-        return assembler.toEvaluateResp(execution.evaluate(request.getRequestId(),
-                request.getSceneCode(), request.getInput()));
+        return ApiResponse.success(assembler.toEvaluateResp(execution.evaluate(request.getRequestId(),
+                request.getSceneCode(), request.getInput())));
     }
 }

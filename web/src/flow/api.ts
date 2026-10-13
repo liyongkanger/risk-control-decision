@@ -2,15 +2,21 @@ import type { FlowValidation, GraphDefinition, GraphIssue } from './types'
 
 const base = '/api'
 
+type ApiResponse<T> = { code: string; message: string; data: T | null }
+
+function apiError(body: ApiResponse<unknown>, status: number): Error {
+  const data = body.data
+  const issues = data && typeof data === 'object' && 'issues' in data ? data.issues : data
+  const issueText = Array.isArray(issues)
+    ? (issues as GraphIssue[]).map((issue) => `${issue.code}: ${issue.message}`).join('; ')
+    : ''
+  return new Error(issueText || body.message || `HTTP ${status}`)
+}
+
 async function readJson<T>(response: Response): Promise<T> {
-  const body = await response.json()
-  if (!response.ok) {
-    const issueText = Array.isArray(body.issues)
-      ? (body.issues as GraphIssue[]).map((issue) => `${issue.code}: ${issue.message}`).join('; ')
-      : ''
-    throw new Error(issueText || body.message || `HTTP ${response.status}`)
-  }
-  return body as T
+  const body = await response.json() as ApiResponse<T>
+  if (!response.ok || body.code !== 'SUCCESS') throw apiError(body, response.status)
+  return body.data as T
 }
 
 export async function loadDraft(sceneCode: string): Promise<{ graph: GraphDefinition; revision: number } | null> {
@@ -31,9 +37,10 @@ export async function validateFlow(sceneCode: string, graph: GraphDefinition): P
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graph),
   })
   if (response.status === 422) {
-    const body = await response.json()
-    if (typeof body.valid === 'boolean' && Array.isArray(body.issues)) return body as FlowValidation
-    throw new Error(body.message || '流程校验请求无效')
+    const body = await response.json() as ApiResponse<FlowValidation>
+    if (body.code === 'GRAPH_INVALID' && body.data && body.data.valid === false
+      && Array.isArray(body.data.issues)) return body.data
+    throw apiError(body, response.status)
   }
   return readJson(response)
 }

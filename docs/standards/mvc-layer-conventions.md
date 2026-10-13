@@ -25,6 +25,8 @@ policy/
 
 不为目录结构预建空包，不要求每个业务对象同时拥有 Req、Resp、Dto、Bo 四种形态。`component` 的框架能力按项目开发规范单独组织，不放进某个业务领域的 Mapper 或 Service 实现。
 
+跨领域 HTTP 公共能力统一放在 `common/response`、`common/exception` 和 `common/web`，业务模块只使用这些类型，不自行定义另一套响应外壳。
+
 | 层 | 负责 | 不负责 |
 | --- | --- | --- |
 | Controller | HTTP 参数接收、调用业务用例、返回接口响应 | 编排流程、写 SQL、直接操作 LiteFlow |
@@ -54,24 +56,24 @@ private FlowPublicationService flowPublicationService;
 
 ### 3.2 方法形态
 
-以下示例表达结构；`PublishFlowReq`、`PublishFlowResp` 是待实现的接口对象，不表示当前仓库已有这些类。
+以下示例表达 Controller 的调用结构；`PublishFlowReq`、`PublishFlowResp` 已在当前仓库中定义。
 
 ```java
 /** 发布场景流程。 */
 @PostMapping("/publish")
-public PublishFlowResp publish(@PathVariable String sceneCode,
-                               @RequestBody PublishFlowReq request) {
+public ApiResponse<PublishFlowResp> publish(@PathVariable String sceneCode,
+                                            @RequestBody PublishFlowReq request) {
     log.info("[FlowAdminController][publish] sceneCode:{}", sceneCode);
     FlowVersion version = flowPublicationService.publish(sceneCode, request.getExpectedRevision());
-    return flowAssembler.toPublishResp(version);
+    return ApiResponse.success(flowAssembler.toPublishResp(version));
 }
 ```
 
-Controller 方法不固定写两层 `try-catch`。当前项目已有 `ApiErrorHandler`，业务异常和未知异常应在统一异常入口处理；只有方法能在本地恢复、转换或补偿时才捕获异常。这样同一种错误不会在每个接口重复记录和映射。
+Controller 方法不固定写两层 `try-catch`。业务异常和未知异常由 `common.exception.GlobalExceptionHandler` 统一处理；只有方法能在本地恢复、转换或补偿时才捕获异常。这样同一种错误不会在每个接口重复记录和映射。
 
 ### 3.3 响应与异常
 
-当前阶段成功响应返回明确的 `*Resp`，失败响应沿用统一异常处理器。业务错误给出稳定错误码和合适的 HTTP 状态；未知异常返回通用错误，不把内部堆栈放入响应。是否增加统一成功响应外壳，需要单独设计 API 契约后再决定；不直接引入 `MobiContentResponse<T>`、`h5Success`、`h5Fail` 等 H5 专用类型。
+所有业务接口使用 `common.response.ApiResponse<T>`：`code` 表示稳定结果码，`message` 表示可读说明，`data` 承载具体 `*Resp`。成功时使用 `ApiResponse.success(data)`；失败时由 `GlobalExceptionHandler` 映射结果码与 HTTP 状态。`/validate` 的图问题保留在 `data.issues`，其他操作抛出的图结构异常以 `data` 问题列表返回。未知异常返回通用错误，不把内部堆栈放入响应。请求体大小过滤器也按同一结构返回。结果码统一放在 `common.response.ResultCode`，不直接引入参考项目的 H5 专用响应类型。
 
 ## 4. Service
 
@@ -156,4 +158,4 @@ Redis、HTTP/Feign 等基础能力经 `component.<能力名>.service` 暴露给�
 
 ## 10. 应用顺序
 
-本文件确定新增代码的分层、命名、依赖注入、异常入口及日志边界。当前场景流程与同步决策代码已完成一轮分包和接口对象迁移；Lombok 已作为默认依赖接入。统一成功响应、业务错误码、MapStruct 和远程客户端的具体实现仍需后续设计。
+本文件确定新增代码的分层、命名、依赖注入、响应结构、异常入口及日志边界。当前场景流程与同步决策代码已完成一轮分包和接口对象迁移；Lombok 已作为默认依赖接入。更细的业务错误码、MapStruct 和远程客户端的具体实现仍需后续设计。
