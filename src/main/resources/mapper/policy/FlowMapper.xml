@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dmp.riskdecision.policy.mapper.FlowMapper">
+    <resultMap id="flowRow" type="com.dmp.riskdecision.policy.mapper.FlowRow">
+        <id column="id" property="id"/>
+        <result column="flow_code" property="flowCode"/>
+        <result column="flow_name" property="flowName"/>
+        <result column="flow_type" property="flowType"/>
+        <result column="published_version_id" property="publishedVersionId"/>
+        <result column="published_version_number" property="publishedVersionNumber"/>
+        <result column="updatetime" property="updatetime"/>
+        <result column="isactive" property="isactive"/>
+    </resultMap>
+
+    <sql id="flowColumns">
+        f.id, f.flow_code, f.flow_name, f.flow_type, f.published_version_id,
+        v.version_number AS published_version_number, f.updatetime, f.isactive
+    </sql>
+
+    <select id="findByCode" resultMap="flowRow">
+        SELECT <include refid="flowColumns"/>
+        FROM tb_flow f
+        LEFT JOIN tb_flow_version v ON v.id = f.published_version_id AND v.isactive = 1
+        WHERE f.flow_code = #{flowCode} AND f.isactive = 1
+    </select>
+
+    <select id="findById" resultMap="flowRow">
+        SELECT <include refid="flowColumns"/>
+        FROM tb_flow f
+        LEFT JOIN tb_flow_version v ON v.id = f.published_version_id AND v.isactive = 1
+        WHERE f.id = #{flowId} AND f.isactive = 1
+    </select>
+
+    <select id="search" resultMap="flowRow">
+        SELECT <include refid="flowColumns"/>
+        FROM tb_flow f
+        LEFT JOIN tb_flow_version v ON v.id = f.published_version_id AND v.isactive = 1
+        WHERE f.isactive = 1
+          AND (f.flow_code LIKE #{pattern} ESCAPE '!'
+            OR f.flow_name LIKE #{pattern} ESCAPE '!')
+        ORDER BY f.updatetime DESC, f.id DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM tb_flow f
+        WHERE f.isactive = 1
+          AND (f.flow_code LIKE #{pattern} ESCAPE '!'
+            OR f.flow_name LIKE #{pattern} ESCAPE '!')
+    </select>
+
+    <update id="switchPublished">
+        UPDATE tb_flow SET published_version_id = #{newId}
+        WHERE id = #{flowId} AND isactive = 1
+          AND ((published_version_id IS NULL AND #{expectedId,jdbcType=BIGINT} IS NULL)
+            OR published_version_id = #{expectedId,jdbcType=BIGINT})
+          AND EXISTS (SELECT 1 FROM tb_flow_draft d
+                      WHERE d.flow_id = #{flowId} AND d.revision = #{expectedRevision}
+                        AND d.isactive = 1)
+    </update>
+</mapper>

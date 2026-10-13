@@ -14,6 +14,7 @@ import com.dmp.riskdecision.orchestrator.graph.NodeKind;
 import com.dmp.riskdecision.policy.model.FlowVersion;
 import com.dmp.riskdecision.policy.repository.SceneFlowRepository;
 import com.dmp.riskdecision.policy.service.FlowPublicationService;
+import com.dmp.riskdecision.policy.service.SceneService;
 import jakarta.annotation.Resource;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,8 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 class DecisionExecutionServiceTest {
     @Resource
+    private SceneService scenes;
+    @Resource
     private SceneFlowRepository repository;
     @Resource
     private FlowPublicationService publication;
@@ -47,6 +50,7 @@ class DecisionExecutionServiceTest {
 
     @Test
     void executesThePublishedVersionAndReturnsNodeTrace() {
+        scenes.create("execute", "执行场景", null);
         GraphDefinition graph = new GraphDefinition(1, List.of(
                 new GraphNode("start", NodeKind.START, null, null, Map.of()),
                 new GraphNode("emit", NodeKind.COMPONENT, "emit-value", FailurePolicy.FAIL_FAST,
@@ -76,6 +80,7 @@ class DecisionExecutionServiceTest {
 
     @Test
     void parallelJoinRunsTheSharedSuccessorOnce() {
+        scenes.create("parallel", "并行场景", null);
         GraphDefinition graph = new GraphDefinition(1, List.of(
                 new GraphNode("start", NodeKind.START, null, null, Map.of()),
                 new GraphNode("split", NodeKind.PARALLEL_SPLIT, null, null, Map.of()),

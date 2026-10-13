@@ -22,7 +22,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: ${RISK_DB_URL:jdbc:mysql://localhost:3306/risk_control_decision?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai}
     username: ${RISK_DB_USERNAME:root}
-    password: ${RISK_DB_PASSWORD:}
+    password: ${RISK_DB_PASSWORD:root}
   data:
     redis:
       host: ${RISK_REDIS_HOST:localhost}

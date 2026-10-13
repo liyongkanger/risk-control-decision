@@ -1,28 +1,22 @@
 package com.dmp.riskdecision.policy.mapper;
 
-import org.apache.ibatis.annotations.Insert;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
 
 /** 场景发布指针表的数据访问接口。 */
 @Mapper
-public interface SceneMapper {
-    @Insert("INSERT IGNORE INTO scene(scene_code, published_version_id, updated_at) VALUES(#{sceneCode}, NULL, CURRENT_TIMESTAMP)")
-    int insertIfMissing(String sceneCode);
+public interface SceneMapper extends BaseMapper<SceneRow> {
+    SceneRow findByCode(String sceneCode);
 
-    @Select("SELECT published_version_id FROM scene WHERE scene_code=#{sceneCode}")
+    List<SceneRow> search(@Param("pattern") String pattern, @Param("offset") long offset,
+                          @Param("pageSize") int pageSize);
+
+    long count(@Param("pattern") String pattern);
+
     Long publishedVersionId(String sceneCode);
 
-    @Update("""
-            UPDATE scene SET published_version_id=#{newId}, updated_at=CURRENT_TIMESTAMP
-            WHERE scene_code=#{sceneCode}
-              AND ((published_version_id IS NULL AND #{expectedId,jdbcType=BIGINT} IS NULL)
-                   OR published_version_id=#{expectedId,jdbcType=BIGINT})
-              AND EXISTS (SELECT 1 FROM flow_draft d
-                          WHERE d.scene_code=#{sceneCode} AND d.revision=#{expectedRevision})
-            """)
     int switchPublished(@Param("sceneCode") String sceneCode,
                         @Param("expectedId") Long expectedId, @Param("newId") long newId,
                         @Param("expectedRevision") long expectedRevision);

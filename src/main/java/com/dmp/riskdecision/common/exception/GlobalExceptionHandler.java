@@ -4,6 +4,8 @@ import com.dmp.riskdecision.common.response.ApiResponse;
 import com.dmp.riskdecision.common.response.ResultCode;
 import com.dmp.riskdecision.orchestrator.graph.GraphCompilationException;
 import com.dmp.riskdecision.orchestrator.graph.GraphIssue;
+import com.dmp.riskdecision.policy.service.SceneCodeConflictException;
+import com.dmp.riskdecision.policy.service.FlowCodeConflictException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.slf4j.Logger;
@@ -35,6 +37,18 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiResponse<Void>> conflict(IllegalStateException error) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiResponse.failure(ResultCode.VERSION_CONFLICT, error.getMessage(), null));
+    }
+
+    @ExceptionHandler(SceneCodeConflictException.class)
+    ResponseEntity<ApiResponse<Void>> sceneCodeConflict(SceneCodeConflictException error) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.failure(ResultCode.SCENE_CODE_CONFLICT, error.getMessage(), null));
+    }
+
+    @ExceptionHandler(FlowCodeConflictException.class)
+    ResponseEntity<ApiResponse<Void>> flowCodeConflict(FlowCodeConflictException error) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.failure(ResultCode.FLOW_CODE_CONFLICT, error.getMessage(), null));
     }
 
     @ExceptionHandler(NoSuchElementException.class)

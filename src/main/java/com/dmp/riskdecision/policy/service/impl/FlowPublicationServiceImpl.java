@@ -1,7 +1,6 @@
 package com.dmp.riskdecision.policy.service.impl;
 
 import com.dmp.riskdecision.component.liteflow.service.ComponentCatalogService;
-import com.dmp.riskdecision.component.liteflow.service.ComponentDefinition;
 import com.dmp.riskdecision.component.liteflow.service.CompiledFlow;
 import com.dmp.riskdecision.component.liteflow.service.LiteFlowChainService;
 import com.dmp.riskdecision.component.liteflow.service.LiteFlowCompilationService;
@@ -9,7 +8,6 @@ import com.dmp.riskdecision.component.liteflow.service.LiteFlowExecutionService;
 import com.dmp.riskdecision.component.liteflow.service.LiteFlowRunResult;
 import com.dmp.riskdecision.orchestrator.graph.GraphCompilationException;
 import com.dmp.riskdecision.orchestrator.graph.GraphDefinition;
-import com.dmp.riskdecision.orchestrator.graph.GraphIssue;
 import com.dmp.riskdecision.orchestrator.graph.GraphNode;
 import com.dmp.riskdecision.orchestrator.graph.GraphValidationResult;
 import com.dmp.riskdecision.orchestrator.graph.GraphValidator;
@@ -42,7 +40,7 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
     @Resource
     private LiteFlowCompilationService compiler;
     @Resource
-    private ComponentCatalogService components;
+    private FlowComponentValidationService componentValidation;
     @Resource
     private LiteFlowChainService chains;
     @Resource
@@ -57,7 +55,7 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
         this.repository = repository;
         this.validator = validator;
         this.compiler = compiler;
-        this.components = components;
+        this.componentValidation = new FlowComponentValidationService(components);
         this.chains = chains;
         this.execution = execution;
     }
@@ -65,6 +63,7 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
     /** 草稿校验通过后保存新修订号。 */
     @Override
     public FlowDraft saveDraft(String sceneCode, GraphDefinition graph, long expectedRevision) {
+        repository.requireActiveScene(sceneCode);
         GraphValidationResult result = validator.validateDraft(graph);
         if (!result.isValid()) {
             throw new GraphCompilationException(result.getIssues());
@@ -75,6 +74,7 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
     /** 根据场景码读取当前草稿。 */
     @Override
     public FlowDraft getDraft(String sceneCode) {
+        repository.requireActiveScene(sceneCode);
         return repository.findDraft(sceneCode)
                 .orElseThrow(() -> new NoSuchElementException("Draft not found: " + sceneCode));
     }
@@ -91,15 +91,16 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
     public FlowVersion publish(String sceneCode, long expectedRevision) {
         LOG.info("[FlowPublicationServiceImpl][publish] sceneCode:{} expectedRevision:{}",
                 sceneCode, expectedRevision);
+        repository.requireActiveScene(sceneCode);
         FlowDraft draft = repository.findDraft(sceneCode)
                 .orElseThrow(() -> new IllegalArgumentException("Draft not found"));
         if (draft.getRevision() != expectedRevision) throw new IllegalStateException("Draft revision conflict");
         GraphDefinition graph = draft.getGraph();
         GraphValidationResult result = validator.validateForPublish(graph);
         if (!result.isValid()) throw new GraphCompilationException(result.getIssues());
-        validateComponents(graph);
+        componentValidation.requireValid(graph);
         long number = repository.nextVersionNumber(sceneCode);
-        CompiledFlow compiled = compiler.compile(sceneCode, number, graph);
+        CompiledFlow compiled = compiler.compile(repository.resolveFlowCode(sceneCode), number, graph);
         Long previous = repository.findPublished(sceneCode).map(FlowVersion::getId).orElse(null);
         FlowVersion version = repository.createVersion(sceneCode, number, graph, compiled.getChainId(), compiled.getEl());
         chains.load(compiled.getChainId(), compiled.getEl());
@@ -112,37 +113,15 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
 
     @Override
     public FlowValidation validate(String sceneCode, GraphDefinition graph) {
+        repository.requireActiveScene(sceneCode);
         GraphValidationResult base = validator.validateForPublish(graph);
         if (!base.isValid()) return new FlowValidation(false, base.getIssues(), null);
         try {
-            validateComponents(graph);
-            String el = compiler.compile(sceneCode, 1, graph).getEl();
+            componentValidation.requireValid(graph);
+            String el = compiler.compile(repository.resolveFlowCode(sceneCode), 1, graph).getEl();
             return new FlowValidation(true, List.of(), el);
         } catch (GraphCompilationException error) {
             return new FlowValidation(false, error.getIssues(), null);
-        }
-    }
-
-    private void validateComponents(GraphDefinition graph) {
-        for (GraphNode node : graph.getNodes()) {
-            if (node.getKind() != NodeKind.COMPONENT && node.getKind() != NodeKind.CONDITION) continue;
-            ComponentDefinition definition;
-            try {
-                definition = components.require(node.getComponentKey());
-            } catch (IllegalArgumentException error) {
-                throw new GraphCompilationException(List.of(new GraphIssue("COMPONENT_UNKNOWN", node.getId(), null,
-                        "Component is not registered")));
-            }
-            if (definition.isCondition() != (node.getKind() == NodeKind.CONDITION)) {
-                throw new GraphCompilationException(List.of(new GraphIssue("COMPONENT_KIND_MISMATCH", node.getId(), null,
-                        "Component kind does not match node kind")));
-            }
-            Map<String, Object> config = node.getConfig();
-            if (config == null || (node.getKind() == NodeKind.COMPONENT && config.get("value") == null)
-                    || (node.getKind() == NodeKind.CONDITION && !(config.get("inputKey") instanceof String))) {
-                throw new GraphCompilationException(List.of(new GraphIssue("COMPONENT_CONFIG_INVALID", node.getId(), null,
-                        "Component configuration is invalid")));
-            }
         }
     }
 

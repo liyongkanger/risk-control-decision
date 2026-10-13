@@ -6,15 +6,15 @@ import java.util.Objects;
 /** 已保存的流程版本。 */
 public class FlowVersion {
     private final long id;
-    private final String sceneCode;
+    private final String flowCode;
     private final long versionNumber;
     private final GraphDefinition graph;
     private final String chainId;
     private final String compiledEl;
 
-    public FlowVersion(long id, String sceneCode, long versionNumber, GraphDefinition graph, String chainId, String compiledEl) {
+    public FlowVersion(long id, String flowCode, long versionNumber, GraphDefinition graph, String chainId, String compiledEl) {
         this.id = id;
-        this.sceneCode = sceneCode;
+        this.flowCode = flowCode;
         this.versionNumber = versionNumber;
         this.graph = graph;
         this.chainId = chainId;
@@ -26,7 +26,11 @@ public class FlowVersion {
     }
 
     public String getSceneCode() {
-        return sceneCode;
+        return flowCode;
+    }
+
+    public String getFlowCode() {
+        return flowCode;
     }
 
     public long getVersionNumber() {
@@ -55,7 +59,7 @@ public class FlowVersion {
         }
         FlowVersion that = (FlowVersion) other;
         return id == that.id
-                && Objects.equals(sceneCode, that.sceneCode)
+                && Objects.equals(flowCode, that.flowCode)
                 && versionNumber == that.versionNumber
                 && Objects.equals(graph, that.graph)
                 && Objects.equals(chainId, that.chainId)
@@ -64,6 +68,6 @@ public class FlowVersion {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, sceneCode, versionNumber, graph, chainId, compiledEl);
+        return Objects.hash(id, flowCode, versionNumber, graph, chainId, compiledEl);
     }
 }

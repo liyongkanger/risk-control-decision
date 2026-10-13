@@ -4,3 +4,6 @@
 /.playwright-cli/
 /web/node_modules/
 /web/dist/
+/web/src/.umi/
+/web/src/.umi-production/
+/output/playwright/

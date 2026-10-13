@@ -1,0 +1,50 @@
+.flow-editor { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #172033; background: #eef2f7; }
+.flow-editor * { box-sizing: border-box; }
+.flow-editor { margin: 0; min-width: 0; }
+.flow-editor button, .flow-editor input, .flow-editor select, .flow-editor textarea { font: inherit; }
+.flow-editor input, .flow-editor select, .flow-editor textarea { width: 100%; border: 1px solid #cfd7e3; border-radius: 6px; padding: 8px; color: #253046; background: white; }
+.flow-editor textarea { resize: vertical; font-family: Consolas, monospace; font-size: 12px; }
+.flow-editor .page { min-height: 100vh; padding: 26px 30px; }
+.flow-editor .header { display: flex; align-items: center; justify-content: space-between; gap: 32px; margin-bottom: 20px; }
+.flow-editor .eyebrow { color: #667085; font-size: 11px; letter-spacing: .18em; margin: 0 0 8px; }
+.flow-editor h1, .flow-editor h2, .flow-editor p { margin: 0; }
+.flow-editor h1 { font-size: 28px; }
+.flow-editor h2 { font-size: 15px; }
+.flow-editor .subtitle { color: #667085; font-size: 13px; margin-top: 5px; }
+.flow-editor .scene { width: 240px; }
+.flow-editor .scene label, .flow-editor .fields label { display: block; color: #475467; font-size: 12px; font-weight: 600; }
+.flow-editor .scene input { margin-top: 6px; }
+.flow-editor .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: white; border: 1px solid #dde3ed; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
+.flow-editor .actions { display: flex; gap: 8px; }
+.flow-editor .sample-input { display: flex; align-items: center; gap: 6px; white-space: nowrap; color: #475467; font-size: 12px; }
+.flow-editor .sample-input select { width: auto; min-width: 72px; }
+.flow-editor .stats { color: #667085; font-size: 12px; white-space: nowrap; }
+.flow-editor button { border: 0; border-radius: 7px; padding: 9px 13px; color: white; background: #1677ff; cursor: pointer; font-size: 13px; }
+.flow-editor button:disabled { opacity: .48; cursor: not-allowed; }
+.flow-editor button:hover:not(:disabled) { filter: brightness(.95); }
+.flow-editor .workspace { display: grid; grid-template-columns: 180px minmax(0, 1fr) 250px; gap: 12px; min-height: 640px; }
+.flow-editor .panel { background: white; border: 1px solid #dde3ed; border-radius: 10px; overflow: hidden; }
+.flow-editor .palette, .flow-editor .inspector { padding: 17px; }
+.flow-editor .palette p, .flow-editor .inspector > p, .flow-editor .issues p { color: #667085; font-size: 12px; line-height: 1.6; margin: 8px 0 16px; }
+.flow-editor .palette-item { display: block; width: 100%; text-align: left; margin-top: 8px; color: #344054; background: #f3f6fa; }
+.flow-editor .canvas { height: 640px; }
+.flow-editor .fields { display: grid; gap: 14px; margin-top: 18px; }
+.flow-editor .kind-hint { padding: 9px 10px; border-radius: 6px; color: #475467; background: #f3f6fa; font-size: 12px; line-height: 1.5; }
+.flow-editor .fields input, .flow-editor .fields select, .flow-editor .fields textarea { margin-top: 5px; }
+.flow-editor .danger { background: #e5484d; margin-top: 18px; }
+.flow-editor .issues { border-top: 1px solid #e8edf3; margin-top: 25px; padding-top: 18px; }
+.flow-editor .issues .issue { background: #fff4f2; color: #a13235; padding: 8px; border-radius: 6px; }
+.flow-editor .message { margin-top: 14px; color: #42526b; font-size: 13px; }
+.flow-editor .page { padding: 0; min-height: 0; }
+.flow-editor .workspace { grid-template-columns: 155px minmax(0, 1fr) 230px; min-height: 620px; }
+.flow-editor .canvas { height: 620px; }
+.flow-editor .actions { flex-wrap: wrap; }
+.flow-editor .scene-list-page { min-height: 0; }
+@media (max-width: 1450px) {
+  .flow-editor .workspace { grid-template-columns: minmax(0, 1fr); }
+  .flow-editor .palette { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .flow-editor .palette h2 { width: 100%; }
+  .flow-editor .palette p { width: 100%; margin: 0; }
+  .flow-editor .palette-item { width: auto; margin-top: 0; }
+  .flow-editor .canvas { height: 520px; }
+}

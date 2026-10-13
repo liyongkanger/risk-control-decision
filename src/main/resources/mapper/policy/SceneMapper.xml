@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dmp.riskdecision.policy.mapper.SceneMapper">
+    <resultMap id="sceneRow" type="com.dmp.riskdecision.policy.mapper.SceneRow">
+        <id column="id" property="id"/>
+        <result column="scene_code" property="sceneCode"/>
+        <result column="scene_name" property="sceneName"/>
+        <result column="description" property="description"/>
+        <result column="flow_id" property="flowId"/>
+        <result column="flow_code" property="flowCode"/>
+        <result column="published_version_id" property="publishedVersionId"/>
+        <result column="published_version_number" property="publishedVersionNumber"/>
+        <result column="updatetime" property="updatetime"/>
+    </resultMap>
+
+    <sql id="sceneColumns">
+        s.id, s.scene_code, s.scene_name, s.description, s.flow_id, f.flow_code, s.published_version_id,
+        v.version_number AS published_version_number, s.updatetime
+    </sql>
+
+    <select id="findByCode" resultMap="sceneRow">
+        SELECT <include refid="sceneColumns"/>
+        FROM tb_scene s
+        JOIN tb_flow f ON f.id = s.flow_id AND f.isactive = 1
+        LEFT JOIN tb_flow_version v ON v.id = s.published_version_id AND v.isactive = 1
+        WHERE s.scene_code = #{sceneCode} AND s.isactive = 1
+    </select>
+
+    <select id="search" resultMap="sceneRow">
+        SELECT <include refid="sceneColumns"/>
+        FROM tb_scene s
+        JOIN tb_flow f ON f.id = s.flow_id AND f.isactive = 1
+        LEFT JOIN tb_flow_version v ON v.id = s.published_version_id AND v.isactive = 1
+        WHERE s.isactive = 1
+          AND (s.scene_code LIKE #{pattern} ESCAPE '!'
+            OR s.scene_name LIKE #{pattern} ESCAPE '!')
+        ORDER BY s.updatetime DESC, s.id DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM tb_scene s
+        WHERE s.isactive = 1
+          AND (s.scene_code LIKE #{pattern} ESCAPE '!'
+            OR s.scene_name LIKE #{pattern} ESCAPE '!')
+    </select>
+
+    <select id="publishedVersionId" resultType="java.lang.Long">
+        SELECT published_version_id FROM tb_scene
+        WHERE scene_code = #{sceneCode} AND isactive = 1
+    </select>
+
+    <update id="switchPublished">
+        UPDATE tb_scene SET published_version_id = #{newId}
+        WHERE scene_code = #{sceneCode} AND isactive = 1
+          AND ((published_version_id IS NULL AND #{expectedId,jdbcType=BIGINT} IS NULL)
+            OR published_version_id = #{expectedId,jdbcType=BIGINT})
+          AND EXISTS (SELECT 1 FROM tb_flow_draft d
+                      WHERE d.flow_id = tb_scene.flow_id AND d.revision = #{expectedRevision}
+                        AND d.isactive = 1)
+    </update>
+</mapper>

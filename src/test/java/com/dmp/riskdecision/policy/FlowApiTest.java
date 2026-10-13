@@ -27,6 +27,7 @@ class FlowApiTest {
 
     @Test
     void validatesPublishesAndEvaluatesAScene() throws Exception {
+        createScene("apiScene");
         GraphDefinition graph = FlowPublicationServiceTest.simpleGraph(27);
         HttpResponse<String> validation = send("POST", "/api/scenes/apiScene/validate", json.writeValueAsString(graph));
         assertThat(validation.statusCode()).isEqualTo(200);
@@ -44,6 +45,11 @@ class FlowApiTest {
         assertThat(publish.statusCode()).isEqualTo(200);
         assertThat(publish.body()).contains("\"code\":\"SUCCESS\"")
                 .contains("\"chainId\"").doesNotContain("compiledEl", "graph");
+        HttpResponse<String> scene = client.send(HttpRequest.newBuilder(
+                URI.create("http://localhost:" + port + "/api/scenes/apiScene"))
+                .GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertThat(scene.statusCode()).isEqualTo(200);
+        assertThat(scene.body()).contains("\"publishedVersionNumber\":1");
         HttpResponse<String> evaluation = send("POST", "/api/decisions/evaluate",
                 "{\"requestId\":\"api-request\",\"sceneCode\":\"apiScene\",\"input\":{}}");
         assertThat(evaluation.statusCode()).isEqualTo(200);
@@ -54,6 +60,7 @@ class FlowApiTest {
 
     @Test
     void validationLocatesInvalidComponentConfiguration() throws Exception {
+        createScene("invalidApi");
         GraphDefinition graph = new GraphDefinition(1, List.of(
                 new GraphNode("start", NodeKind.START, null, null, Map.of()),
                 new GraphNode("bad", NodeKind.COMPONENT, "emit-value", FailurePolicy.FAIL_FAST, Map.of()),
@@ -96,6 +103,7 @@ class FlowApiTest {
 
     @Test
     void returnsGraphIssuesThroughTheGlobalErrorEnvelope() throws Exception {
+        createScene("invalidDraft");
         GraphDefinition graph = new GraphDefinition(1, List.of(
                 new GraphNode("duplicate", NodeKind.START, null, null, Map.of()),
                 new GraphNode("duplicate", NodeKind.END, null, null, Map.of())), List.of(), Map.of());
@@ -124,5 +132,11 @@ class FlowApiTest {
                 .header("Content-Type", "application/json")
                 .method(method, HttpRequest.BodyPublishers.ofString(body)).build(),
                 HttpResponse.BodyHandlers.ofString());
+    }
+
+    private void createScene(String sceneCode) throws Exception {
+        HttpResponse<String> response = send("POST", "/api/scenes",
+                "{\"sceneCode\":\"" + sceneCode + "\",\"sceneName\":\"测试场景\"}");
+        assertThat(response.statusCode()).isEqualTo(200);
     }
 }

@@ -15,6 +15,8 @@ import com.dmp.riskdecision.orchestrator.graph.NodeKind;
 import com.dmp.riskdecision.policy.model.FlowDraft;
 import com.dmp.riskdecision.policy.model.FlowVersion;
 import com.dmp.riskdecision.policy.repository.SceneFlowRepository;
+import com.dmp.riskdecision.policy.repository.FlowAssetRepository;
+import com.dmp.riskdecision.policy.service.SceneService;
 import com.dmp.riskdecision.policy.service.impl.FlowPublicationServiceImpl;
 import jakarta.annotation.Resource;
 import java.util.List;
@@ -36,7 +38,11 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 class FlowPublicationServiceTest {
     @Resource
+    private SceneService scenes;
+    @Resource
     private SceneFlowRepository repository;
+    @Resource
+    private FlowAssetRepository flowAssets;
     @Resource
     private FlowPublicationServiceImpl publication;
     @Resource
@@ -44,6 +50,7 @@ class FlowPublicationServiceTest {
 
     @Test
     void savesDraftWithRevisionAndPublishesImmutableVersion() {
+        scenes.create("payment", "支付场景", null);
         FlowDraft first = repository.saveDraft("payment", simpleGraph(1), 0);
         assertThat(first.getRevision()).isEqualTo(1);
         assertThatThrownBy(() -> repository.saveDraft("payment", simpleGraph(2), 0))
@@ -62,6 +69,7 @@ class FlowPublicationServiceTest {
 
     @Test
     void rejectsInvalidComponentConfigWithoutChangingPublishedPointer() {
+        scenes.create("invalidConfig", "无效组件场景", null);
         repository.saveDraft("invalidConfig", new GraphDefinition(1, List.of(
                 new GraphNode("start", NodeKind.START, null, null, Map.of()),
                 new GraphNode("emit", NodeKind.COMPONENT, "emit-value", FailurePolicy.FAIL_FAST, Map.of()),
@@ -76,6 +84,7 @@ class FlowPublicationServiceTest {
 
     @Test
     void reloadsPublishedChainFromDatabaseAtStartup() {
+        scenes.create("reload", "重载场景", null);
         repository.saveDraft("reload", simpleGraph(9), 0);
         FlowVersion version = publication.publish("reload", 1);
         com.yomahub.liteflow.flow.FlowBus.removeChain(version.getChainId());
@@ -92,14 +101,15 @@ class FlowPublicationServiceTest {
         ComponentCatalogService registry = new ComponentCatalogService(new ComponentRegistry());
         when(storage.findDraft("failure")).thenReturn(java.util.Optional.of(
                 new FlowDraft("failure", simpleGraph(3), 1)));
+        when(storage.resolveFlowCode("failure")).thenReturn("failure");
         when(storage.nextVersionNumber("failure")).thenReturn(1L);
         when(storage.createVersion(org.mockito.ArgumentMatchers.eq("failure"),
                 org.mockito.ArgumentMatchers.eq(1L), org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString()))
                 .thenReturn(new FlowVersion(10, "failure", 1, simpleGraph(3),
-                        "scene_failure_v1", "THEN(emitValue.tag(\"emit\"))"));
+                        "flow_failure_v1", "THEN(emitValue.tag(\"emit\"))"));
         doThrow(new IllegalStateException("load failed")).when(failingChains)
-                .load("scene_failure_v1", "THEN(emitValue.tag(\"emit\"))");
+                .load("flow_failure_v1", "THEN(emitValue.tag(\"emit\"))");
         FlowPublicationServiceImpl service = new FlowPublicationServiceImpl(storage, new GraphValidator(),
                 new LiteFlowCompilationService(new FlowCompiler(registry)), registry,
                 failingChains, mock(LiteFlowExecutionService.class));
@@ -110,7 +120,7 @@ class FlowPublicationServiceTest {
         order.verify(storage).createVersion(org.mockito.ArgumentMatchers.eq("failure"),
                 org.mockito.ArgumentMatchers.eq(1L), org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
-        order.verify(failingChains).load("scene_failure_v1", "THEN(emitValue.tag(\"emit\"))");
+        order.verify(failingChains).load("flow_failure_v1", "THEN(emitValue.tag(\"emit\"))");
         verify(storage, never()).switchPublished(org.mockito.ArgumentMatchers.anyString(),
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyLong(),
                 org.mockito.ArgumentMatchers.anyLong());
@@ -118,6 +128,7 @@ class FlowPublicationServiceTest {
 
     @Test
     void refusesPointerSwitchWhenDraftRevisionAdvanced() {
+        scenes.create("revisionRace", "修订冲突场景", null);
         repository.saveDraft("revisionRace", simpleGraph(1), 0);
         FlowVersion candidate = repository.createVersion("revisionRace", 1, simpleGraph(1),
                 "scene_revisionRace_v1", "THEN(emitValue.tag(\"emit\"))");
@@ -126,6 +137,20 @@ class FlowPublicationServiceTest {
         assertThatThrownBy(() -> repository.switchPublished("revisionRace", null, candidate.getId(), 1))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(repository.findPublished("revisionRace")).isEmpty();
+    }
+
+    @Test
+    void rollsBackFlowPointerWhenScenePointerConflicts() {
+        scenes.create("pointerRace", "发布冲突场景", null);
+        repository.saveDraft("pointerRace", simpleGraph(1), 0);
+        FlowVersion candidate = repository.createVersion("pointerRace", 1, simpleGraph(1),
+                "flow_pointerRace_v1", "THEN(emitValue.tag(\"emit\"))");
+
+        assertThatThrownBy(() -> repository.switchPublished("pointerRace", -1L, candidate.getId(), 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(repository.findPublished("pointerRace")).isEmpty();
+        assertThat(repository.nextVersionNumber("pointerRace")).isEqualTo(2);
+        assertThat(flowAssets.require("pointerRace").getPublishedVersionId()).isNull();
     }
 
     static GraphDefinition simpleGraph(int value) {

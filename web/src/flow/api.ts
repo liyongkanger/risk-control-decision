@@ -1,59 +1,66 @@
-import type { FlowValidation, GraphDefinition, GraphIssue } from './types'
+import type { FlowValidation, GraphDefinition } from './types'
+import { readApi, type ApiResponse } from '../services/http'
 
 const base = '/api'
 
-type ApiResponse<T> = { code: string; message: string; data: T | null }
+/** 场景入口或独立流程资产对应的编辑目标。 */
+export type FlowTarget = { kind: 'scene' | 'flow'; code: string }
 
-function apiError(body: ApiResponse<unknown>, status: number): Error {
-  const data = body.data
-  const issues = data && typeof data === 'object' && 'issues' in data ? data.issues : data
-  const issueText = Array.isArray(issues)
-    ? (issues as GraphIssue[]).map((issue) => `${issue.code}: ${issue.message}`).join('; ')
-    : ''
-  return new Error(issueText || body.message || `HTTP ${status}`)
+function targetPath(target: FlowTarget): string {
+  return `${base}/${target.kind === 'scene' ? 'scenes' : 'flows'}/${encodeURIComponent(target.code)}`
 }
 
-async function readJson<T>(response: Response): Promise<T> {
-  const body = await response.json() as ApiResponse<T>
-  if (!response.ok || body.code !== 'SUCCESS') throw apiError(body, response.status)
-  return body.data as T
-}
-
-export async function loadDraft(sceneCode: string): Promise<{ graph: GraphDefinition; revision: number } | null> {
-  const response = await fetch(`${base}/scenes/${encodeURIComponent(sceneCode)}/draft`)
+export async function loadTargetDraft(target: FlowTarget): Promise<{ graph: GraphDefinition; revision: number } | null> {
+  const response = await fetch(`${targetPath(target)}/draft`)
   if (response.status === 404) return null
-  return readJson(response)
+  return readApi(response)
 }
 
-export async function saveDraft(sceneCode: string, graph: GraphDefinition, expectedRevision: number) {
-  return readJson<{ graph: GraphDefinition; revision: number }>(await fetch(
-    `${base}/scenes/${encodeURIComponent(sceneCode)}/draft?expectedRevision=${expectedRevision}`,
+export async function loadDraft(sceneCode: string) {
+  return loadTargetDraft({ kind: 'scene', code: sceneCode })
+}
+
+export async function saveTargetDraft(target: FlowTarget, graph: GraphDefinition, expectedRevision: number) {
+  return readApi<{ graph: GraphDefinition; revision: number }>(await fetch(
+    `${targetPath(target)}/draft?expectedRevision=${expectedRevision}`,
     { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graph) },
   ))
 }
 
-export async function validateFlow(sceneCode: string, graph: GraphDefinition): Promise<FlowValidation> {
-  const response = await fetch(`${base}/scenes/${encodeURIComponent(sceneCode)}/validate`, {
+export async function saveDraft(sceneCode: string, graph: GraphDefinition, expectedRevision: number) {
+  return saveTargetDraft({ kind: 'scene', code: sceneCode }, graph, expectedRevision)
+}
+
+export async function validateTargetFlow(target: FlowTarget, graph: GraphDefinition): Promise<FlowValidation> {
+  const response = await fetch(`${targetPath(target)}/validate`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graph),
   })
   if (response.status === 422) {
     const body = await response.json() as ApiResponse<FlowValidation>
     if (body.code === 'GRAPH_INVALID' && body.data && body.data.valid === false
       && Array.isArray(body.data.issues)) return body.data
-    throw apiError(body, response.status)
+    throw new Error(body.message || '流程校验请求无效')
   }
-  return readJson(response)
+  return readApi(response)
 }
 
-export async function publishFlow(sceneCode: string, expectedRevision: number) {
-  return readJson<{ id: number; versionNumber: number; chainId: string }>(await fetch(
-    `${base}/scenes/${encodeURIComponent(sceneCode)}/publish`,
+export async function validateFlow(sceneCode: string, graph: GraphDefinition): Promise<FlowValidation> {
+  return validateTargetFlow({ kind: 'scene', code: sceneCode }, graph)
+}
+
+export async function publishTargetFlow(target: FlowTarget, expectedRevision: number) {
+  return readApi<{ id: number; versionNumber: number; chainId: string }>(await fetch(
+    `${targetPath(target)}/publish`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ expectedRevision }) },
   ))
 }
 
+export async function publishFlow(sceneCode: string, expectedRevision: number) {
+  return publishTargetFlow({ kind: 'scene', code: sceneCode }, expectedRevision)
+}
+
 export async function evaluateFlow(sceneCode: string, input: Record<string, unknown>) {
-  return readJson<{ status: string; versionId: number; nodeResults: Record<string, unknown> }>(await fetch(
+  return readApi<{ status: string; versionId: number; nodeResults: Record<string, unknown> }>(await fetch(
     `${base}/decisions/evaluate`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sceneCode, input }) },
   ))

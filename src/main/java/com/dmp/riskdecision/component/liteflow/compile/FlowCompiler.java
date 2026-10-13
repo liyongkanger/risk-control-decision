@@ -35,14 +35,14 @@ public class FlowCompiler {
     }
 
     /**
-     * 编译场景流程图，并保留节点与 LiteFlow 标签的绑定关系。
+     * 编译独立流程图，并保留节点与 LiteFlow 标签的绑定关系。
      *
      * <p>先通过 {@link GraphValidator#validateForPublish(GraphDefinition)} 校验图结构，
      * 再由内部解析器生成 EL；不支持的分支结构抛出 {@link GraphCompilationException}。</p>
      */
-    public CompiledFlow compile(String sceneCode, long version, GraphDefinition graph) {
-        if (sceneCode == null || !sceneCode.matches("[A-Za-z][A-Za-z0-9_-]{0,63}") || version < 1) {
-            throw new IllegalArgumentException("Invalid scene code or version");
+    public CompiledFlow compile(String flowCode, long version, GraphDefinition graph) {
+        if (flowCode == null || !flowCode.matches("[A-Za-z][A-Za-z0-9_-]{0,63}") || version < 1) {
+            throw new IllegalArgumentException("Invalid flow code or version");
         }
         GraphValidationResult validation = validator.validateForPublish(graph);
         if (!validation.isValid()) throw new GraphCompilationException(validation.getIssues());
@@ -63,7 +63,7 @@ public class FlowCompiler {
                 bindings.put(node.getId(), node.getId());
             }
         }
-        return new CompiledFlow("scene_" + sceneCode + "_v" + version, el, Map.copyOf(bindings));
+        return new CompiledFlow("flow_" + flowCode + "_v" + version, el, Map.copyOf(bindings));
     }
 
     private static GraphCompilationException problem(String code, String nodeId, String message) {

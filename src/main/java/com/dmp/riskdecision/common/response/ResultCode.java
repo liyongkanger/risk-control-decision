@@ -10,6 +10,10 @@ public enum ResultCode {
     GRAPH_INVALID("流程图无效"),
     /** 草稿修订号或版本发生冲突。 */
     VERSION_CONFLICT("版本冲突"),
+    /** 场景码已被使用。 */
+    SCENE_CODE_CONFLICT("场景码已存在"),
+    /** 流程码已被使用。 */
+    FLOW_CODE_CONFLICT("流程码已存在"),
     /** 请求的资源不存在。 */
     NOT_FOUND("资源不存在"),
     /** 请求体超过大小限制。 */

@@ -23,7 +23,7 @@ public class LiteFlowCompilationService {
      *
      * @see FlowCompiler#compile(String, long, GraphDefinition)
      */
-    public CompiledFlow compile(String sceneCode, long version, GraphDefinition graph) {
-        return compiler.compile(sceneCode, version, graph);
+    public CompiledFlow compile(String flowCode, long version, GraphDefinition graph) {
+        return compiler.compile(flowCode, version, graph);
     }
 }

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dmp.riskdecision.policy.mapper.FlowVersionMapper">
+    <resultMap id="flowVersionRow" type="com.dmp.riskdecision.policy.mapper.FlowVersionRow">
+        <id column="id" property="id"/>
+        <result column="flow_id" property="flowId"/>
+        <result column="flow_code" property="flowCode"/>
+        <result column="version_number" property="versionNumber"/>
+        <result column="graph_json" property="graphJson"/>
+        <result column="chain_id" property="chainId"/>
+        <result column="compiled_el" property="compiledEl"/>
+    </resultMap>
+
+    <sql id="versionColumns">v.id, v.flow_id, f.flow_code, v.version_number, v.graph_json, v.chain_id, v.compiled_el</sql>
+
+    <select id="latestVersionNumber" resultType="long">
+        SELECT COALESCE(MAX(version_number), 0)
+        FROM tb_flow_version WHERE flow_id = #{flowId}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO tb_flow_version(flow_id, version_number, graph_json, chain_id, compiled_el)
+        VALUES(#{flowId}, #{versionNumber}, #{graphJson}, #{chainId}, #{compiledEl})
+    </insert>
+
+    <select id="find" resultMap="flowVersionRow">
+        SELECT <include refid="versionColumns"/>
+        FROM tb_flow_version v JOIN tb_flow f ON f.id = v.flow_id
+        WHERE v.id = #{id} AND v.isactive = 1 AND f.isactive = 1
+    </select>
+
+    <select id="findByNumber" resultMap="flowVersionRow">
+        SELECT <include refid="versionColumns"/>
+        FROM tb_flow_version v JOIN tb_flow f ON f.id = v.flow_id
+        WHERE v.flow_id = #{flowId} AND v.version_number = #{number} AND v.isactive = 1 AND f.isactive = 1
+    </select>
+
+    <select id="findAllPublished" resultMap="flowVersionRow">
+        SELECT DISTINCT <include refid="versionColumns"/>
+        FROM tb_flow_version v
+        JOIN tb_flow f ON f.id = v.flow_id
+        LEFT JOIN tb_scene s ON s.published_version_id = v.id AND s.isactive = 1
+        WHERE v.isactive = 1 AND f.isactive = 1
+          AND (f.published_version_id = v.id OR s.id IS NOT NULL)
+    </select>
+</mapper>

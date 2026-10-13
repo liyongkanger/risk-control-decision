@@ -87,10 +87,16 @@ Controller 方法不固定写两层 `try-catch`。业务异常和未知异常由
 
 ## 5. Mapper 与持久化对象
 
-- Mapper 接口位于领域 `mapper` 包，命名为 `*Mapper`，使用 MyBatis `@Mapper`。方法名表达数据操作，例如 `findBySceneCode`、`insertVersion`、`switchPublishedVersion`。
-- SQL 和字段映射在 Mapper 层维护；Mapper 返回持久化行对象或基础结果，Service 或专门的仓储适配类负责把它转换成业务对象。
+- 持久层统一使用 **MyBatis-Plus** 的 Spring Boot 4 starter。Mapper 接口位于领域 `mapper` 包，命名为 `*Mapper`，使用 `@Mapper`；单表通用 CRUD 继承 `BaseMapper<实体类>`，在 Service 或 Repository 中使用 `LambdaQueryWrapper`、`LambdaUpdateWrapper` 组合条件。
+- **Mapper 接口不写 SQL 或结果映射注解**，包括 `@Select`、`@Insert`、`@Update`、`@Delete`、`@Results`、`@ResultMap` 及对应 Provider。接口只声明方法及必要的 `@Param`。不在 Service、Repository 或 Mapper 默认方法里拼接 SQL 字符串。
+- 多表 JOIN、聚合查询、乐观并发更新、发布指针条件切换等不适合通用 CRUD 的操作写入 `src/main/resources/mapper/<领域>/<Mapper名>.xml`。XML 的 `namespace` 必须是 Mapper 接口全名，语句 `id` 与方法名一致；复用列清单和结果映射用 `<sql>`、`<resultMap>`。XML 扫描沿用 MyBatis-Plus 的 `classpath*:/mapper/**/*.xml` 路径。
+- XML 中数据值统一通过 `#{}` 绑定；动态表名或列名必须由代码侧固定白名单决定，不直接拼接请求参数。每个自定义方法只维护一处 SQL。
+- 使用 MyBatis-Plus 的实体类标记 `@TableName`，自增主键标记 `@TableId(type = IdType.AUTO)`；若映射 `isactive`，`@TableLogic(value = "1", delval = "0")` 与本项目“1 有效、0 删除”语义一致。XML 自定义查询与更新仍须明确处理 `isactive = 1`。
+- Mapper 返回持久化行对象或基础结果，Service 或专门的仓储适配类负责把它转换成业务对象。条件更新必须检查影响行数，不能用简单覆盖更新替代修订号或发布指针的并发校验。
 - Controller 不调用 Mapper。业务模块不把 Mapper 行对象直接作为 HTTP 请求或响应。
 - 新增或修改字段时，同步检查 SQL、结果映射和上层对象转换；表名及公共字段遵循[项目开发规范](project-conventions.md)。
+
+当前 `SceneMapper` 继承 `BaseMapper<SceneRow>` 处理基础写入；场景查询和流程发布相关的条件 SQL 位于对应 XML。选择 XML 或 MyBatis-Plus Wrapper 的依据是查询复杂度和并发语义，不在同一方法上混用两种实现。
 
 ## 6. Req、Resp、Dto、Bo
 

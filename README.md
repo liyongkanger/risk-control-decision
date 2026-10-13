@@ -1,6 +1,6 @@
 # 风控决策平台
 
-项目使用 Java 21、Spring Boot 4.1、LiteFlow 和 React/X6。当前可编辑结构化场景流程、保存草稿、发布版本并同步执行示例组件。
+项目使用 Java 21、Spring Boot 4.1、MyBatis-Plus、LiteFlow 和 React/X6。当前可编辑结构化场景流程、保存草稿、发布版本并同步执行示例组件。
 
 ## 代码结构
 
@@ -22,9 +22,9 @@
 
 当前由 Spring Boot 管理的 MySQL Connector/J 为 9.7，目标 MySQL Server 8.0 及以上；部署版本确定后再核对驱动兼容性。
 
-准备好 MySQL 数据库后，使用 JDK 21 运行 `mvn spring-boot:run`。Flyway 会执行 `V1__scene_flow.sql` 创建场景、草稿和版本表。Redis 已配置，但当前流程切片不依赖 Redis。Actuator 提供 `/actuator/health` 和 `/actuator/info`。
+准备好 MySQL 数据库后，使用 JDK 21 运行 `mvn spring-boot:run`。Flyway 依次执行历史 V1、规范表结构 V2、场景元数据 V3 和流程资产独立化 V4 迁移；已经执行过的版本不会再次执行。Redis 已配置，但当前流程切片不依赖 Redis。Actuator 提供 `/actuator/health` 和 `/actuator/info`。
 
-## 前端开发
+## 后台开发
 
 ```powershell
 cd web
@@ -32,7 +32,15 @@ npm ci
 npm run dev
 ```
 
-打开 `http://localhost:5173/`。Vite 将 `/api` 请求转发到本地 `8080` 端口。页面初始提供一条 `开始 → emit-value → 结束` 示例流程。输入场景码后，可以校验、保存草稿、发布版本和执行示例。
+打开 `http://localhost:8000/`，进入 Ant Design Pro 后台的场景管理页。Umi Max 将 `/api` 请求转发到本地 `8080` 端口。首版使用静态菜单和展示用模拟用户；场景数据来自真实后端。先新建场景，再点击“设计流程”。新场景画布初始只有开始、结束节点；需要示例流程时点击“载入示例模板”，随后可保存草稿、校验、发布和试运行。
+
+场景与流程资产已分离：新建场景会创建并绑定一条入口流程；“流程资产”菜单可独立新建、搜索、设计和发布流程。“场景管理”显示入口流程，可将同一已发布流程绑定给多个场景；流程后续发布新版本不会自动切换已绑定场景。
+
+本次隔离环境的页面验收步骤和结果见[场景与流程隔离的本地页面联调](docs/references/local-h2-flow-ui-integration-2026-10-13.md)。
+
+需要查看所有节点类型的组合示例，可在画布中点击“载入全节点示例”；示例节点含义及隔离环境中的 `test` 流程见[全节点 test 流程说明](docs/references/all-node-test-flow.md)。
+
+`npm test` 运行前端行为测试，`npm run typecheck` 检查 TypeScript，`npm run build` 生成后台静态资源。部署静态资源时，服务端需将非资源路径回退到 `index.html`，以支持直接访问 `/scenes/{sceneCode}/flow`。
 
 ## 场景流程
 
@@ -49,9 +57,20 @@ npm run dev
 | `POST` | `/api/scenes/{sceneCode}/validate` | 校验图并预览 EL |
 | `POST` | `/api/scenes/{sceneCode}/publish` | 用 `{"expectedRevision":1}` 发布不可变版本 |
 | `POST` | `/api/decisions/evaluate` | 用 `{"sceneCode":"demoScene","input":{}}` 同步执行 |
+| `GET` | `/api/scenes?keyword=&page=1&pageSize=20` | 搜索场景并分页 |
+| `POST` | `/api/scenes` | 新建场景 |
+| `GET` | `/api/scenes/{sceneCode}` | 场景详情与当前发布版本 |
+| `PUT` | `/api/scenes/{sceneCode}` | 修改场景名称和描述 |
+| `PUT` | `/api/scenes/{sceneCode}/entry-flow` | 绑定独立流程，并选中其当前发布版本 |
+| `POST` | `/api/flows` | 创建脱离场景的流程资产 |
+| `GET` | `/api/flows?keyword=&page=1&pageSize=20` | 分页搜索独立流程资产 |
+| `GET` | `/api/flows/{flowCode}` | 读取流程资产 |
+| `GET/PUT` | `/api/flows/{flowCode}/draft` | 读取或保存独立流程草稿 |
+| `POST` | `/api/flows/{flowCode}/validate` | 校验独立流程图 |
+| `POST` | `/api/flows/{flowCode}/publish` | 发布独立流程版本 |
 
 业务接口统一返回 `{ "code": "SUCCESS", "message": "成功", "data": ... }`；失败时保留对应 HTTP 状态，`code` 为稳定结果码，`data` 可为空。`/validate` 的图校验结果在 `data.issues`，其他操作抛出的图结构错误在 `data` 问题列表中，均提供节点和连线定位信息。
 
 ## 验证范围
 
-后端 `mvn test` 使用 H2 的 MySQL 兼容模式验证数据库操作；前端使用 `npm test` 与 `npm run build`。浏览器已验证校验、保存、发布、执行及错误定位。真实 MySQL 联调尚未完成，H2 测试不能证明 MySQL 版本兼容。当前发布与执行设计针对单个应用实例，管理接口尚无鉴权，暂不用于生产环境。
+后端 `mvn test` 使用 H2 的 MySQL 兼容模式验证数据库操作；前端使用 `npm test` 与 `npm run build`。浏览器已验证场景管理、校验、保存、发布、执行及错误定位。[本地 MySQL 联调记录](docs/references/local-mysql-integration-2026-10-13.md)覆盖 Flyway V1→V3、完整接口链路及重启恢复；实测服务器为 MySQL 5.7.40，目标 MySQL 8 及以上仍需验证。本机 Redis 未运行，因此 Actuator 总体健康状态为 DOWN。当前发布与执行设计针对单个应用实例，管理接口尚无鉴权，暂不用于生产环境。

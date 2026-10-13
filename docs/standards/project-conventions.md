@@ -70,7 +70,7 @@ component/
 
 ### 3.1 命名与公共字段
 
-- 业务表名以 `tb_` 开头；表名、字段名使用小写字母和下划线，表达业务对象与用途。当前流程表目标名为 `tb_scene`、`tb_flow_draft`、`tb_flow_version`。
+- 业务表名以 `tb_` 开头；表名、字段名使用小写字母和下划线，表达业务对象与用途。当前场景与流程表为 `tb_scene`、`tb_flow`、`tb_flow_draft`、`tb_flow_version`。
 - 每张业务表包含 `id` 自增主键、`inserttime`、`updatetime`、`isactive`。`scene_code` 等业务标识设置唯一约束，不代替 `id` 主键。
 - `inserttime` 为插入时间，插入时由数据库生成；`updatetime` 为更新时间，插入及更新时由数据库维护。
 - `isactive` 为逻辑删除标记：`1` 表示有效，`0` 表示已删除，默认 `1`。常规业务查询明确筛选 `isactive = 1`；删除操作更新该字段，不物理删除业务记录。
@@ -101,10 +101,10 @@ Flyway 自身创建的元数据表不是业务表，不受 `tb_` 和业务公共
 
 ## 4. 与当前代码的关系
 
-Java 类已按普通类、显式类型和组件子包完成一轮迁移。`V1__scene_flow.sql` 的表名与公共字段仍未按本规范迁移；尤其要先确认 `V1` 是否已在任何真实 MySQL 环境执行，再决定修改原迁移或新增后续迁移。
+Java 类已按普通类、显式类型和组件子包完成一轮迁移。历史 `V1__scene_flow.sql` 保持不变；V2 将旧数据迁移到规范业务表，V3 补充场景信息，V4 新增独立流程资产并把草稿和版本关联到流程 ID。V1 至 V4 已在 H2 的 MySQL 兼容模式验证；此前 V1 至 V3 在本机 MySQL 5.7.40 上验证，V4 仍需 MySQL 实例验证。
 
 ## 5. 参考来源
 
 - 本仓库已确认的 Java 21、LiteFlow、场景流程设计。
 - `D:\dmp\dmp-java-projects` 的公共实体字段惯例。
-- 本地 gami-workflow 的 `references/code-spec/db.md`、`references/infra-spec/database.md`。其中旧 Spring Boot、MyBatis Plus 要求不作为本项目约束；Lombok 用法以本项目分层开发规范为准。
+- 本地 gami-workflow 的 `references/code-spec/db.md`、`references/infra-spec/database.md` 可作参考；其中旧 Spring Boot 版本与其他项目的持久层细节不直接作为本项目约束。MyBatis-Plus 与 Lombok 的具体用法以本项目[分层开发规范](mvc-layer-conventions.md)为准。

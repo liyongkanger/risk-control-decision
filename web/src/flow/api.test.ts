@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest'
-import { saveDraft, validateFlow } from './api'
+import { loadTargetDraft, publishTargetFlow, saveDraft, saveTargetDraft, validateFlow } from './api'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -39,4 +39,24 @@ it('shows graph issues from the global error response', async () => {
 
   await expect(saveDraft('scene', { schemaVersion: 1, nodes: [], edges: [], layout: {} }, 0))
     .rejects.toThrow('DUPLICATE_NODE_ID: Duplicate node')
+})
+
+it('uses independent flow endpoints for its draft and publication', async () => {
+  const mockedFetch = vi.fn(async (_url: string, options?: RequestInit) => new Response(JSON.stringify({
+    code: 'SUCCESS', message: '成功', data: options?.method === 'POST'
+      ? { id: 7, flowCode: 'shared', versionNumber: 1, chainId: 'flow_shared_v1' }
+      : { flowCode: 'shared', graph: { schemaVersion: 1, nodes: [], edges: [], layout: {} }, revision: 1 },
+  }), { status: 200 }))
+  vi.stubGlobal('fetch', mockedFetch)
+  const target = { kind: 'flow' as const, code: 'shared' }
+  const graph = { schemaVersion: 1 as const, nodes: [], edges: [], layout: {} }
+
+  await loadTargetDraft(target)
+  await saveTargetDraft(target, graph, 0)
+  await publishTargetFlow(target, 1)
+  expect(mockedFetch).toHaveBeenNthCalledWith(1, '/api/flows/shared/draft')
+  expect(mockedFetch).toHaveBeenNthCalledWith(2, '/api/flows/shared/draft?expectedRevision=0',
+    expect.objectContaining({ method: 'PUT', body: JSON.stringify(graph) }))
+  expect(mockedFetch).toHaveBeenNthCalledWith(3, '/api/flows/shared/publish',
+    expect.objectContaining({ method: 'POST', body: JSON.stringify({ expectedRevision: 1 }) }))
 })

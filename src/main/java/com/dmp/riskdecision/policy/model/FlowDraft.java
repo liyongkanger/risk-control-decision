@@ -5,18 +5,22 @@ import java.util.Objects;
 
 /** 流程草稿。 */
 public class FlowDraft {
-    private final String sceneCode;
+    private final String flowCode;
     private final GraphDefinition graph;
     private final long revision;
 
-    public FlowDraft(String sceneCode, GraphDefinition graph, long revision) {
-        this.sceneCode = sceneCode;
+    public FlowDraft(String flowCode, GraphDefinition graph, long revision) {
+        this.flowCode = flowCode;
         this.graph = graph;
         this.revision = revision;
     }
 
     public String getSceneCode() {
-        return sceneCode;
+        return flowCode;
+    }
+
+    public String getFlowCode() {
+        return flowCode;
     }
 
     public GraphDefinition getGraph() {
@@ -36,13 +40,13 @@ public class FlowDraft {
             return false;
         }
         FlowDraft that = (FlowDraft) other;
-        return Objects.equals(sceneCode, that.sceneCode)
+        return Objects.equals(flowCode, that.flowCode)
                 && Objects.equals(graph, that.graph)
                 && revision == that.revision;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sceneCode, graph, revision);
+        return Objects.hash(flowCode, graph, revision);
     }
 }
