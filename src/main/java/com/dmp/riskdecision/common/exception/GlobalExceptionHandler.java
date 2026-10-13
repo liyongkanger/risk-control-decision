@@ -2,7 +2,7 @@ package com.dmp.riskdecision.common.exception;
 
 import com.dmp.riskdecision.common.response.ApiResponse;
 import com.dmp.riskdecision.common.response.ResultCode;
-import com.dmp.riskdecision.orchestrator.compile.GraphCompilationException;
+import com.dmp.riskdecision.orchestrator.graph.GraphCompilationException;
 import com.dmp.riskdecision.orchestrator.graph.GraphIssue;
 import java.util.List;
 import java.util.NoSuchElementException;

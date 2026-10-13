@@ -4,7 +4,7 @@
 
 ## 代码结构
 
-`policy` 和 `decision` 按业务领域划分，领域内分别组织 `controller`、`service`、`mapper`、`vo` 等职责。`orchestrator` 负责流程图校验与编译；`component.liteflow` 将节点、上下文和注册表封装在框架包内，通过 `service` 向业务模块提供能力。公共响应结构、结果码和全局异常处理放在 `common` 包。具体写法见[项目开发规范](docs/standards/project-conventions.md)和[分层开发规范](docs/standards/mvc-layer-conventions.md)。
+`policy` 和 `decision` 按业务领域划分，领域内分别组织 `controller`、`service`、`mapper`、`vo` 等职责。`orchestrator.graph` 负责流程图定义与结构校验；`component.liteflow.compile` 生成 LiteFlow EL，节点、上下文和注册表也封装在 LiteFlow 组件包内，通过 `component.liteflow.service` 向业务模块提供能力。公共响应结构、结果码和全局异常处理放在 `common` 包。具体写法见[项目开发规范](docs/standards/project-conventions.md)和[分层开发规范](docs/standards/mvc-layer-conventions.md)。
 
 ## 本地配置
 

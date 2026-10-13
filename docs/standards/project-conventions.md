@@ -49,6 +49,7 @@ LiteFlow 的目标结构：
 component/
 └── liteflow/
     ├── service/       对其他模块提供流程加载、执行等方法
+    ├── compile/       图定义到 LiteFlow EL 的转换实现
     ├── registry/      chain、节点及实现的注册和查找
     ├── context/       单次执行上下文及节点结果
     ├── node/          LiteFlow 节点实现
@@ -58,7 +59,7 @@ component/
     └── config/        LiteFlow 与 Spring 的配置
 ```
 
-- `component.liteflow` 负责 LiteFlow 专属的执行适配与支撑能力；`orchestrator` 负责图结构校验和流程语义转换；`policy` 负责场景、草稿与版本发布。
+- `component.liteflow` 负责 LiteFlow 专属的 EL 编译、执行适配与支撑能力；`orchestrator.graph` 负责与执行框架无关的图定义和结构校验；`policy` 负责场景、草稿与版本发布。
 - 流程节点是一次流程中对可复用组件的引用及其配置。组件实现不依赖特定场景，节点的配置和结果保存在本次执行上下文中。
 - 其他模块通过 `component.liteflow.service` 调用能力，不直接操作 LiteFlow 的注册表、上下文实现或节点类。
 - 后续引入其他框架能力时沿用“框架包 → `service` 对外方法 → 内部按职责分包”的方式；各框架内部结构可按实际能力调整。

@@ -2,12 +2,12 @@ package com.dmp.riskdecision.policy.service.impl;
 
 import com.dmp.riskdecision.component.liteflow.service.ComponentCatalogService;
 import com.dmp.riskdecision.component.liteflow.service.ComponentDefinition;
+import com.dmp.riskdecision.component.liteflow.service.CompiledFlow;
 import com.dmp.riskdecision.component.liteflow.service.LiteFlowChainService;
+import com.dmp.riskdecision.component.liteflow.service.LiteFlowCompilationService;
 import com.dmp.riskdecision.component.liteflow.service.LiteFlowExecutionService;
 import com.dmp.riskdecision.component.liteflow.service.LiteFlowRunResult;
-import com.dmp.riskdecision.orchestrator.compile.CompiledFlow;
-import com.dmp.riskdecision.orchestrator.compile.FlowCompiler;
-import com.dmp.riskdecision.orchestrator.compile.GraphCompilationException;
+import com.dmp.riskdecision.orchestrator.graph.GraphCompilationException;
 import com.dmp.riskdecision.orchestrator.graph.GraphDefinition;
 import com.dmp.riskdecision.orchestrator.graph.GraphIssue;
 import com.dmp.riskdecision.orchestrator.graph.GraphNode;
@@ -40,7 +40,7 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
     @Resource
     private GraphValidator validator;
     @Resource
-    private FlowCompiler compiler;
+    private LiteFlowCompilationService compiler;
     @Resource
     private ComponentCatalogService components;
     @Resource
@@ -52,7 +52,7 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
     }
 
     public FlowPublicationServiceImpl(SceneFlowRepository repository, GraphValidator validator,
-                                      FlowCompiler compiler, ComponentCatalogService components,
+                                      LiteFlowCompilationService compiler, ComponentCatalogService components,
                                       LiteFlowChainService chains, LiteFlowExecutionService execution) {
         this.repository = repository;
         this.validator = validator;

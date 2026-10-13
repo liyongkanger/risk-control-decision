@@ -4,7 +4,8 @@ import com.dmp.riskdecision.component.liteflow.registry.ComponentRegistry;
 import com.dmp.riskdecision.component.liteflow.service.ComponentCatalogService;
 import com.dmp.riskdecision.component.liteflow.service.LiteFlowChainService;
 import com.dmp.riskdecision.component.liteflow.service.LiteFlowExecutionService;
-import com.dmp.riskdecision.orchestrator.compile.FlowCompiler;
+import com.dmp.riskdecision.component.liteflow.compile.FlowCompiler;
+import com.dmp.riskdecision.component.liteflow.service.LiteFlowCompilationService;
 import com.dmp.riskdecision.orchestrator.graph.FailurePolicy;
 import com.dmp.riskdecision.orchestrator.graph.GraphDefinition;
 import com.dmp.riskdecision.orchestrator.graph.GraphEdge;
@@ -100,7 +101,8 @@ class FlowPublicationServiceTest {
         doThrow(new IllegalStateException("load failed")).when(failingChains)
                 .load("scene_failure_v1", "THEN(emitValue.tag(\"emit\"))");
         FlowPublicationServiceImpl service = new FlowPublicationServiceImpl(storage, new GraphValidator(),
-                new FlowCompiler(registry), registry, failingChains, mock(LiteFlowExecutionService.class));
+                new LiteFlowCompilationService(new FlowCompiler(registry)), registry,
+                failingChains, mock(LiteFlowExecutionService.class));
 
         assertThatThrownBy(() -> service.publish("failure", 1))
                 .isInstanceOf(IllegalStateException.class).hasMessage("load failed");
