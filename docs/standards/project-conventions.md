@@ -9,7 +9,7 @@
 
 - 使用 Java 21 编译和运行，可使用 Java 21 标准库 API。
 - 保持偏 Java 8 的显式类和变量写法：不用 `record`、`var`、`instanceof` 模式变量等简写。新式 `switch` 可以使用。
-- 数据对象使用普通类，清楚声明字段、构造方法和访问方法。是否使用 Lombok 按具体模块统一选择；本规范不强制引入 Lombok。
+- 数据对象使用普通类，不使用 `record`。Lombok 是项目默认依赖；请求、响应及简单传输对象的注解写法遵循[分层开发规范](mvc-layer-conventions.md)。
 - 类名使用 `UpperCamelCase`，方法和变量使用 `lowerCamelCase`，常量使用 `UPPER_SNAKE_CASE`。包名全小写，按职责分包。
 - 依赖注入方式及 Controller、Service、Mapper 的具体写法遵循[分层开发规范](mvc-layer-conventions.md)。公共逻辑集中在明确的服务或工具类中，避免散落复制。
 
@@ -104,4 +104,4 @@ Java 类已按普通类、显式类型和组件子包完成一轮迁移。`V1__s
 
 - 本仓库已确认的 Java 21、LiteFlow、场景流程设计。
 - `D:\dmp\dmp-java-projects` 的公共实体字段惯例。
-- 本地 gami-workflow 的 `references/code-spec/db.md`、`references/infra-spec/database.md`。它们的旧 Spring Boot、MyBatis Plus 和 Lombok 要求不作为本项目约束。
+- 本地 gami-workflow 的 `references/code-spec/db.md`、`references/infra-spec/database.md`。其中旧 Spring Boot、MyBatis Plus 要求不作为本项目约束；Lombok 用法以本项目分层开发规范为准。

@@ -99,9 +99,42 @@ Controller 方法不固定写两层 `try-catch`。当前项目已有 `ApiErrorHa
 | `Dto` | 跨层或组件传输数据 | `FlowSnapshotDto` |
 | `Bo` | 有独立业务语义的对象 | `ScenePolicyBo` |
 
-请求与响应按领域放在 `vo/req` 和 `vo/resp`。类使用普通 Java 类，写中文类注释，不使用 `record`。字段、构造方法和访问方法保持清楚；只有某响应专用且体量很小的嵌套对象才用 `static` 内部类，否则单独建类。
+请求与响应按领域放在 `vo/req` 和 `vo/resp`。类使用普通 Java 类，写中文类注释，不使用 `record`；只有某响应专用且体量很小的嵌套对象才用 `static` 内部类，否则单独建类。
 
-当前仓库未引入 Lombok。接入前使用显式代码；接入后也不默认给所有对象加 `@Data`，按需要选择 Getter、Setter、构造器或 Builder，避免无意生成包含敏感字段的 `toString()`。
+### 6.1 Lombok 默认用法
+
+项目默认引入 Lombok。新增的简单 `Req`、`Resp`、`Dto`、`Bo` 使用 `@Data` 生成访问方法；需要构建器的响应对象使用以下组合：
+
+```java
+import lombok.Data;
+
+/** 流程发布请求。 */
+@Data
+public class PublishFlowReq {
+    private long expectedRevision;
+}
+```
+
+```java
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/** 流程发布响应。 */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class PublishFlowResp {
+    private long id;
+    private String sceneCode;
+    private long versionNumber;
+    private String chainId;
+}
+```
+
+`@Data` 会生成 `toString()`、`equals()` 和 `hashCode()`。含令牌、密码或个人信息的类对相应字段使用 `@ToString.Exclude`，必要时仅使用 `@Getter`、`@Setter`；有不变式的领域对象保留明确的构造方法和受控修改方法，不为了统一注解而开放所有 Setter。已有手写访问方法的类在相关功能修改时逐步收敛，不做纯格式批量替换。
 
 ## 7. Assembler
 
@@ -115,7 +148,7 @@ Redis、HTTP/Feign 等基础能力经 `component.<能力名>.service` 暴露给�
 
 ## 9. 日志与通用写法
 
-- 有日志的类使用项目选定的日志写法；若后续引入 Lombok，可统一使用 `@Slf4j`。消息采用 `[ClassName][methodName]` 前缀，参数化占位输出，不做字符串拼接。
+- 有日志的类默认使用 Lombok `@Slf4j`。消息采用 `[ClassName][methodName]` 前缀，参数化占位输出，不做字符串拼接。
 - `info` 记录请求标识、场景码、流程版本及关键状态变化；`warn` 记录可预期的校验或降级；`error` 记录需要排查的失败，异常对象作为最后一个参数。未知异常原则上由统一异常入口记录一次。
 - 日志不默认序列化完整 `Req`、流程输入、节点配置或远程响应。避免令牌、密码、个人数据进入日志。当前项目使用 Jackson 处理 JSON，不因日志格式引入 FastJSON。
 - 空值判断优先使用清楚的 JDK 写法；可空 `Boolean` 使用 `Boolean.TRUE.equals(flag)`。不为 `isBlank` 或集合判空单独引入工具依赖。
@@ -123,4 +156,4 @@ Redis、HTTP/Feign 等基础能力经 `component.<能力名>.service` 暴露给�
 
 ## 10. 应用顺序
 
-本文件确定新增代码的分层、命名、依赖注入、异常入口及日志边界。当前场景流程与同步决策代码已完成一轮分包和接口对象迁移；统一成功响应、业务错误码、Lombok、MapStruct 和远程客户端的具体实现仍需后续设计。
+本文件确定新增代码的分层、命名、依赖注入、异常入口及日志边界。当前场景流程与同步决策代码已完成一轮分包和接口对象迁移；Lombok 已作为默认依赖接入。统一成功响应、业务错误码、MapStruct 和远程客户端的具体实现仍需后续设计。
