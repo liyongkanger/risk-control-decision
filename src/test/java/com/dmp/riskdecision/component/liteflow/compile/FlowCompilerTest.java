@@ -22,6 +22,17 @@ class FlowCompilerTest {
     private final FlowCompiler compiler = new FlowCompiler(new ComponentCatalogService(new ComponentRegistry()));
 
     @Test
+    void compilesResultAsAPlatformNodeWithItsOwnTag() {
+        GraphDefinition graph = graph(List.of(node("start", NodeKind.START), component("work"),
+                        result("outcome"), node("end", NodeKind.END)),
+                edge("a", "start", "work"), edge("b", "work", "outcome"),
+                edge("c", "outcome", "end"));
+
+        assertThat(compiler.compile("payment", 1, graph).getEl())
+                .contains("businessResult.tag(\"outcome\")");
+    }
+
+    @Test
     void wrapsASingleComponentInAChainExpression() {
         GraphDefinition graph = graph(List.of(node("start", NodeKind.START), component("only"), node("end", NodeKind.END)),
                 edge("a", "start", "only"), edge("b", "only", "end"));
@@ -126,6 +137,11 @@ class FlowCompilerTest {
 
     private static GraphNode condition(String id) {
         return new GraphNode(id, NodeKind.CONDITION, "is-positive", FailurePolicy.FAIL_FAST, Map.of());
+    }
+
+    private static GraphNode result(String id) {
+        return new GraphNode(id, NodeKind.RESULT, null, null,
+                Map.of("conclusion", "NO_NEW_OFFER", "reasonCode", "NONE", "reason", "无新增优惠"));
     }
 
     private static GraphEdge edge(String id, String source, String target) {

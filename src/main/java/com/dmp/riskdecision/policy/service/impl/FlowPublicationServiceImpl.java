@@ -12,6 +12,7 @@ import com.dmp.riskdecision.orchestrator.graph.GraphNode;
 import com.dmp.riskdecision.orchestrator.graph.GraphValidationResult;
 import com.dmp.riskdecision.orchestrator.graph.GraphValidator;
 import com.dmp.riskdecision.orchestrator.graph.NodeKind;
+import com.dmp.riskdecision.orchestrator.graph.ResultPathValidator;
 import com.dmp.riskdecision.policy.model.FlowDraft;
 import com.dmp.riskdecision.policy.model.FlowValidation;
 import com.dmp.riskdecision.policy.model.FlowVersion;
@@ -38,6 +39,10 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
     @Resource
     private GraphValidator validator;
     @Resource
+    private ResultPathValidator resultValidation;
+    @Resource
+    private SubflowReferenceValidator subflowValidation;
+    @Resource
     private LiteFlowCompilationService compiler;
     @Resource
     private FlowComponentValidationService componentValidation;
@@ -54,6 +59,7 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
                                       LiteFlowChainService chains, LiteFlowExecutionService execution) {
         this.repository = repository;
         this.validator = validator;
+        this.resultValidation = new ResultPathValidator();
         this.compiler = compiler;
         this.componentValidation = new FlowComponentValidationService(components);
         this.chains = chains;
@@ -99,13 +105,25 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
         GraphValidationResult result = validator.validateForPublish(graph);
         if (!result.isValid()) throw new GraphCompilationException(result.getIssues());
         componentValidation.requireValid(graph);
+        GraphValidationResult resultPaths = resultValidation.validate(graph);
+        if (!resultPaths.isValid()) throw new GraphCompilationException(resultPaths.getIssues());
+        String flowCode = repository.resolveFlowCode(sceneCode);
+        if (hasSubflow(graph)) {
+            GraphValidationResult references = subflowValidation.validate(flowCode, graph);
+            if (!references.isValid()) throw new GraphCompilationException(references.getIssues());
+        }
         long number = repository.nextVersionNumber(sceneCode);
-        CompiledFlow compiled = compiler.compile(repository.resolveFlowCode(sceneCode), number, graph);
+        CompiledFlow compiled = compiler.compile(flowCode, number, graph);
         Long previous = repository.findPublished(sceneCode).map(FlowVersion::getId).orElse(null);
         FlowVersion version = repository.createVersion(sceneCode, number, graph, compiled.getChainId(), compiled.getEl());
         chains.load(compiled.getChainId(), compiled.getEl());
-        verifyWithDemoInput(sceneCode, number, graph, compiled.getChainId());
-        repository.switchPublished(sceneCode, previous, version.getId(), expectedRevision);
+        if (!hasSubflow(graph)) verifyWithDemoInput(sceneCode, number, graph, compiled.getChainId());
+        if (hasSubflow(graph)) {
+            GraphValidationResult references = subflowValidation.validate(flowCode, graph);
+            if (!references.isValid()) throw new GraphCompilationException(references.getIssues());
+        }
+        repository.switchPublished(sceneCode, previous, version.getId(), expectedRevision,
+                SubflowReferenceValidator.pinnedVersions(graph));
         LOG.info("[FlowPublicationServiceImpl][publish] sceneCode:{} versionId:{} published",
                 sceneCode, version.getId());
         return version;
@@ -118,6 +136,12 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
         if (!base.isValid()) return new FlowValidation(false, base.getIssues(), null);
         try {
             componentValidation.requireValid(graph);
+            GraphValidationResult resultPaths = resultValidation.validate(graph);
+            if (!resultPaths.isValid()) return new FlowValidation(false, resultPaths.getIssues(), null);
+            if (hasSubflow(graph)) {
+                GraphValidationResult references = subflowValidation.validate(repository.resolveFlowCode(sceneCode), graph);
+                if (!references.isValid()) return new FlowValidation(false, references.getIssues(), null);
+            }
             String el = compiler.compile(repository.resolveFlowCode(sceneCode), 1, graph).getEl();
             return new FlowValidation(true, List.of(), el);
         } catch (GraphCompilationException error) {
@@ -129,7 +153,8 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
         Map<String, Map<String, Object>> configs = new HashMap<>();
         Map<String, Object> input = new HashMap<>();
         for (GraphNode node : graph.getNodes()) {
-            if (node.getKind() == NodeKind.COMPONENT || node.getKind() == NodeKind.CONDITION) {
+            if (node.getKind() == NodeKind.COMPONENT || node.getKind() == NodeKind.CONDITION
+                    || node.getKind() == NodeKind.RESULT || node.getKind() == NodeKind.SUBFLOW) {
                 configs.put(node.getId(), node.getConfig());
             }
             if (node.getKind() == NodeKind.CONDITION) {
@@ -141,6 +166,10 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
         if (!result.isSuccess()) {
             throw new IllegalStateException("Generated LiteFlow chain failed validation", result.getCause());
         }
+    }
+
+    private static boolean hasSubflow(GraphDefinition graph) {
+        return graph.getNodes().stream().anyMatch(node -> node.getKind() == NodeKind.SUBFLOW);
     }
 
     @EventListener(ApplicationReadyEvent.class)

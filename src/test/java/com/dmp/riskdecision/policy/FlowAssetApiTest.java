@@ -1,12 +1,19 @@
 package com.dmp.riskdecision.policy;
 
 import com.dmp.riskdecision.component.liteflow.service.LiteFlowChainService;
+import com.dmp.riskdecision.orchestrator.graph.FailurePolicy;
+import com.dmp.riskdecision.orchestrator.graph.GraphDefinition;
+import com.dmp.riskdecision.orchestrator.graph.GraphEdge;
+import com.dmp.riskdecision.orchestrator.graph.GraphNode;
+import com.dmp.riskdecision.orchestrator.graph.NodeKind;
 import com.dmp.riskdecision.policy.service.impl.FlowPublicationServiceImpl;
 import jakarta.annotation.Resource;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,6 +34,115 @@ class FlowAssetApiTest {
 
     private final HttpClient client = HttpClient.newHttpClient();
     private final ObjectMapper json = new ObjectMapper();
+
+    @Test
+    void exposesTheCurrentPublishedVersionInputDeclaration() throws Exception {
+        String flowCode = "inputSummary" + System.nanoTime();
+        data(request("POST", "/api/flows", "{\"flowCode\":\"" + flowCode
+                + "\",\"flowName\":\"输入摘要\"}"));
+        assertThat(request("GET", "/api/flows/" + flowCode + "/published", null).statusCode())
+                .isEqualTo(404);
+        GraphDefinition graph = FlowPublicationServiceTest.simpleGraph(1);
+        graph.setRequiredInputs(List.of("positive", "userId"));
+        data(request("PUT", "/api/flows/" + flowCode + "/draft?expectedRevision=0",
+                json.writeValueAsString(graph)));
+        long id = data(request("POST", "/api/flows/" + flowCode + "/publish",
+                "{\"expectedRevision\":1}")).get("id").asLong();
+
+        JsonNode summary = data(request("GET", "/api/flows/" + flowCode + "/published", null));
+        assertThat(summary.get("id").asLong()).isEqualTo(id);
+        assertThat(summary.get("flowCode").asText()).isEqualTo(flowCode);
+        assertThat(summary.get("versionNumber").asLong()).isEqualTo(1);
+        assertThat(summary.get("requiredInputs").get(0).asText()).isEqualTo("positive");
+        assertThat(summary.get("requiredInputs").get(1).asText()).isEqualTo("userId");
+    }
+
+    @Test
+    void publishesAndRunsAnOuterFlowWithAPinnedSubflowThroughHttp() throws Exception {
+        String suffix = Long.toString(System.nanoTime());
+        String child = "apiChild" + suffix;
+        String outer = "apiOuter" + suffix;
+        String scene = "apiScene" + suffix;
+        data(request("POST", "/api/flows", "{\"flowCode\":\"" + child
+                + "\",\"flowName\":\"子流程\"}"));
+        String childGraph = json.writeValueAsString(FlowPublicationServiceTest.simpleGraph(1));
+        data(request("PUT", "/api/flows/" + child + "/draft?expectedRevision=0", childGraph));
+        long childVersionId = data(request("POST", "/api/flows/" + child + "/publish",
+                "{\"expectedRevision\":1}")).get("id").asLong();
+
+        data(request("POST", "/api/flows", "{\"flowCode\":\"" + outer
+                + "\",\"flowName\":\"外层流程\"}"));
+        GraphDefinition graph = new GraphDefinition(1, List.of(
+                new GraphNode("start", NodeKind.START, null, null, Map.of()),
+                new GraphNode("childCall", NodeKind.SUBFLOW, null, FailurePolicy.FAIL_FAST,
+                        Map.of("flowCode", child, "versionId", childVersionId, "inputMappings", Map.of())),
+                new GraphNode("result", NodeKind.RESULT, null, null,
+                        Map.of("conclusion", "OUTER_FINAL", "reasonCode", "OUTER", "reason", "外层结果")),
+                new GraphNode("end", NodeKind.END, null, null, Map.of())),
+                List.of(new GraphEdge("a", "start", "childCall", null),
+                        new GraphEdge("b", "childCall", "result", null),
+                        new GraphEdge("c", "result", "end", null)), Map.of());
+        String encoded = json.writeValueAsString(graph);
+        data(request("PUT", "/api/flows/" + outer + "/draft?expectedRevision=0", encoded));
+        assertThat(data(request("POST", "/api/flows/" + outer + "/validate", encoded))
+                .get("valid").asBoolean()).isTrue();
+        data(request("POST", "/api/flows/" + outer + "/publish", "{\"expectedRevision\":1}"));
+        data(request("POST", "/api/scenes", "{\"sceneCode\":\"" + scene
+                + "\",\"sceneName\":\"接口场景\"}"));
+        data(request("PUT", "/api/scenes/" + scene + "/entry-flow",
+                "{\"flowCode\":\"" + outer + "\"}"));
+
+        JsonNode evaluated = data(request("POST", "/api/decisions/evaluate",
+                "{\"sceneCode\":\"" + scene + "\",\"input\":{}}"));
+        assertThat(evaluated.get("status").asText()).isEqualTo("SUCCEEDED");
+        assertThat(evaluated.get("businessResult").get("conclusion").asText()).isEqualTo("OUTER_FINAL");
+        assertThat(evaluated.get("nodeResults").get("childCall").get("versionId").asLong())
+                .isEqualTo(childVersionId);
+        assertThat(evaluated.get("nodeResults").get("childCall").get("businessResult")
+                .get("conclusion").asText()).isEqualTo("NO_NEW_OFFER");
+    }
+
+    @Test
+    void rejectsNewFlowPublicationWithoutAnExplicitBusinessResult() throws Exception {
+        String flowCode = "noResultFlow" + System.nanoTime();
+        data(request("POST", "/api/flows", "{\"flowCode\":\"" + flowCode
+                + "\",\"flowName\":\"缺少结果\"}"));
+        String graph = json.writeValueAsString(FlowPublicationServiceTest.legacyGraph(1));
+        data(request("PUT", "/api/flows/" + flowCode + "/draft?expectedRevision=0", graph));
+
+        HttpResponse<String> validationResponse = request("POST", "/api/flows/" + flowCode + "/validate", graph);
+        assertThat(validationResponse.statusCode()).isEqualTo(422);
+        JsonNode validation = json.readTree(validationResponse.body()).get("data");
+        assertThat(validation.get("valid").asBoolean()).isFalse();
+        assertThat(validation.get("issues").toString()).contains("RESULT_MISSING");
+
+        HttpResponse<String> rejected = request("POST", "/api/flows/" + flowCode + "/publish",
+                "{\"expectedRevision\":1}");
+        assertThat(rejected.statusCode()).isEqualTo(422);
+        assertThat(json.readTree(rejected.body()).get("code").asText()).isEqualTo("GRAPH_INVALID");
+        assertThat(data(request("GET", "/api/flows/" + flowCode, null))
+                .get("publishedVersionId").isNull()).isTrue();
+    }
+
+    @Test
+    void rejectsNewScenePublicationWithoutAnExplicitBusinessResult() throws Exception {
+        String sceneCode = "noResultScene" + System.nanoTime();
+        data(request("POST", "/api/scenes", "{\"sceneCode\":\"" + sceneCode
+                + "\",\"sceneName\":\"缺少结果\"}"));
+        String graph = json.writeValueAsString(FlowPublicationServiceTest.legacyGraph(1));
+        data(request("PUT", "/api/scenes/" + sceneCode + "/draft?expectedRevision=0", graph));
+
+        HttpResponse<String> validationResponse = request("POST", "/api/scenes/" + sceneCode + "/validate", graph);
+        assertThat(validationResponse.statusCode()).isEqualTo(422);
+        JsonNode validation = json.readTree(validationResponse.body()).get("data");
+        assertThat(validation.get("valid").asBoolean()).isFalse();
+        assertThat(validation.get("issues").toString()).contains("RESULT_MISSING");
+
+        HttpResponse<String> rejected = request("POST", "/api/scenes/" + sceneCode + "/publish",
+                "{\"expectedRevision\":1}");
+        assertThat(rejected.statusCode()).isEqualTo(422);
+        assertThat(json.readTree(rejected.body()).get("code").asText()).isEqualTo("GRAPH_INVALID");
+    }
 
     @Test
     void publishesFlowWithoutSceneAndBindsPinnedVersionToScene() throws Exception {
@@ -55,6 +171,8 @@ class FlowAssetApiTest {
 
         JsonNode firstDecision = data(request("POST", "/api/decisions/evaluate",
                 "{\"sceneCode\":\"" + sceneCode + "\",\"input\":{}}"));
+        assertThat(firstDecision.get("status").asText()).isEqualTo("SUCCEEDED");
+        assertThat(firstDecision.get("businessResult").get("conclusion").asText()).isEqualTo("NO_NEW_OFFER");
         assertThat(firstDecision.get("versionId").asLong()).isEqualTo(firstId);
         assertThat(firstDecision.get("nodeResults").get("emit").asInt()).isEqualTo(1);
 

@@ -107,9 +107,9 @@ class FlowPublicationServiceTest {
                 org.mockito.ArgumentMatchers.eq(1L), org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString()))
                 .thenReturn(new FlowVersion(10, "failure", 1, simpleGraph(3),
-                        "flow_failure_v1", "THEN(emitValue.tag(\"emit\"))"));
+                        "flow_failure_v1", "THEN(emitValue.tag(\"emit\"),businessResult.tag(\"result\"))"));
         doThrow(new IllegalStateException("load failed")).when(failingChains)
-                .load("flow_failure_v1", "THEN(emitValue.tag(\"emit\"))");
+                .load("flow_failure_v1", "THEN(emitValue.tag(\"emit\"),businessResult.tag(\"result\"))");
         FlowPublicationServiceImpl service = new FlowPublicationServiceImpl(storage, new GraphValidator(),
                 new LiteFlowCompilationService(new FlowCompiler(registry)), registry,
                 failingChains, mock(LiteFlowExecutionService.class));
@@ -120,7 +120,7 @@ class FlowPublicationServiceTest {
         order.verify(storage).createVersion(org.mockito.ArgumentMatchers.eq("failure"),
                 org.mockito.ArgumentMatchers.eq(1L), org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
-        order.verify(failingChains).load("flow_failure_v1", "THEN(emitValue.tag(\"emit\"))");
+        order.verify(failingChains).load("flow_failure_v1", "THEN(emitValue.tag(\"emit\"),businessResult.tag(\"result\"))");
         verify(storage, never()).switchPublished(org.mockito.ArgumentMatchers.anyString(),
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyLong(),
                 org.mockito.ArgumentMatchers.anyLong());
@@ -154,6 +154,19 @@ class FlowPublicationServiceTest {
     }
 
     static GraphDefinition simpleGraph(int value) {
+        return new GraphDefinition(1, List.of(
+                new GraphNode("start", NodeKind.START, null, null, Map.of()),
+                new GraphNode("emit", NodeKind.COMPONENT, "emit-value", FailurePolicy.FAIL_FAST, Map.of("value", value)),
+                new GraphNode("result", NodeKind.RESULT, null, null,
+                        Map.of("conclusion", "NO_NEW_OFFER", "reasonCode", "DEMO",
+                                "reason", "演示流程无新增优惠")),
+                new GraphNode("end", NodeKind.END, null, null, Map.of())),
+                List.of(new GraphEdge("a", "start", "emit", null),
+                        new GraphEdge("b", "emit", "result", null),
+                        new GraphEdge("c", "result", "end", null)), Map.of());
+    }
+
+    static GraphDefinition legacyGraph(int value) {
         return new GraphDefinition(1, List.of(
                 new GraphNode("start", NodeKind.START, null, null, Map.of()),
                 new GraphNode("emit", NodeKind.COMPONENT, "emit-value", FailurePolicy.FAIL_FAST, Map.of("value", value)),

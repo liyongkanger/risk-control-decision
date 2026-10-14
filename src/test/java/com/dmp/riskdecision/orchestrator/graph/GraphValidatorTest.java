@@ -69,6 +69,15 @@ class GraphValidatorTest {
     }
 
     @Test
+    void rejectsMalformedRequiredInputNamesAsGraphIssues() {
+        GraphDefinition graph = serialGraph();
+        graph.setRequiredInputs(java.util.Arrays.asList("userId", null));
+
+        assertThat(validator.validateDraft(graph).getIssues())
+                .extracting(GraphIssue::getCode).contains("INVALID_REQUIRED_INPUT");
+    }
+
+    @Test
     void requiresConditionBranchLabelsAndJoinDegree() {
         GraphDefinition graph = new GraphDefinition(1,
                 List.of(new GraphNode("start", NodeKind.START, null, null, Map.of()),

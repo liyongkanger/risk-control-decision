@@ -1,5 +1,7 @@
 package com.dmp.riskdecision.orchestrator.graph;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -10,6 +12,7 @@ public class GraphDefinition {
     private List<GraphNode> nodes;
     private List<GraphEdge> edges;
     private Map<String, Point> layout;
+    private List<String> requiredInputs = List.of();
 
     public GraphDefinition() {
     }
@@ -53,6 +56,15 @@ public class GraphDefinition {
         this.layout = layout;
     }
 
+    public List<String> getRequiredInputs() {
+        return requiredInputs;
+    }
+
+    public void setRequiredInputs(List<String> requiredInputs) {
+        this.requiredInputs = requiredInputs == null ? List.of()
+                : Collections.unmodifiableList(new ArrayList<>(requiredInputs));
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -65,11 +77,12 @@ public class GraphDefinition {
         return schemaVersion == that.schemaVersion
                 && Objects.equals(nodes, that.nodes)
                 && Objects.equals(edges, that.edges)
-                && Objects.equals(layout, that.layout);
+                && Objects.equals(layout, that.layout)
+                && Objects.equals(requiredInputs, that.requiredInputs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(schemaVersion, nodes, edges, layout);
+        return Objects.hash(schemaVersion, nodes, edges, layout, requiredInputs);
     }
 }

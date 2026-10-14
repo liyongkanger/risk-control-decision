@@ -12,6 +12,7 @@ public class FlowGraphReq {
     private List<GraphNode> nodes;
     private List<GraphEdge> edges;
     private Map<String, Point> layout;
+    private List<String> requiredInputs;
 
     public FlowGraphReq() {
     }
@@ -46,6 +47,14 @@ public class FlowGraphReq {
 
     public void setLayout(Map<String, Point> layout) {
         this.layout = layout;
+    }
+
+    public List<String> getRequiredInputs() {
+        return requiredInputs;
+    }
+
+    public void setRequiredInputs(List<String> requiredInputs) {
+        this.requiredInputs = requiredInputs;
     }
 
 }

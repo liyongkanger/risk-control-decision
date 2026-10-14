@@ -1,5 +1,5 @@
 export type NodeKind = 'START' | 'END' | 'COMPONENT' | 'PARALLEL_SPLIT' |
-  'PARALLEL_JOIN' | 'CONDITION' | 'CONDITION_JOIN'
+  'PARALLEL_JOIN' | 'CONDITION' | 'CONDITION_JOIN' | 'RESULT' | 'SUBFLOW'
 
 export type FlowNode = {
   id: string
@@ -18,6 +18,7 @@ export type FlowEdge = {
 
 export type GraphDefinition = {
   schemaVersion: 1
+  requiredInputs?: string[]
   nodes: FlowNode[]
   edges: FlowEdge[]
   layout: Record<string, { x: number; y: number }>

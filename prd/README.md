@@ -29,6 +29,7 @@
 | `product/` | 持续维护整体产品方向：[产品定位](product/vision.md)说明服务对象与目标，[能力地图](product/capability-map.md)说明完整产品闭环。 |
 | `roadmap/` | [产品路线图](roadmap/roadmap.md)记录迭代顺序、当前承诺与未排期候选能力。 |
 | `iterations/` | 每轮迭代单独建目录，保存目标、范围、产品需求和验收口径。当前为 [2026-10 · v0.1 决策子流程](iterations/2026-10-v0.1-decision-subflow/prd.md)。 |
+| `scenarios/` | 保存跨迭代复用的业务样板。当前为[结算页优惠选择与增量利润闭环](scenarios/checkout-offer-incremental-profit.md)，使用模拟业务数据。 |
 
 ## 迭代命名
 

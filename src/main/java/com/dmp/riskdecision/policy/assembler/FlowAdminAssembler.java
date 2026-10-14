@@ -14,8 +14,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class FlowAdminAssembler {
     public GraphDefinition toGraphDefinition(FlowGraphReq request) {
-        return new GraphDefinition(request.getSchemaVersion(), request.getNodes(),
+        GraphDefinition graph = new GraphDefinition(request.getSchemaVersion(), request.getNodes(),
                 request.getEdges(), request.getLayout());
+        graph.setRequiredInputs(request.getRequiredInputs());
+        return graph;
     }
 
     public FlowDraftResp toDraftResp(FlowDraft draft) {

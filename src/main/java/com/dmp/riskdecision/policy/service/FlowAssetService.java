@@ -15,6 +15,9 @@ public interface FlowAssetService {
     /** 获取有效流程资产。 */
     FlowInfo get(String flowCode);
 
+    /** 获取当前已发布版本的输入声明。 */
+    FlowVersion getPublished(String flowCode);
+
     /** 按流程码或名称分页搜索有效流程。 */
     FlowPage search(String keyword, int page, int pageSize);
 

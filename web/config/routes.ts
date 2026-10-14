@@ -3,6 +3,7 @@ export default [
   { path: '/', redirect: '/scenes' },
   { path: '/scenes', name: '场景管理', icon: 'appstore', component: './scenes' },
   { path: '/flows', name: '流程资产', icon: 'apartment', component: './flows' },
+  { path: '/marketing-demo', name: '营销闭环演示', icon: 'experiment', component: './marketing-demo' },
   { path: '/flows/:flowCode/editor', name: '流程设计', hideInMenu: true, component: './flows/editor' },
   { path: '/flow-design', name: '流程设计', icon: 'partition', component: './flow-design' },
   { path: '/scenes/:sceneCode/flow', name: '流程设计', hideInMenu: true, component: './flow-design/editor' },

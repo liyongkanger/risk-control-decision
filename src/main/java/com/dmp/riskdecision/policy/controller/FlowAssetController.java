@@ -13,6 +13,7 @@ import com.dmp.riskdecision.policy.vo.resp.FlowAssetVersionResp;
 import com.dmp.riskdecision.policy.vo.resp.FlowInfoResp;
 import com.dmp.riskdecision.policy.vo.resp.FlowValidationResp;
 import com.dmp.riskdecision.policy.vo.resp.PageFlowResp;
+import com.dmp.riskdecision.policy.vo.resp.PublishedFlowSummaryResp;
 import jakarta.annotation.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +52,11 @@ public class FlowAssetController {
     @GetMapping("/{flowCode}")
     public ApiResponse<FlowInfoResp> get(@PathVariable String flowCode) {
         return ApiResponse.success(assembler.toResp(flows.get(flowCode)));
+    }
+
+    @GetMapping("/{flowCode}/published")
+    public ApiResponse<PublishedFlowSummaryResp> getPublished(@PathVariable String flowCode) {
+        return ApiResponse.success(assembler.toPublishedSummary(flows.getPublished(flowCode)));
     }
 
     @PutMapping("/{flowCode}/draft")

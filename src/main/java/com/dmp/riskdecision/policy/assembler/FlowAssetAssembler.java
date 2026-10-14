@@ -8,6 +8,7 @@ import com.dmp.riskdecision.policy.vo.resp.FlowAssetDraftResp;
 import com.dmp.riskdecision.policy.vo.resp.FlowAssetVersionResp;
 import com.dmp.riskdecision.policy.vo.resp.FlowInfoResp;
 import com.dmp.riskdecision.policy.vo.resp.PageFlowResp;
+import com.dmp.riskdecision.policy.vo.resp.PublishedFlowSummaryResp;
 import org.springframework.stereotype.Component;
 
 /** 独立流程资产及版本的响应转换。 */
@@ -31,5 +32,10 @@ public class FlowAssetAssembler {
     public FlowAssetVersionResp toResp(FlowVersion version) {
         return new FlowAssetVersionResp(version.getId(), version.getFlowCode(),
                 version.getVersionNumber(), version.getChainId());
+    }
+
+    public PublishedFlowSummaryResp toPublishedSummary(FlowVersion version) {
+        return new PublishedFlowSummaryResp(version.getId(), version.getFlowCode(),
+                version.getVersionNumber(), version.getGraph().getRequiredInputs());
     }
 }

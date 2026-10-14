@@ -25,6 +25,13 @@
         WHERE f.flow_code = #{flowCode} AND f.isactive = 1
     </select>
 
+    <select id="findByCodeForUpdate" resultMap="flowRow">
+        SELECT f.id, f.flow_code, f.published_version_id, f.isactive
+        FROM tb_flow f
+        WHERE f.flow_code = #{flowCode} AND f.isactive = 1
+        FOR UPDATE
+    </select>
+
     <select id="findById" resultMap="flowRow">
         SELECT <include refid="flowColumns"/>
         FROM tb_flow f

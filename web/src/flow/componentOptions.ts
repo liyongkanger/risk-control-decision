@@ -6,7 +6,7 @@ export function componentOptionsFor(kind: NodeKind): string[] {
     case 'COMPONENT':
       return ['emit-value']
     case 'CONDITION':
-      return ['is-positive']
+      return ['is-positive', 'equals-value']
     default:
       return []
   }

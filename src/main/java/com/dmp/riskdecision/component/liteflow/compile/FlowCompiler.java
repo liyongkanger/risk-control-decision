@@ -54,12 +54,14 @@ public class FlowCompiler {
             el = "THEN(" + el + ")";
         }
         if (parser.seen.size() != graph.getNodes().stream().filter(n -> n.getKind() == NodeKind.COMPONENT
-                || n.getKind() == NodeKind.CONDITION).count()) {
+                || n.getKind() == NodeKind.CONDITION || n.getKind() == NodeKind.RESULT
+                || n.getKind() == NodeKind.SUBFLOW).count()) {
             throw problem("UNCONSUMED_NODE", null, "Graph contains nodes outside the compiled structure");
         }
         Map<String, String> bindings = new HashMap<>();
         for (GraphNode node : graph.getNodes()) {
-            if (node.getKind() == NodeKind.COMPONENT || node.getKind() == NodeKind.CONDITION) {
+            if (node.getKind() == NodeKind.COMPONENT || node.getKind() == NodeKind.CONDITION
+                    || node.getKind() == NodeKind.RESULT || node.getKind() == NodeKind.SUBFLOW) {
                 bindings.put(node.getId(), node.getId());
             }
         }
@@ -100,7 +102,7 @@ public class FlowCompiler {
                 GraphNode node = nodes.get(current);
                 if (node == null) throw problem("EDGE_TARGET_MISSING", current, "Target node does not exist");
                 switch (node.getKind()) {
-                    case COMPONENT -> {
+                    case COMPONENT, RESULT, SUBFLOW -> {
                         if (!seen.add(current)) throw problem("SHARED_NODE", current, "Node appears in more than one branch");
                         parts.add(componentExpression(node));
                         current = onlyNext(current);
@@ -129,6 +131,12 @@ public class FlowCompiler {
         }
 
         private String componentExpression(GraphNode node) {
+            if (node.getKind() == NodeKind.RESULT) {
+                return "businessResult.tag(\"" + node.getId() + "\")";
+            }
+            if (node.getKind() == NodeKind.SUBFLOW) {
+                return "decisionSubflow.tag(\"" + node.getId() + "\")";
+            }
             String liteFlowNodeId = components.require(node.getComponentKey()).getLiteFlowNodeId();
             return liteFlowNodeId + ".tag(\"" + node.getId() + "\")";
         }

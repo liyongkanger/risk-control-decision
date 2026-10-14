@@ -78,6 +78,7 @@ Controller 方法不固定写两层 `try-catch`。业务异常和未知异常由
 ## 4. Service
 
 - 对外业务用例采用 `service/XxxService` 接口与 `service/impl/XxxServiceImpl` 实现；接口写中文职责和关键方法契约，实现使用 `@Service`。内部辅助类和简单算法类无需为了形式创建接口。
+- Service 接口的每个对外方法必须写中文 Javadoc，说明业务目的、参数及返回值；幂等、状态限制、并发、事务或失败条件存在时写清契约，并按需要使用 `@param`、`@return`、`@throws`。实现类的 `public` 方法也必须写 Javadoc：可用 `{@inheritDoc}` 承接接口契约，同时补充实现特有的处理规则。承载复杂业务分支的私有方法也写 Javadoc；简单访问器不强制。
 - Service 方法按“校验业务条件 → 获取所需数据 → 执行业务动作 → 构造业务结果”组织。复杂步骤提取为有业务含义的私有方法，如 `validatePublishRevision`、`buildExecutionContext`。
 - Service 可以调用 Repository、Mapper 或基础组件的公开 `service`；不直接依赖 `component.liteflow.node`、`registry` 等内部实现。流程发布、执行等用例的边界保持清楚。
 - 业务失败抛出有明确语义的异常，由统一异常入口转换为接口错误；不捕获后原样包装。确需补偿或转换异常时，在捕获处说明处理结果。

@@ -7,6 +7,6 @@ describe('component options', () => {
   })
 
   it('only offers condition components for a condition node', () => {
-    expect(componentOptionsFor('CONDITION')).toEqual(['is-positive'])
+    expect(componentOptionsFor('CONDITION')).toEqual(['is-positive', 'equals-value'])
   })
 })

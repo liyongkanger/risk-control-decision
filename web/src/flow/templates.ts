@@ -21,13 +21,16 @@ export function demoFlow(): GraphDefinition {
     nodes: [
       { id: 'start', kind: 'START', componentKey: null, failurePolicy: null, config: {} },
       { id: 'emit', kind: 'COMPONENT', componentKey: 'emit-value', failurePolicy: 'FAIL_FAST', config: { value: 'demo' } },
+      { id: 'result', kind: 'RESULT', componentKey: null, failurePolicy: null,
+        config: { conclusion: 'NO_NEW_OFFER', reasonCode: 'DEMO', reason: '演示流程无新增优惠' } },
       { id: 'end', kind: 'END', componentKey: null, failurePolicy: null, config: {} },
     ],
     edges: [
       { id: 'edge1', source: 'start', target: 'emit', branch: null },
-      { id: 'edge2', source: 'emit', target: 'end', branch: null },
+      { id: 'edge2', source: 'emit', target: 'result', branch: null },
+      { id: 'edge3', source: 'result', target: 'end', branch: null },
     ],
-    layout: { start: { x: 30, y: 220 }, emit: { x: 235, y: 220 }, end: { x: 440, y: 220 } },
+    layout: { start: { x: 30, y: 220 }, emit: { x: 235, y: 220 }, result: { x: 440, y: 220 }, end: { x: 645, y: 220 } },
   }
 }
 

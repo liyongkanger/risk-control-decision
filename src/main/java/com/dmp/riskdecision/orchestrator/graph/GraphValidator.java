@@ -26,6 +26,14 @@ public class GraphValidator {
             issues.add(issue("SCHEMA_VERSION_UNSUPPORTED", null, null, "Only schema version 1 is supported"));
         }
         List<GraphNode> nodes = graph.getNodes() == null ? List.of() : graph.getNodes();
+        List<String> requiredInputs = graph.getRequiredInputs() == null ? List.of() : graph.getRequiredInputs();
+        Set<String> inputNames = new HashSet<>();
+        for (String inputName : requiredInputs) {
+            if (inputName == null || !inputName.matches("[A-Za-z][A-Za-z0-9_]{0,63}")
+                    || !inputNames.add(inputName)) {
+                issues.add(issue("INVALID_REQUIRED_INPUT", null, null, "Required input names must be unique identifiers"));
+            }
+        }
         List<GraphEdge> edges = graph.getEdges() == null ? List.of() : graph.getEdges();
         if (nodes.size() > 200 || edges.size() > 500) {
             issues.add(issue("GRAPH_TOO_LARGE", null, null, "Graph exceeds 200 nodes or 500 edges"));
@@ -108,7 +116,9 @@ public class GraphValidator {
             int out = outgoing.get(node.getId()).size();
             if ((node.getKind() == NodeKind.START && (in != 0 || out != 1))
                     || (node.getKind() == NodeKind.END && (in != 1 || out != 0))
-                    || (node.getKind() == NodeKind.COMPONENT && (in != 1 || out != 1))) {
+                    || ((node.getKind() == NodeKind.COMPONENT || node.getKind() == NodeKind.RESULT
+                    || node.getKind() == NodeKind.SUBFLOW)
+                    && (in != 1 || out != 1))) {
                 issues.add(issue("INVALID_DEGREE", node.getId(), null, "Invalid number of incoming or outgoing edges"));
             }
             if (node.getKind() == NodeKind.COMPONENT) {

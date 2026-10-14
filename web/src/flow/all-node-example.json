@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "nodes": [
+    { "id": "start", "kind": "START", "componentKey": null, "failurePolicy": null, "config": {} },
+    { "id": "prepare", "kind": "COMPONENT", "componentKey": "emit-value", "failurePolicy": "FAIL_FAST", "config": { "value": "准备数据" } },
+    { "id": "parallelSplit", "kind": "PARALLEL_SPLIT", "componentKey": null, "failurePolicy": null, "config": {} },
+    { "id": "parallelLeft", "kind": "COMPONENT", "componentKey": "emit-value", "failurePolicy": "FAIL_FAST", "config": { "value": "并行左侧" } },
+    { "id": "parallelRight", "kind": "COMPONENT", "componentKey": "emit-value", "failurePolicy": "FAIL_FAST", "config": { "value": "并行右侧" } },
+    { "id": "parallelJoin", "kind": "PARALLEL_JOIN", "componentKey": null, "failurePolicy": null, "config": {} },
+    { "id": "condition", "kind": "CONDITION", "componentKey": "is-positive", "failurePolicy": "FAIL_FAST", "config": { "inputKey": "positive" } },
+    { "id": "truePath", "kind": "COMPONENT", "componentKey": "emit-value", "failurePolicy": "FAIL_FAST", "config": { "value": "条件为真" } },
+    { "id": "falsePath", "kind": "COMPONENT", "componentKey": "emit-value", "failurePolicy": "FAIL_FAST", "config": { "value": "条件为假" } },
+    { "id": "trueResult", "kind": "RESULT", "componentKey": null, "failurePolicy": null, "config": { "conclusion": "LOW_VALUE_OFFER", "reasonCode": "DEMO_POSITIVE", "reason": "演示条件为真，建议低额优惠", "details": { "offerCode": "LOW_5_OFF_100" }, "suggestedAction": { "code": "APPLY_OFFER", "parameters": { "offerCode": "LOW_5_OFF_100" } } } },
+    { "id": "falseResult", "kind": "RESULT", "componentKey": null, "failurePolicy": null, "config": { "conclusion": "NO_NEW_OFFER", "reasonCode": "DEMO_NEGATIVE", "reason": "演示条件为假，无新增优惠" } },
+    { "id": "conditionJoin", "kind": "CONDITION_JOIN", "componentKey": null, "failurePolicy": null, "config": {} },
+    { "id": "finalize", "kind": "COMPONENT", "componentKey": "emit-value", "failurePolicy": "FAIL_FAST", "config": { "value": "汇合后处理" } },
+    { "id": "end", "kind": "END", "componentKey": null, "failurePolicy": null, "config": {} }
+  ],
+  "edges": [
+    { "id": "e01", "source": "start", "target": "prepare", "branch": null },
+    { "id": "e02", "source": "prepare", "target": "parallelSplit", "branch": null },
+    { "id": "e03", "source": "parallelSplit", "target": "parallelLeft", "branch": null },
+    { "id": "e04", "source": "parallelSplit", "target": "parallelRight", "branch": null },
+    { "id": "e05", "source": "parallelLeft", "target": "parallelJoin", "branch": null },
+    { "id": "e06", "source": "parallelRight", "target": "parallelJoin", "branch": null },
+    { "id": "e07", "source": "parallelJoin", "target": "condition", "branch": null },
+    { "id": "e08", "source": "condition", "target": "truePath", "branch": "true" },
+    { "id": "e09", "source": "condition", "target": "falsePath", "branch": "false" },
+    { "id": "e10", "source": "truePath", "target": "trueResult", "branch": null },
+    { "id": "e11", "source": "falsePath", "target": "falseResult", "branch": null },
+    { "id": "e12", "source": "trueResult", "target": "conditionJoin", "branch": null },
+    { "id": "e13", "source": "falseResult", "target": "conditionJoin", "branch": null },
+    { "id": "e14", "source": "conditionJoin", "target": "finalize", "branch": null },
+    { "id": "e15", "source": "finalize", "target": "end", "branch": null }
+  ],
+  "layout": {
+    "start": { "x": 40, "y": 260 },
+    "prepare": { "x": 215, "y": 260 },
+    "parallelSplit": { "x": 390, "y": 260 },
+    "parallelLeft": { "x": 565, "y": 105 },
+    "parallelRight": { "x": 565, "y": 415 },
+    "parallelJoin": { "x": 740, "y": 260 },
+    "condition": { "x": 915, "y": 260 },
+    "truePath": { "x": 1090, "y": 105 },
+    "falsePath": { "x": 1090, "y": 415 },
+    "trueResult": { "x": 1265, "y": 105 },
+    "falseResult": { "x": 1265, "y": 415 },
+    "conditionJoin": { "x": 1440, "y": 260 },
+    "finalize": { "x": 1615, "y": 260 },
+    "end": { "x": 1790, "y": 260 }
+  }
+}

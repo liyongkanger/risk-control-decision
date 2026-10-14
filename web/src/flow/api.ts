@@ -1,6 +1,25 @@
 import type { FlowValidation, GraphDefinition } from './types'
 import { readApi, type ApiResponse } from '../services/http'
 
+export type BusinessResult = {
+  conclusion: string
+  reasonCode: string
+  reason: string
+  details: Record<string, unknown>
+  suggestedAction: { code: string; parameters: Record<string, unknown> } | null
+}
+
+export type DecisionRunResult = {
+  requestId: string
+  sceneCode: string
+  versionId: number
+  status: 'SUCCEEDED' | 'FAILED'
+  businessResult: BusinessResult | null
+  nodeResults: Record<string, unknown>
+  trace: Array<{ nodeId: string; status: string; errorCode: string | null }>
+  errorCode: string | null
+}
+
 const base = '/api'
 
 /** 场景入口或独立流程资产对应的编辑目标。 */
@@ -60,7 +79,7 @@ export async function publishFlow(sceneCode: string, expectedRevision: number) {
 }
 
 export async function evaluateFlow(sceneCode: string, input: Record<string, unknown>) {
-  return readApi<{ status: string; versionId: number; nodeResults: Record<string, unknown> }>(await fetch(
+  return readApi<DecisionRunResult>(await fetch(
     `${base}/decisions/evaluate`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sceneCode, input }) },
   ))

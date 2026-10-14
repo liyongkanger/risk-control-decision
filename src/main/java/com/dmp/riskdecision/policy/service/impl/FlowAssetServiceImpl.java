@@ -11,6 +11,7 @@ import com.dmp.riskdecision.orchestrator.graph.GraphNode;
 import com.dmp.riskdecision.orchestrator.graph.GraphValidationResult;
 import com.dmp.riskdecision.orchestrator.graph.GraphValidator;
 import com.dmp.riskdecision.orchestrator.graph.NodeKind;
+import com.dmp.riskdecision.orchestrator.graph.ResultPathValidator;
 import com.dmp.riskdecision.policy.model.FlowDraft;
 import com.dmp.riskdecision.policy.model.FlowInfo;
 import com.dmp.riskdecision.policy.model.FlowPage;
@@ -36,6 +37,10 @@ public class FlowAssetServiceImpl implements FlowAssetService {
     private FlowAssetRepository repository;
     @Resource
     private GraphValidator validator;
+    @Resource
+    private ResultPathValidator resultValidation;
+    @Resource
+    private SubflowReferenceValidator subflowValidation;
     @Resource
     private FlowComponentValidationService componentValidation;
     @Resource
@@ -65,6 +70,12 @@ public class FlowAssetServiceImpl implements FlowAssetService {
     @Override
     public FlowInfo get(String flowCode) {
         return repository.require(flowCode);
+    }
+
+    @Override
+    public FlowVersion getPublished(String flowCode) {
+        return repository.findPublished(flowCode)
+                .orElseThrow(() -> new NoSuchElementException("Published flow not found: " + flowCode));
     }
 
     @Override
@@ -104,6 +115,12 @@ public class FlowAssetServiceImpl implements FlowAssetService {
         if (!base.isValid()) return new FlowValidation(false, base.getIssues(), null);
         try {
             componentValidation.requireValid(graph);
+            GraphValidationResult resultPaths = resultValidation.validate(graph);
+            if (!resultPaths.isValid()) return new FlowValidation(false, resultPaths.getIssues(), null);
+            if (hasSubflow(graph)) {
+                GraphValidationResult references = subflowValidation.validate(flowCode, graph);
+                if (!references.isValid()) return new FlowValidation(false, references.getIssues(), null);
+            }
             String el = compiler.compile(flowCode, 1, graph).getEl();
             return new FlowValidation(true, List.of(), el);
         } catch (GraphCompilationException error) {
@@ -120,14 +137,25 @@ public class FlowAssetServiceImpl implements FlowAssetService {
         GraphValidationResult result = validator.validateForPublish(graph);
         if (!result.isValid()) throw new GraphCompilationException(result.getIssues());
         componentValidation.requireValid(graph);
+        GraphValidationResult resultPaths = resultValidation.validate(graph);
+        if (!resultPaths.isValid()) throw new GraphCompilationException(resultPaths.getIssues());
+        if (hasSubflow(graph)) {
+            GraphValidationResult references = subflowValidation.validate(flowCode, graph);
+            if (!references.isValid()) throw new GraphCompilationException(references.getIssues());
+        }
         long number = repository.nextVersionNumber(flowCode);
         CompiledFlow compiled = compiler.compile(flowCode, number, graph);
         Long previous = repository.findPublished(flowCode).map(FlowVersion::getId).orElse(null);
         FlowVersion version = repository.createVersion(flowCode, number, graph,
                 compiled.getChainId(), compiled.getEl());
         chains.load(compiled.getChainId(), compiled.getEl());
-        verifyWithDemoInput(flowCode, number, graph, compiled.getChainId());
-        repository.switchPublished(flowCode, previous, version.getId(), expectedRevision);
+        if (!hasSubflow(graph)) verifyWithDemoInput(flowCode, number, graph, compiled.getChainId());
+        if (hasSubflow(graph)) {
+            GraphValidationResult references = subflowValidation.validate(flowCode, graph);
+            if (!references.isValid()) throw new GraphCompilationException(references.getIssues());
+        }
+        repository.switchPublished(flowCode, previous, version.getId(), expectedRevision,
+                SubflowReferenceValidator.pinnedVersions(graph));
         return version;
     }
 
@@ -135,7 +163,8 @@ public class FlowAssetServiceImpl implements FlowAssetService {
         Map<String, Map<String, Object>> configs = new HashMap<>();
         Map<String, Object> input = new HashMap<>();
         for (GraphNode node : graph.getNodes()) {
-            if (node.getKind() == NodeKind.COMPONENT || node.getKind() == NodeKind.CONDITION) {
+            if (node.getKind() == NodeKind.COMPONENT || node.getKind() == NodeKind.CONDITION
+                    || node.getKind() == NodeKind.RESULT || node.getKind() == NodeKind.SUBFLOW) {
                 configs.put(node.getId(), node.getConfig());
             }
             if (node.getKind() == NodeKind.CONDITION) {
@@ -147,5 +176,9 @@ public class FlowAssetServiceImpl implements FlowAssetService {
         if (!result.isSuccess()) {
             throw new IllegalStateException("Generated LiteFlow chain failed validation", result.getCause());
         }
+    }
+
+    private static boolean hasSubflow(GraphDefinition graph) {
+        return graph.getNodes().stream().anyMatch(node -> node.getKind() == NodeKind.SUBFLOW);
     }
 }

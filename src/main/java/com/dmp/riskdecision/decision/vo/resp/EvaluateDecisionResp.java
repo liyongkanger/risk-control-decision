@@ -10,6 +10,7 @@ public class EvaluateDecisionResp {
     private String sceneCode;
     private long versionId;
     private String status;
+    private BusinessResultResp businessResult;
     private Map<String, Object> nodeResults;
     private List<NodeTrace> trace;
     private String errorCode;
@@ -47,6 +48,14 @@ public class EvaluateDecisionResp {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public BusinessResultResp getBusinessResult() {
+        return businessResult;
+    }
+
+    public void setBusinessResult(BusinessResultResp businessResult) {
+        this.businessResult = businessResult;
     }
 
     public Map<String, Object> getNodeResults() {

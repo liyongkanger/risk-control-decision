@@ -10,6 +10,8 @@ import org.apache.ibatis.annotations.Param;
 public interface FlowMapper extends BaseMapper<FlowRow> {
     FlowRow findByCode(String flowCode);
 
+    FlowRow findByCodeForUpdate(String flowCode);
+
     FlowRow findById(long flowId);
 
     List<FlowRow> search(@Param("pattern") String pattern, @Param("offset") long offset,

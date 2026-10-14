@@ -1,10 +1,13 @@
 package com.dmp.riskdecision.component.liteflow.context;
 
 import com.dmp.riskdecision.audit.NodeTrace;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** 单次流程执行上下文。 */
 public class ExecutionContext {
@@ -15,6 +18,7 @@ public class ExecutionContext {
     private final ConcurrentMap<String, Object> nodeResults;
     private final Queue<NodeTrace> traces;
     private final Map<String, Map<String, Object>> nodeConfigs;
+    private final AtomicReference<Map<String, Object>> businessResultConfig = new AtomicReference<>();
 
     public ExecutionContext(String requestId, String sceneCode, long version, Map<String, Object> input, ConcurrentMap<String, Object> nodeResults, Queue<NodeTrace> traces, Map<String, Map<String, Object>> nodeConfigs) {
         this.requestId = requestId;
@@ -52,6 +56,18 @@ public class ExecutionContext {
 
     public Map<String, Map<String, Object>> getNodeConfigs() {
         return nodeConfigs;
+    }
+
+    /** 本次运行只能写入一次最终业务结果配置。 */
+    public void setBusinessResultConfig(Map<String, Object> config) {
+        if (config == null || !businessResultConfig.compareAndSet(null,
+                Collections.unmodifiableMap(new LinkedHashMap<>(config)))) {
+            throw new IllegalStateException("Business result was already set or is missing");
+        }
+    }
+
+    public Map<String, Object> getBusinessResultConfig() {
+        return businessResultConfig.get();
     }
 
     @Override

@@ -4,7 +4,7 @@
 
 ## 代码结构
 
-`policy` 和 `decision` 按业务领域划分，领域内分别组织 `controller`、`service`、`mapper`、`vo` 等职责。`orchestrator.graph` 负责流程图定义与结构校验；`component.liteflow.compile` 生成 LiteFlow EL，节点、上下文和注册表也封装在 LiteFlow 组件包内，通过 `component.liteflow.service` 向业务模块提供能力。公共响应结构、结果码和全局异常处理放在 `common` 包。具体写法见[项目开发规范](docs/standards/project-conventions.md)和[分层开发规范](docs/standards/mvc-layer-conventions.md)。
+`policy`、`decision` 和 `business.marketing` 按业务领域划分，领域内分别组织 `controller`、`service`、`model`、`vo` 等职责；`business.marketing` 当前承载结算优惠的可运行模拟业务。`orchestrator.graph` 负责流程图定义与结构校验；`component.liteflow.compile` 生成 LiteFlow EL，节点、上下文和注册表也封装在 LiteFlow 组件包内，通过 `component.liteflow.service` 向业务模块提供能力。公共响应结构、结果码和全局异常处理放在 `common` 包。具体写法见[项目开发规范](docs/standards/project-conventions.md)和[分层开发规范](docs/standards/mvc-layer-conventions.md)。
 
 ## 本地配置
 
@@ -36,6 +36,12 @@ npm run dev
 
 场景与流程资产已分离：新建场景会创建并绑定一条入口流程；“流程资产”菜单可独立新建、搜索、设计和发布流程。“场景管理”显示入口流程，可将同一已发布流程绑定给多个场景；流程后续发布新版本不会自动切换已绑定场景。
 
+流程设计页的“一键整理”按现有连线将串行、条件和并行分支排成自上而下的布局，只调整画布坐标；检查效果后点击“保存草稿”才会持久化，不会自动发布。存在环路的草稿会提示无法整理。
+
+“营销闭环演示”菜单位于 `/marketing-demo`：可初始化结算优惠场景、运行 30 人固定模拟样本、查看分组人均贡献利润，并手动执行结算、支付反馈和退款。决策使用真实流程版本；订单与反馈仅保存在当前后端进程。演示逻辑见[营销闭环演示说明](docs/marketing-demo-closed-loop.md)，场景基线见[固定营销样板](prd/scenarios/checkout-offer-incremental-profit.md)，接口见[营销演示接口](docs/api/marketing-demo.md)。
+
+外层决策流程可通过 `SUBFLOW` 节点调用已发布子流程，并在外层发布时固定其版本 ID。后台画布可搜索子流程、配置输入映射和 `RESULT` 结论；场景试运行分开展示外层及子流程结果。子流程失败使外层运行失败。节点契约见[流程资产接口](docs/api/flow-assets.md)，页面验证见[本地 H2 子流程画布联调](docs/references/local-h2-subflow-editor-integration-2026-10-14.md)。
+
 本次隔离环境的页面验收步骤和结果见[场景与流程隔离的本地页面联调](docs/references/local-h2-flow-ui-integration-2026-10-13.md)。
 
 需要查看所有节点类型的组合示例，可在画布中点击“载入全节点示例”；示例节点含义及隔离环境中的 `test` 流程见[全节点 test 流程说明](docs/references/all-node-test-flow.md)。
@@ -44,9 +50,9 @@ npm run dev
 
 ## 场景流程
 
-图数据契约见[设计文档](docs/superpowers/specs/2026-10-12-scene-flow-model-design.md)。首期支持 `START`、`END`、`COMPONENT`、`PARALLEL_SPLIT`、`PARALLEL_JOIN`、`CONDITION` 和 `CONDITION_JOIN`。并行汇合等待所有分支。组件节点和条件节点的失败策略只能是 `FAIL_FAST`。草稿可暂不完整，发布时必须通过全部校验；单图限制为 200 个节点、500 条边和 1 MiB JSON。HTTP 写入请求也限制为 1 MiB。
+图数据契约见[设计文档](docs/superpowers/specs/2026-10-12-scene-flow-model-design.md)。当前支持 `START`、`END`、`COMPONENT`、`PARALLEL_SPLIT`、`PARALLEL_JOIN`、`CONDITION`、`CONDITION_JOIN` 和 `RESULT`。并行汇合等待所有分支。组件节点和条件节点的失败策略只能是 `FAIL_FAST`。草稿可暂不完整；新发布流程的每条结束路径必须恰好执行一个结果节点。单图限制为 200 个节点、500 条边和 1 MiB JSON；HTTP 写入请求也限制为 1 MiB。
 
-首期组件目录只有无外部副作用的 `emit-value`（配置 `{"value": 任意非空值}`）和 `is-positive`（配置 `{"inputKey": "输入字段名"}`）。场景码必须以字母开头，只包含字母、数字、下划线和连字符，最长 64 位。执行接口返回流程状态、节点结果和轨迹；业务决策值尚未定义。
+组件目录目前有演示用的 `emit-value`、`is-positive`，以及读取上游结果的 `equals-value` 条件组件；`RESULT` 和 `SUBFLOW` 是平台节点。场景码必须以字母开头，只包含字母、数字、下划线和连字符，最长 64 位。执行接口返回流程状态、业务结果、节点结果和轨迹；营销样板使用固定资格规则和内存模拟订单反馈，真实商城接入仍待后续迭代。接口字段见[决策结果文档](docs/api/decision-results.md)。
 
 发布流程先写入不可变版本，再加载和验证 LiteFlow 链，最后在数据库中按草稿修订号与旧发布指针进行条件切换。加载或验证失败的版本保留为未发布记录，不会被场景请求选中；重试会生成新的版本号。
 

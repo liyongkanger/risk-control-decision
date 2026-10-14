@@ -14,8 +14,17 @@ public class ExecutionResult {
     private final Map<String, Object> nodeResults;
     private final List<NodeTrace> trace;
     private final String errorCode;
+    private final BusinessResult businessResult;
 
     public ExecutionResult(String requestId, String sceneCode, long versionId, String status, Map<String, Object> nodeResults, List<NodeTrace> trace, String errorCode) {
+        this(requestId, sceneCode, versionId, status, nodeResults, trace, errorCode, null);
+    }
+
+    public ExecutionResult(String requestId, String sceneCode, long versionId, String status, Map<String, Object> nodeResults,
+                           List<NodeTrace> trace, String errorCode, BusinessResult businessResult) {
+        if ("FAILED".equals(status) && businessResult != null) {
+            throw new IllegalArgumentException("failed execution cannot have a business result");
+        }
         this.requestId = requestId;
         this.sceneCode = sceneCode;
         this.versionId = versionId;
@@ -23,6 +32,7 @@ public class ExecutionResult {
         this.nodeResults = nodeResults;
         this.trace = trace;
         this.errorCode = errorCode;
+        this.businessResult = businessResult;
     }
 
     public String getRequestId() {
@@ -53,6 +63,10 @@ public class ExecutionResult {
         return errorCode;
     }
 
+    public BusinessResult getBusinessResult() {
+        return businessResult;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -68,11 +82,12 @@ public class ExecutionResult {
                 && Objects.equals(status, that.status)
                 && Objects.equals(nodeResults, that.nodeResults)
                 && Objects.equals(trace, that.trace)
-                && Objects.equals(errorCode, that.errorCode);
+                && Objects.equals(errorCode, that.errorCode)
+                && Objects.equals(businessResult, that.businessResult);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(requestId, sceneCode, versionId, status, nodeResults, trace, errorCode);
+        return Objects.hash(requestId, sceneCode, versionId, status, nodeResults, trace, errorCode, businessResult);
     }
 }

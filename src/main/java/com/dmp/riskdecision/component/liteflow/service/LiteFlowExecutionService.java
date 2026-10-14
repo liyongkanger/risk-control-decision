@@ -24,6 +24,7 @@ public class LiteFlowExecutionService {
                 new ConcurrentLinkedQueue<>(), Map.copyOf(nodeConfigs));
         LiteflowResponse response = executor.execute2Resp(chainId, null, context);
         return new LiteFlowRunResult(response.isSuccess(), response.getCause(),
-                Map.copyOf(context.getNodeResults()), List.copyOf(context.getTraces()));
+                Map.copyOf(context.getNodeResults()), List.copyOf(context.getTraces()),
+                context.getBusinessResultConfig());
     }
 }

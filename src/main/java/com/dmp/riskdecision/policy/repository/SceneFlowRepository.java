@@ -7,6 +7,7 @@ import com.dmp.riskdecision.policy.model.FlowDraft;
 import com.dmp.riskdecision.policy.model.FlowVersion;
 import jakarta.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.springframework.stereotype.Repository;
@@ -70,9 +71,16 @@ public class SceneFlowRepository {
 
     @Transactional
     public void switchPublished(String sceneCode, Long expectedId, long newId, long expectedRevision) {
+        switchPublished(sceneCode, expectedId, newId, expectedRevision, Map.of());
+    }
+
+    /** 在场景与入口流程指针切换期间锁定子流程引用。 */
+    @Transactional
+    public void switchPublished(String sceneCode, Long expectedId, long newId, long expectedRevision,
+                                Map<String, Long> pinnedSubflows) {
         String flowCode = resolveFlowCode(sceneCode);
         Long flowPrevious = flows.require(flowCode).getPublishedVersionId();
-        flows.switchPublished(flowCode, flowPrevious, newId, expectedRevision);
+        flows.switchPublished(flowCode, flowPrevious, newId, expectedRevision, pinnedSubflows);
         if (scenes.switchPublished(sceneCode, expectedId, newId, expectedRevision) != 1) {
             throw new IllegalStateException("Published version or draft revision conflict");
         }

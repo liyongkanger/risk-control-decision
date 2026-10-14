@@ -6,6 +6,7 @@ import com.dmp.riskdecision.orchestrator.graph.GraphCompilationException;
 import com.dmp.riskdecision.orchestrator.graph.GraphDefinition;
 import com.dmp.riskdecision.orchestrator.graph.GraphIssue;
 import com.dmp.riskdecision.orchestrator.graph.GraphNode;
+import com.dmp.riskdecision.orchestrator.graph.GraphSourceAvailability;
 import com.dmp.riskdecision.orchestrator.graph.NodeKind;
 import jakarta.annotation.Resource;
 import java.util.List;
@@ -40,10 +41,22 @@ public class FlowComponentValidationService {
                         "Component kind does not match node kind")));
             }
             Map<String, Object> config = node.getConfig();
+            boolean invalidCondition = config != null && node.getKind() == NodeKind.CONDITION
+                    && ("equals-value".equals(node.getComponentKey())
+                    ? !(config.get("sourceNodeId") instanceof String)
+                        || !(config.get("path") instanceof String)
+                        || !((String) config.get("path")).matches("[A-Za-z][A-Za-z0-9_.]{0,127}")
+                        || !(config.get("expected") instanceof String)
+                    : !(config.get("inputKey") instanceof String));
             if (config == null || (node.getKind() == NodeKind.COMPONENT && config.get("value") == null)
-                    || (node.getKind() == NodeKind.CONDITION && !(config.get("inputKey") instanceof String))) {
+                    || invalidCondition) {
                 throw new GraphCompilationException(List.of(new GraphIssue("COMPONENT_CONFIG_INVALID", node.getId(), null,
                         "Component configuration is invalid")));
+            }
+            if (node.getKind() == NodeKind.CONDITION && "equals-value".equals(node.getComponentKey())
+                    && !GraphSourceAvailability.isAvailable(graph, (String) config.get("sourceNodeId"), node.getId())) {
+                throw new GraphCompilationException(List.of(new GraphIssue("CONDITION_SOURCE_UNAVAILABLE",
+                        node.getId(), null, "Condition source must execute on every path before this node")));
             }
         }
     }

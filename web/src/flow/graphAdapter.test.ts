@@ -23,5 +23,6 @@ describe('toGraphDefinition', () => {
       edges: [{ id: 'edge1', source: 'start', target: 'check', branch: 'true' }],
       layout: { check: { x: 140, y: 220 } },
     })
+    expect(toGraphDefinition(graph, ['userId']).requiredInputs).toEqual(['userId'])
   })
 })

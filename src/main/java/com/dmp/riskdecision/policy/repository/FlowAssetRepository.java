@@ -13,6 +13,7 @@ import com.dmp.riskdecision.policy.model.FlowPage;
 import com.dmp.riskdecision.policy.model.FlowVersion;
 import jakarta.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.springframework.dao.DuplicateKeyException;
@@ -110,7 +111,21 @@ public class FlowAssetRepository {
         return id == null ? Optional.empty() : findVersion(id);
     }
 
+    @Transactional
     public void switchPublished(String flowCode, Long expectedId, long newId, long expectedRevision) {
+        switchPublished(flowCode, expectedId, newId, expectedRevision, Map.of());
+    }
+
+    /** 锁定引用的子流程发布指针，再条件切换外层版本。 */
+    @Transactional
+    public void switchPublished(String flowCode, Long expectedId, long newId, long expectedRevision,
+                                Map<String, Long> pinnedSubflows) {
+        for (String childCode : pinnedSubflows.keySet().stream().sorted().toList()) {
+            FlowRow child = flows.findByCodeForUpdate(childCode);
+            if (child == null || !pinnedSubflows.get(childCode).equals(child.getPublishedVersionId())) {
+                throw new IllegalStateException("Subflow published version changed: " + childCode);
+            }
+        }
         long flowId = require(flowCode).getId();
         if (flows.switchPublished(flowId, expectedId, newId, expectedRevision) != 1) {
             throw new IllegalStateException("Published version or draft revision conflict");

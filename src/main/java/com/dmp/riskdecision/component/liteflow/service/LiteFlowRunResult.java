@@ -10,13 +10,21 @@ public class LiteFlowRunResult {
     private final Throwable cause;
     private final Map<String, Object> nodeResults;
     private final List<NodeTrace> traces;
+    private final Map<String, Object> businessResultConfig;
 
     public LiteFlowRunResult(boolean success, Throwable cause,
                              Map<String, Object> nodeResults, List<NodeTrace> traces) {
+        this(success, cause, nodeResults, traces, null);
+    }
+
+    public LiteFlowRunResult(boolean success, Throwable cause,
+                             Map<String, Object> nodeResults, List<NodeTrace> traces,
+                             Map<String, Object> businessResultConfig) {
         this.success = success;
         this.cause = cause;
         this.nodeResults = nodeResults;
         this.traces = traces;
+        this.businessResultConfig = businessResultConfig;
     }
 
     public boolean isSuccess() {
@@ -30,5 +38,9 @@ public class LiteFlowRunResult {
     }
     public List<NodeTrace> getTraces() {
         return traces;
+    }
+
+    public Map<String, Object> getBusinessResultConfig() {
+        return businessResultConfig;
     }
 }

@@ -49,15 +49,58 @@ class DecisionExecutionServiceTest {
     private DecisionExecutionService execution;
 
     @Test
+    void returnsTheExplicitBusinessResultOfThePublishedFlow() {
+        scenes.create("resultScene", "结果场景", null);
+        GraphDefinition graph = new GraphDefinition(1, List.of(
+                new GraphNode("start", NodeKind.START, null, null, Map.of()),
+                valueNode("emit", 7),
+                new GraphNode("outcome", NodeKind.RESULT, null, null,
+                        Map.of("conclusion", "LOW_VALUE_OFFER", "reasonCode", "ELIGIBLE",
+                                "reason", "符合活动条件", "details", Map.of("offerCode", "LOW_5_OFF_100"))),
+                new GraphNode("end", NodeKind.END, null, null, Map.of())),
+                List.of(new GraphEdge("a", "start", "emit", null),
+                        new GraphEdge("b", "emit", "outcome", null),
+                        new GraphEdge("c", "outcome", "end", null)), Map.of());
+        repository.saveDraft("resultScene", graph, 0);
+        publication.publish("resultScene", 1);
+
+        ExecutionResult result = execution.evaluate("result-request", "resultScene", Map.of());
+
+        assertThat(result.getStatus()).isEqualTo("SUCCEEDED");
+        assertThat(result.getBusinessResult().getConclusion()).isEqualTo("LOW_VALUE_OFFER");
+        assertThat(result.getBusinessResult().getReasonCode()).isEqualTo("ELIGIBLE");
+        assertThat(result.getBusinessResult().getDetails()).containsEntry("offerCode", "LOW_5_OFF_100");
+        assertThat(result.getTrace()).extracting("nodeId").contains("outcome");
+    }
+
+    @Test
+    void executesAnOlderPublishedVersionWithoutAResultNode() {
+        scenes.create("legacyDecision", "历史场景", null);
+        GraphDefinition legacy = graphFor(5);
+        repository.saveDraft("legacyDecision", legacy, 0);
+        FlowVersion version = repository.createVersion("legacyDecision", 1, legacy,
+                "flow_legacyDecision_v1", "THEN(emitValue.tag(\"emit\"))");
+        repository.switchPublished("legacyDecision", null, version.getId(), 1);
+
+        ExecutionResult result = execution.evaluate("legacy-request", "legacyDecision", Map.of());
+
+        assertThat(result.getStatus()).isEqualTo("SUCCEEDED");
+        assertThat(result.getBusinessResult()).isNull();
+        assertThat(result.getNodeResults()).containsEntry("emit", 5);
+    }
+
+    @Test
     void executesThePublishedVersionAndReturnsNodeTrace() {
         scenes.create("execute", "执行场景", null);
         GraphDefinition graph = new GraphDefinition(1, List.of(
                 new GraphNode("start", NodeKind.START, null, null, Map.of()),
                 new GraphNode("emit", NodeKind.COMPONENT, "emit-value", FailurePolicy.FAIL_FAST,
                         Map.of("value", "accepted")),
+                resultNode("result"),
                 new GraphNode("end", NodeKind.END, null, null, Map.of())),
                 List.of(new GraphEdge("a", "start", "emit", null),
-                        new GraphEdge("b", "emit", "end", null)), Map.of());
+                        new GraphEdge("b", "emit", "result", null),
+                        new GraphEdge("c", "result", "end", null)), Map.of());
         repository.saveDraft("execute", graph, 0);
         FlowVersion published = publication.publish("execute", 1);
 
@@ -87,6 +130,7 @@ class DecisionExecutionServiceTest {
                 valueNode("left", 1), valueNode("right", 2),
                 new GraphNode("join", NodeKind.PARALLEL_JOIN, null, null, Map.of()),
                 valueNode("after", 3),
+                resultNode("result"),
                 new GraphNode("end", NodeKind.END, null, null, Map.of())),
                 List.of(new GraphEdge("a", "start", "split", null),
                         new GraphEdge("b", "split", "left", null),
@@ -94,7 +138,8 @@ class DecisionExecutionServiceTest {
                         new GraphEdge("d", "left", "join", null),
                         new GraphEdge("e", "right", "join", null),
                         new GraphEdge("f", "join", "after", null),
-                        new GraphEdge("g", "after", "end", null)), Map.of());
+                        new GraphEdge("g", "after", "result", null),
+                        new GraphEdge("h", "result", "end", null)), Map.of());
         repository.saveDraft("parallel", graph, 0);
         publication.publish("parallel", 1);
 
@@ -171,5 +216,10 @@ class DecisionExecutionServiceTest {
 
     private static GraphNode valueNode(String id, int value) {
         return new GraphNode(id, NodeKind.COMPONENT, "emit-value", FailurePolicy.FAIL_FAST, Map.of("value", value));
+    }
+
+    private static GraphNode resultNode(String id) {
+        return new GraphNode(id, NodeKind.RESULT, null, null,
+                Map.of("conclusion", "NO_NEW_OFFER", "reasonCode", "DEMO", "reason", "演示流程无新增优惠"));
     }
 }
