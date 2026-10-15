@@ -5,6 +5,8 @@ import com.dmp.riskdecision.policy.mapper.SceneMapper;
 import com.dmp.riskdecision.policy.mapper.SceneRow;
 import com.dmp.riskdecision.policy.mapper.FlowMapper;
 import com.dmp.riskdecision.policy.mapper.FlowRow;
+import com.dmp.riskdecision.policy.repository.SceneFlowRepository;
+import com.dmp.riskdecision.policy.model.FlowVersion;
 import com.dmp.riskdecision.policy.model.SceneInfo;
 import com.dmp.riskdecision.policy.model.ScenePage;
 import com.dmp.riskdecision.policy.service.SceneCodeConflictException;
@@ -25,6 +27,8 @@ public class SceneServiceImpl implements SceneService {
     private SceneMapper mapper;
     @Resource
     private FlowMapper flows;
+    @Resource
+    private SceneFlowRepository sceneFlows;
 
     /** 创建有效场景，重复场景码返回独立业务冲突。 */
     @Override
@@ -112,6 +116,14 @@ public class SceneServiceImpl implements SceneService {
             throw new NoSuchElementException("Scene not found: " + sceneCode);
         }
         return toInfo(row);
+    }
+
+    /** {@inheritDoc} 场景未选中入口版本时显式返回不存在。 */
+    @Override
+    public FlowVersion getSelectedFlowVersion(String sceneCode) {
+        validateSceneCode(sceneCode);
+        return sceneFlows.findPublished(sceneCode)
+                .orElseThrow(() -> new NoSuchElementException("Scene has no selected flow version: " + sceneCode));
     }
 
     /** 按页搜索有效场景，页码从一开始。 */

@@ -1,9 +1,23 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { checkoutMarketingDemo, getMarketingReport, runMarketingFixture } from './marketingDemo'
+import { checkoutMarketingDemo, getMarketingDemoStatus, getMarketingReport,
+  runMarketingFixture, setupMarketingDemo } from './marketingDemo'
 
 afterEach(() => vi.unstubAllGlobals())
 
 describe('marketing demo API', () => {
+  it('reads strategy status without initializing and activates only on explicit setup', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+      code: 'SUCCESS', message: 'success', data: { initialized: false, sceneSelectedOuterVersionId: null },
+    }) })
+    vi.stubGlobal('fetch', fetchMock)
+    const status = await getMarketingDemoStatus()
+    expect(status.initialized).toBe(false)
+    expect(fetchMock).toHaveBeenCalledWith('/api/demo/checkout-offer/status')
+    await setupMarketingDemo()
+    expect(fetchMock).toHaveBeenLastCalledWith('/api/demo/checkout-offer/setup',
+      expect.objectContaining({ method: 'POST' }))
+  })
+
   it('sends fixed sample and reads report through the shared response envelope', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({
       code: 'SUCCESS', message: 'success', data: { experimentId: 'demoA', groups: {}, attempts: [] },

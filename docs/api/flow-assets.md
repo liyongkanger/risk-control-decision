@@ -132,6 +132,8 @@ GET /api/flows/offerEligibility/published
 
 `conclusion`、`reasonCode`、`reason` 必须是非空字符串；`details` 与 `suggestedAction.parameters` 省略时按空对象，`suggestedAction` 可省略。条件分支可各放一个结果节点；并行分支中不可放结果节点，须在汇合后确定结论。校验问题码包括 `RESULT_MISSING`、`RESULT_DUPLICATE`、`RESULT_PARALLEL_UNSUPPORTED`、`RESULT_CONFIG_INVALID`，`nodeId` 指向相关节点或 `END`。历史已发布版本不回写，仍可按原行为执行；其业务结果为空，见[决策结果接口](decision-results.md)。
 
+`RESULT` 可额外配置 `reasonFromRuleNodeId`，指向在每条到达该结果节点的路径上已执行的 `execute-rule-set` 节点。运行时 `reasonCode` 和 `reason` 从该规则节点实际命中结果读取，固定配置值作为图发布所需的声明；来源缺失时流程失败。规则执行节点配置为 `{ "ruleSetCode": "checkoutEligibility", "ruleVersionId": 12, "inputMappings": { "orderAmount": { "source": "INPUT", "key": "orderAmount" } } }`。输入映射可用 `INPUT` 指向本流程 `requiredInputs`，或用 `{ "source": "NODE_RESULT", "nodeId": "margin" }` 指向上游“获取变量”的强类型单值。发布时必须引用规则集当前已发布版本并校验映射；后续规则集发布新版本不会改变旧流程。`rule-result-equals` 条件配置为 `{ "sourceNodeId": "rules", "expectedResultCode": "ELIGIBLE" }`，预期码必须由所选规则集声明。规则中心接口见[规则中心](rule-center.md)。
+
 | HTTP | `code` | 典型场景 | `data` |
 | --- | --- | --- | --- |
 | 400 | `INVALID_REQUEST` | JSON 格式无法解析 | `null` |

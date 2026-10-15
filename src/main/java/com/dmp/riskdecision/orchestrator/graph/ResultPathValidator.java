@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ResultPathValidator {
     private static final Set<String> RESULT_KEYS = Set.of(
-            "conclusion", "reasonCode", "reason", "details", "suggestedAction");
+            "conclusion", "reasonCode", "reason", "details", "suggestedAction", "reasonFromRuleNodeId");
     private static final Set<String> ACTION_KEYS = Set.of("code", "parameters");
 
     /**
@@ -35,7 +35,7 @@ public class ResultPathValidator {
             nodes.put(node.getId(), node);
             outgoing.put(node.getId(), new ArrayList<>());
             inDegree.put(node.getId(), 0);
-            if (node.getKind() == NodeKind.RESULT && !validConfig(node)) {
+            if (node.getKind() == NodeKind.RESULT && !validConfig(graph, node)) {
                 issues.add(issue("RESULT_CONFIG_INVALID", node.getId(), "Result configuration is invalid"));
             }
         }
@@ -50,12 +50,20 @@ public class ResultPathValidator {
         return new GraphValidationResult(List.copyOf(issues));
     }
 
-    private static boolean validConfig(GraphNode node) {
+    private static boolean validConfig(GraphDefinition graph, GraphNode node) {
         if (node.getComponentKey() != null || node.getFailurePolicy() != null) return false;
         Map<String, Object> config = node.getConfig();
         if (config == null || !RESULT_KEYS.containsAll(config.keySet())) return false;
         if (!nonblank(config.get("conclusion")) || !nonblank(config.get("reasonCode"))
                 || !nonblank(config.get("reason"))) return false;
+        Object reasonSource = config.get("reasonFromRuleNodeId");
+        if (reasonSource != null) {
+            if (!(reasonSource instanceof String) || !GraphSourceAvailability.isAvailable(graph,
+                    (String) reasonSource, node.getId())) return false;
+            GraphNode source = graph.getNodes().stream().filter(item -> item.getId().equals(reasonSource))
+                    .findFirst().orElse(null);
+            if (source == null || !"execute-rule-set".equals(source.getComponentKey())) return false;
+        }
         Object details = config.get("details");
         if (details != null && !(details instanceof Map)) return false;
         Object action = config.get("suggestedAction");

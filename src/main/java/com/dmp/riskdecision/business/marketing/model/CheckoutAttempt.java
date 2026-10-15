@@ -16,6 +16,7 @@ public class CheckoutAttempt {
     private final Instant decidedAt;
     private final long outerVersionId;
     private final Map<String, Long> subflowVersionIds;
+    private final MarketingRuleTrace ruleTrace;
     private final String decisionStatus;
     private final String decisionConclusion;
     private final String decisionReason;
@@ -32,6 +33,7 @@ public class CheckoutAttempt {
 
     public CheckoutAttempt(String experimentId, String checkoutId, String userId, DemoGroup group,
                            String requestId, long outerVersionId, Map<String, Long> subflowVersionIds,
+                           MarketingRuleTrace ruleTrace,
                            String decisionStatus, String decisionConclusion, String decisionReason,
                            String recommendedOfferCode, boolean eligible, BigDecimal orderAmount,
                            BigDecimal preDiscountMargin, BigDecimal existingOfferAmount) {
@@ -43,6 +45,7 @@ public class CheckoutAttempt {
         this.decidedAt = Instant.now();
         this.outerVersionId = outerVersionId;
         this.subflowVersionIds = Map.copyOf(subflowVersionIds);
+        this.ruleTrace = ruleTrace;
         this.decisionStatus = decisionStatus;
         this.decisionConclusion = decisionConclusion;
         this.decisionReason = decisionReason;

@@ -16,20 +16,23 @@ public class MarketingDemoFlows {
     public static final String SCENE_CODE = "demoCheckoutScene";
     public static final String LOW_OFFER = "LOW_5_OFF_100";
     public static final String HIGH_OFFER = "HIGH_18_OFF_100";
+    public static final String ELIGIBILITY_RULE_SET_CODE = "demoOfferEligibilityRules";
 
     /** 资格子流程把统一的资格判断表达为可追溯结论。 */
-    public GraphDefinition eligibilityGraph() {
-        return graph(List.of(start(), positive("qualified", "eligible"),
+    public GraphDefinition eligibilityGraph(long ruleVersionId) {
+        return graph(List.of(start(), ruleSet("eligibilityRules", ruleVersionId),
+                        ruleResult("qualified", "eligibilityRules", "ELIGIBLE"),
                         eligibilityResult("eligibleResult", true),
                         eligibilityResult("ineligibleResult", false),
                         join("eligibilityJoin"), end()),
-                List.of(edge("a", "start", "qualified"),
-                        edge("b", "qualified", "eligibleResult", "true"),
-                        edge("c", "qualified", "ineligibleResult", "false"),
-                        edge("d", "eligibleResult", "eligibilityJoin"),
-                        edge("e", "ineligibleResult", "eligibilityJoin"),
-                        edge("f", "eligibilityJoin", "end")),
-                List.of("eligible"));
+                List.of(edge("a", "start", "eligibilityRules"),
+                        edge("b", "eligibilityRules", "qualified"),
+                        edge("c", "qualified", "eligibleResult", "true"),
+                        edge("d", "qualified", "ineligibleResult", "false"),
+                        edge("e", "eligibleResult", "eligibilityJoin"),
+                        edge("f", "ineligibleResult", "eligibilityJoin"),
+                        edge("g", "eligibilityJoin", "end")),
+                List.of("orderAmount", "marginAfterMaxOffer", "remainingBudget"));
     }
 
     /** 优惠选择子流程按资格、实验组和高低券组返回三种正常结论。 */
@@ -64,7 +67,9 @@ public class MarketingDemoFlows {
     /** 外层固定引用两个子流程版本，并独立决定最终业务结论。 */
     public GraphDefinition outerGraph(long eligibilityVersionId, long selectionVersionId) {
         GraphNode eligibilityCall = call("eligibilityCall", ELIGIBILITY_CODE, eligibilityVersionId,
-                Map.of("eligible", requestInput("eligible")));
+                Map.of("orderAmount", requestInput("orderAmount"),
+                        "marginAfterMaxOffer", requestInput("marginAfterMaxOffer"),
+                        "remainingBudget", requestInput("remainingBudget")));
         GraphNode selectionCall = call("selectionCall", SELECTION_CODE, selectionVersionId,
                 Map.of("eligible", nodeResult("eligibilityCall", "businessResult.details.eligible"),
                         "inExperiment", requestInput("inExperiment"),
@@ -88,7 +93,7 @@ public class MarketingDemoFlows {
                         edge("j", "lowJoin", "highJoin"),
                         edge("k", "highResult", "highJoin"),
                         edge("l", "highJoin", "end")),
-                List.of("eligible", "inExperiment", "highGroup"));
+                List.of("orderAmount", "marginAfterMaxOffer", "remainingBudget", "inExperiment", "highGroup"));
     }
 
     private static GraphDefinition graph(List<GraphNode> nodes, List<GraphEdge> edges,
@@ -115,6 +120,24 @@ public class MarketingDemoFlows {
                 Map.of("inputKey", inputKey));
     }
 
+    private static GraphNode ruleSet(String id, long versionId) {
+        return new GraphNode(id, NodeKind.COMPONENT, "execute-rule-set", FailurePolicy.FAIL_FAST,
+                Map.of("ruleSetCode", ELIGIBILITY_RULE_SET_CODE, "ruleVersionId", versionId,
+                        "inputMappings", Map.of(
+                                "orderAmount", ruleRequestInput("orderAmount"),
+                                "marginAfterMaxOffer", ruleRequestInput("marginAfterMaxOffer"),
+                                "remainingBudget", ruleRequestInput("remainingBudget"))));
+    }
+
+    private static GraphNode ruleResult(String id, String sourceNodeId, String resultCode) {
+        return new GraphNode(id, NodeKind.CONDITION, "rule-result-equals", FailurePolicy.FAIL_FAST,
+                Map.of("sourceNodeId", sourceNodeId, "expectedResultCode", resultCode));
+    }
+
+    private static Map<String, Object> ruleRequestInput(String key) {
+        return Map.of("source", "INPUT", "key", key);
+    }
+
     private static GraphNode equalsResult(String id, String expected) {
         return new GraphNode(id, NodeKind.CONDITION, "equals-value", FailurePolicy.FAIL_FAST,
                 Map.of("sourceNodeId", "selectionCall", "path", "businessResult.conclusion",
@@ -126,7 +149,8 @@ public class MarketingDemoFlows {
                 Map.of("conclusion", eligible ? "ELIGIBLE" : "INELIGIBLE",
                         "reasonCode", eligible ? "QUALIFIED" : "NOT_QUALIFIED",
                         "reason", eligible ? "满足演示资格条件" : "未满足演示资格条件",
-                        "details", Map.of("eligible", eligible)));
+                        "details", Map.of("eligible", eligible),
+                        "reasonFromRuleNodeId", "eligibilityRules"));
     }
 
     private static GraphNode offerResult(String id, String conclusion, String offerCode) {

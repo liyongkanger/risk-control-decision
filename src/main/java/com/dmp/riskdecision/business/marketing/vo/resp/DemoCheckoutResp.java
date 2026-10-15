@@ -2,6 +2,7 @@ package com.dmp.riskdecision.business.marketing.vo.resp;
 
 import com.dmp.riskdecision.business.marketing.model.CheckoutAttempt;
 import com.dmp.riskdecision.business.marketing.model.DemoGroup;
+import com.dmp.riskdecision.business.marketing.model.MarketingRuleTrace;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
@@ -18,6 +19,10 @@ public class DemoCheckoutResp {
     private final Instant decidedAt;
     private final long outerVersionId;
     private final Map<String, Long> subflowVersionIds;
+    private final String ruleSetCode;
+    private final Long ruleVersionId;
+    private final String matchedRuleId;
+    private final String ruleReasonCode;
     private final String decisionStatus;
     private final String decisionConclusion;
     private final String decisionReason;
@@ -42,6 +47,11 @@ public class DemoCheckoutResp {
         decidedAt = attempt.getDecidedAt();
         outerVersionId = attempt.getOuterVersionId();
         subflowVersionIds = attempt.getSubflowVersionIds();
+        MarketingRuleTrace trace = attempt.getRuleTrace();
+        ruleSetCode = trace == null ? null : trace.getRuleSetCode();
+        ruleVersionId = trace == null ? null : trace.getRuleVersionId();
+        matchedRuleId = trace == null ? null : trace.getMatchedRuleId();
+        ruleReasonCode = trace == null ? null : trace.getRuleReasonCode();
         decisionStatus = attempt.getDecisionStatus();
         decisionConclusion = attempt.getDecisionConclusion();
         decisionReason = attempt.getDecisionReason();

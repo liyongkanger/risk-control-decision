@@ -40,7 +40,8 @@ class MarketingDemoFlowServiceTest {
     private void assertConclusion(String requestId, boolean eligible, boolean inExperiment,
                                   boolean highGroup, String expected) {
         ExecutionResult result = decisions.evaluate(requestId, MarketingDemoFlows.SCENE_CODE,
-                Map.of("eligible", eligible, "inExperiment", inExperiment, "highGroup", highGroup));
+                Map.of("orderAmount", eligible ? 120 : 80, "marginAfterMaxOffer", 12,
+                        "remainingBudget", 2000, "inExperiment", inExperiment, "highGroup", highGroup));
         assertThat(result.getStatus()).isEqualTo("SUCCEEDED");
         assertThat(result.getBusinessResult().getConclusion()).isEqualTo(expected);
         assertThat(result.getNodeResults()).containsKeys("eligibilityCall", "selectionCall");

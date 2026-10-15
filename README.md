@@ -36,9 +36,19 @@ npm run dev
 
 场景与流程资产已分离：新建场景会创建并绑定一条入口流程；“流程资产”菜单可独立新建、搜索、设计和发布流程。“场景管理”显示入口流程，可将同一已发布流程绑定给多个场景；流程后续发布新版本不会自动切换已绑定场景。
 
+“组件管理”菜单是只读能力目录，二级菜单分为取值组件、判断组件和规则组件，可查看每种能力的用途、输出、配置字段及初始配置。变量定义仍在“变量中心”管理，规则集在“规则中心”管理；开始、结束、汇合等结构节点仍在画布中配置。目录字段见[组件能力接口](docs/api/component-catalog.md)，职责边界见[节点、组件与变量中心](docs/design/component-management-boundary.md)。
+
+“变量中心”菜单管理只读 HTTP 来源的强类型变量及不可变版本，支持 `STRING`、`BOOLEAN`、`DECIMAL` 和试取值。画布中只用“获取变量”节点选择固定版本并映射输入，后接“比较变量”条件节点；HTTP 来源的 URL 与 JSON 路径由变量中心管理。变量取值失败会使决策失败。目标主机由 `RISK_VARIABLE_ALLOWED_HOSTS` 配置，本地默认仅允许 `localhost,127.0.0.1`。使用方式见[变量中心接口](docs/api/variable-center.md)。
+
+“规则中心”菜单可编辑首命中规则表、试算草稿并发布不可变版本。画布使用“执行规则集”组件固定版本、映射流程输入或上游变量单值，再用“规则结果等于指定码”选择分支；结果节点也可复制命中规则的原因。规则执行失败与业务拒绝分开。接口见[规则中心](docs/api/rule-center.md)。营销样板的资格门槛已放入 `demoOfferEligibilityRules`，样板预算快照及固定券额仍由模拟结算服务准备。
+
+本地演示后端可在项目根目录运行 `scripts/start-review-backend.ps1`，使用被 Git 忽略的 `.local/variable-review.mv.db` 保存流程资产；重启后仍可查看。旧 `.local/review.mv.db` 保留原样但不再使用。前端开发服务由 `web` 目录的 `npm run dev` 启动，并把 `RISK_API_TARGET` 指向 `http://localhost:8081`。
+
+需要一条可查看的变量决策样板时，在本地后端启动后运行 `scripts/init-variable-review.ps1`；它会创建 `lowGroupUsers` 变量及 `variableCanvasDemo` 流程、场景，并执行一次模拟决策。脚本遇到已发布样板时复用现有版本。
+
 流程设计页的“一键整理”按现有连线将串行、条件和并行分支排成自上而下的布局，只调整画布坐标；检查效果后点击“保存草稿”才会持久化，不会自动发布。存在环路的草稿会提示无法整理。
 
-“营销闭环演示”菜单位于 `/marketing-demo`：可初始化结算优惠场景、运行 30 人固定模拟样本、查看分组人均贡献利润，并手动执行结算、支付反馈和退款。决策使用真实流程版本；订单与反馈仅保存在当前后端进程。演示逻辑见[营销闭环演示说明](docs/marketing-demo-closed-loop.md)，场景基线见[固定营销样板](prd/scenarios/checkout-offer-incremental-profit.md)，接口见[营销演示接口](docs/api/marketing-demo.md)。
+“营销闭环演示”工作台位于 `/marketing-demo`：按策略版本、试决策、实际反馈、增量复盘和下一版引导完成样板操作。可初始化场景、运行 30 人固定样本、查看相对对照组的利润差值，并手动执行结算、支付反馈和退款；新外层版本须在工作台显式选用。决策使用真实流程版本；订单与反馈仅保存在当前后端进程。演示逻辑见[营销闭环演示说明](docs/marketing-demo-closed-loop.md)，场景基线见[固定营销样板](prd/scenarios/checkout-offer-incremental-profit.md)，接口见[营销演示接口](docs/api/marketing-demo.md)。
 
 外层决策流程可通过 `SUBFLOW` 节点调用已发布子流程，并在外层发布时固定其版本 ID。后台画布可搜索子流程、配置输入映射和 `RESULT` 结论；场景试运行分开展示外层及子流程结果。子流程失败使外层运行失败。节点契约见[流程资产接口](docs/api/flow-assets.md)，页面验证见[本地 H2 子流程画布联调](docs/references/local-h2-subflow-editor-integration-2026-10-14.md)。
 
@@ -52,7 +62,7 @@ npm run dev
 
 图数据契约见[设计文档](docs/superpowers/specs/2026-10-12-scene-flow-model-design.md)。当前支持 `START`、`END`、`COMPONENT`、`PARALLEL_SPLIT`、`PARALLEL_JOIN`、`CONDITION`、`CONDITION_JOIN` 和 `RESULT`。并行汇合等待所有分支。组件节点和条件节点的失败策略只能是 `FAIL_FAST`。草稿可暂不完整；新发布流程的每条结束路径必须恰好执行一个结果节点。单图限制为 200 个节点、500 条边和 1 MiB JSON；HTTP 写入请求也限制为 1 MiB。
 
-组件目录目前有演示用的 `emit-value`、`is-positive`，以及读取上游结果的 `equals-value` 条件组件；`RESULT` 和 `SUBFLOW` 是平台节点。场景码必须以字母开头，只包含字母、数字、下划线和连字符，最长 64 位。执行接口返回流程状态、业务结果、节点结果和轨迹；营销样板使用固定资格规则和内存模拟订单反馈，真实商城接入仍待后续迭代。接口字段见[决策结果文档](docs/api/decision-results.md)。
+组件目录包含演示用 `emit-value`、`is-positive`，读取上游结果的 `equals-value`，变量中心的 `get-variable` 与强类型 `compare-value`，以及规则中心的 `execute-rule-set` 与 `rule-result-equals`；`RESULT` 和 `SUBFLOW` 是平台节点。场景码必须以字母开头，只包含字母、数字、下划线和连字符，最长 64 位。执行接口返回流程状态、业务结果、节点结果和轨迹；营销样板的资格规则由规则中心版本提供，订单反馈仍为内存模拟，真实商城接入仍待后续迭代。接口字段见[决策结果文档](docs/api/decision-results.md)。
 
 发布流程先写入不可变版本，再加载和验证 LiteFlow 链，最后在数据库中按草稿修订号与旧发布指针进行条件切换。加载或验证失败的版本保留为未发布记录，不会被场景请求选中；重试会生成新的版本号。
 

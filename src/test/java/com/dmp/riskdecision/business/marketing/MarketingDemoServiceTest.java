@@ -28,6 +28,15 @@ class MarketingDemoServiceTest {
         assertGroup(first, DemoGroup.CONTROL, 10, 2, "6.00", "20.00");
         assertGroup(first, DemoGroup.LOW, 10, 3, "7.50", "30.00");
         assertGroup(first, DemoGroup.HIGH, 10, 4, "4.80", "40.00");
+        assertThat(first.getGroups().get(DemoGroup.CONTROL).getIncrementalAverageContributionProfit()).isNull();
+        assertThat(first.getGroups().get(DemoGroup.LOW).getIncrementalAverageContributionProfit())
+                .isEqualByComparingTo("1.50");
+        assertThat(first.getGroups().get(DemoGroup.HIGH).getIncrementalAverageContributionProfit())
+                .isEqualByComparingTo("-1.20");
+        assertThat(first.getGroups().get(DemoGroup.LOW).getRecommendedOfferUseRate())
+                .isEqualByComparingTo("30.00");
+        assertThat(first.getGroups().get(DemoGroup.HIGH).getRecommendedOfferUseRate())
+                .isEqualByComparingTo("40.00");
         assertThat(first.getAttempts()).allSatisfy(attempt -> {
             assertThat(attempt.getDecisionStatus()).isEqualTo("SUCCEEDED");
             assertThat(attempt.getOuterVersionId()).isPositive();
@@ -64,6 +73,8 @@ class MarketingDemoServiceTest {
         assertThat(demo.report(experiment).getGroups().get(checkout.getGroup()).getPaidUsers()).isZero();
         assertThat(demo.report(experiment).getGroups().get(checkout.getGroup()).getMerchantDiscount())
                 .isEqualByComparingTo("0.00");
+        assertThat(demo.report(experiment).getGroups().get(checkout.getGroup()).getRefundRate())
+                .isEqualByComparingTo("100.00");
     }
 
     @Test
@@ -92,6 +103,14 @@ class MarketingDemoServiceTest {
                 .getContributionProfit()).isEqualByComparingTo("30.00");
         assertThat(demo.feedback(experiment, "orderB", "paidEvent", "SETTLED", true, "NONE")
                 .getContributionProfit()).isEqualByComparingTo("30.00");
+    }
+
+    @Test
+    void emptyExperimentHasNoIncrementalOrRateDenominators() {
+        MarketingDemoReport empty = demo.report("empty" + System.nanoTime());
+        assertThat(empty.getGroups().get(DemoGroup.LOW).getIncrementalAverageContributionProfit()).isNull();
+        assertThat(empty.getGroups().get(DemoGroup.LOW).getRefundRate()).isNull();
+        assertThat(empty.getGroups().get(DemoGroup.LOW).getRecommendedOfferUseRate()).isNull();
     }
 
     private static void assertGroup(MarketingDemoReport report, DemoGroup group, int users,

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dmp.riskdecision.component.variable.mapper.VariableVersionMapper">
+    <resultMap id="versionMap" type="com.dmp.riskdecision.component.variable.mapper.VariableVersionRow">
+        <id property="id" column="id"/>
+        <result property="variableCode" column="variable_code"/>
+        <result property="variableName" column="variable_name"/>
+        <result property="versionNumber" column="version_number"/>
+        <result property="valueType" column="value_type"/>
+        <result property="sourceType" column="source_type"/>
+        <result property="url" column="url"/>
+        <result property="timeoutMs" column="timeout_ms"/>
+        <result property="parameterNamesJson" column="parameter_names_json"/>
+        <result property="resultPath" column="result_path"/>
+        <result property="inserttime" column="inserttime"/>
+        <result property="updatetime" column="updatetime"/>
+        <result property="isactive" column="isactive"/>
+    </resultMap>
+    <select id="current" resultMap="versionMap">
+        SELECT * FROM tb_variable_version WHERE variable_code = #{variableCode} AND isactive = 1
+        ORDER BY version_number DESC LIMIT 1
+    </select>
+    <select id="search" resultMap="versionMap">
+        SELECT v.* FROM tb_variable_version v
+        INNER JOIN (SELECT variable_code, MAX(version_number) version_number
+                    FROM tb_variable_version WHERE isactive = 1 GROUP BY variable_code) latest
+          ON latest.variable_code = v.variable_code AND latest.version_number = v.version_number
+        WHERE v.isactive = 1 AND (v.variable_code LIKE #{pattern} OR v.variable_name LIKE #{pattern})
+        ORDER BY v.variable_code ASC LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM (SELECT variable_code, MAX(version_number) version_number
+            FROM tb_variable_version WHERE isactive = 1 GROUP BY variable_code) latest
+        INNER JOIN tb_variable_version v
+          ON latest.variable_code = v.variable_code AND latest.version_number = v.version_number
+        WHERE v.isactive = 1 AND (v.variable_code LIKE #{pattern} OR v.variable_name LIKE #{pattern})
+    </select>
+</mapper>

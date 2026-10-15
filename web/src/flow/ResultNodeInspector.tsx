@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import type { FlowNode } from './types'
 import { parseJsonObject } from './subflowConfig'
 
-type Props = { node: FlowNode; onChange: (config: Record<string, unknown>) => void }
+type Props = { node: FlowNode; candidates?: FlowNode[]
+  onChange: (config: Record<string, unknown>) => void }
 
 /** 显式业务结果配置，不把建议动作当作已执行动作。 */
-export default function ResultNodeInspector({ node, onChange }: Props) {
+export default function ResultNodeInspector({ node, candidates = [], onChange }: Props) {
   const config = node.config
   const action = config.suggestedAction && typeof config.suggestedAction === 'object'
     ? config.suggestedAction as Record<string, unknown> : null
@@ -38,6 +39,12 @@ export default function ResultNodeInspector({ node, onChange }: Props) {
       onChange={(event) => update('reasonCode', event.target.value)} /></label>
     <label>原因说明<textarea value={String(config.reason ?? '')} rows={2}
       onChange={(event) => update('reason', event.target.value)} /></label>
+    <label>从规则节点读取实际原因（可选）<select value={String(config.reasonFromRuleNodeId ?? '')}
+      onChange={(event) => { const next = { ...config }; if (event.target.value) next.reasonFromRuleNodeId = event.target.value
+        else delete next.reasonFromRuleNodeId; onChange(next) }}>
+      <option value="">使用上方固定原因</option>{candidates.filter((item) => item.componentKey === 'execute-rule-set')
+        .map((item) => <option key={item.id} value={item.id}>{item.id}</option>)}
+    </select></label>
     <label>业务明细 JSON<textarea value={detailsText} rows={4}
       onChange={(event) => setDetailsText(event.target.value)} /></label>
     <label>建议动作代码（可选）<input value={String(action?.code ?? '')} placeholder="如 APPLY_OFFER"

@@ -78,6 +78,13 @@ public class FlowAssetServiceImpl implements FlowAssetService {
                 .orElseThrow(() -> new NoSuchElementException("Published flow not found: " + flowCode));
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public FlowVersion getVersion(long versionId) {
+        return repository.findVersion(versionId)
+                .orElseThrow(() -> new NoSuchElementException("Flow version not found: " + versionId));
+    }
+
     @Override
     public FlowPage search(String keyword, int page, int pageSize) {
         if (page < 1 || pageSize < 1 || pageSize > 100) {
@@ -149,7 +156,9 @@ public class FlowAssetServiceImpl implements FlowAssetService {
         FlowVersion version = repository.createVersion(flowCode, number, graph,
                 compiled.getChainId(), compiled.getEl());
         chains.load(compiled.getChainId(), compiled.getEl());
-        if (!hasSubflow(graph)) verifyWithDemoInput(flowCode, number, graph, compiled.getChainId());
+        if (!hasSubflow(graph) && !hasExternalComponent(graph)) {
+            verifyWithDemoInput(flowCode, number, graph, compiled.getChainId());
+        }
         if (hasSubflow(graph)) {
             GraphValidationResult references = subflowValidation.validate(flowCode, graph);
             if (!references.isValid()) throw new GraphCompilationException(references.getIssues());
@@ -167,7 +176,7 @@ public class FlowAssetServiceImpl implements FlowAssetService {
                     || node.getKind() == NodeKind.RESULT || node.getKind() == NodeKind.SUBFLOW) {
                 configs.put(node.getId(), node.getConfig());
             }
-            if (node.getKind() == NodeKind.CONDITION) {
+            if (node.getKind() == NodeKind.CONDITION && "is-positive".equals(node.getComponentKey())) {
                 input.put((String) node.getConfig().get("inputKey"), true);
             }
         }
@@ -176,6 +185,12 @@ public class FlowAssetServiceImpl implements FlowAssetService {
         if (!result.isSuccess()) {
             throw new IllegalStateException("Generated LiteFlow chain failed validation", result.getCause());
         }
+    }
+
+    /** 外部查询节点只在实际决策请求中执行，发布时仅校验结构和配置。 */
+    private static boolean hasExternalComponent(GraphDefinition graph) {
+        return graph.getNodes().stream().anyMatch(node -> "get-variable".equals(node.getComponentKey())
+                || "execute-rule-set".equals(node.getComponentKey()));
     }
 
     private static boolean hasSubflow(GraphDefinition graph) {

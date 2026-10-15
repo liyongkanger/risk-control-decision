@@ -3,6 +3,7 @@ package com.dmp.riskdecision.common.exception;
 import com.dmp.riskdecision.common.response.ApiResponse;
 import com.dmp.riskdecision.common.response.ResultCode;
 import com.dmp.riskdecision.orchestrator.graph.GraphCompilationException;
+import com.dmp.riskdecision.component.variable.service.VariableResolutionException;
 import com.dmp.riskdecision.orchestrator.graph.GraphIssue;
 import com.dmp.riskdecision.policy.service.SceneCodeConflictException;
 import com.dmp.riskdecision.policy.service.FlowCodeConflictException;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /** 将业务与系统异常转换为统一的 HTTP 错误响应。 */
 @RestControllerAdvice
@@ -55,6 +57,18 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiResponse<Void>> missing(NoSuchElementException error) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.failure(ResultCode.NOT_FOUND, error.getMessage(), null));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    ResponseEntity<ApiResponse<Void>> noResource(NoResourceFoundException error) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.failure(ResultCode.NOT_FOUND, "Resource not found", null));
+    }
+
+    @ExceptionHandler(VariableResolutionException.class)
+    ResponseEntity<ApiResponse<Void>> variableSourceFailure(VariableResolutionException error) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(ApiResponse.failure(ResultCode.VARIABLE_RESOLUTION_FAILED, error.getMessage(), null));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

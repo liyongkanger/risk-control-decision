@@ -10,6 +10,7 @@ import com.dmp.riskdecision.business.marketing.MarketingDemoSetup;
 import com.dmp.riskdecision.business.marketing.model.CheckoutAttempt;
 import com.dmp.riskdecision.business.marketing.model.DemoGroup;
 import com.dmp.riskdecision.business.marketing.model.MarketingDemoReport;
+import com.dmp.riskdecision.business.marketing.model.MarketingRuleTrace;
 import com.dmp.riskdecision.business.marketing.repository.MarketingDemoStore;
 import com.dmp.riskdecision.business.marketing.service.MarketingDemoService;
 import jakarta.annotation.Resource;
@@ -27,10 +28,8 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class MarketingDemoServiceImpl implements MarketingDemoService {
-    private static final BigDecimal ORDER_THRESHOLD = new BigDecimal("100.00");
     private static final BigDecimal HIGH_DISCOUNT = new BigDecimal("18.00");
     private static final BigDecimal LOW_DISCOUNT = new BigDecimal("5.00");
-    private static final BigDecimal MIN_CONTRIBUTION = new BigDecimal("10.00");
     private static final BigDecimal BUDGET = new BigDecimal("2000.00");
     private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(2);
 
@@ -66,26 +65,27 @@ public class MarketingDemoServiceImpl implements MarketingDemoService {
             }
             return prior;
         }
-        flows.setup();
+        flows.ensureInitialized();
         return evaluateCheckout(experimentId, checkoutId, userId, orderAmount,
                 preDiscountMargin, existingOfferAmount);
     }
 
     /**
-     * 按共同资格条件和稳定实验组执行外层流程，并记录实际命中的外层及子流程版本。
-     * 资格金额与预算规则属于演示输入，资格子流程负责输出可追溯结论。
+     * 准备订单事实与预算快照，交给资格规则集和稳定实验组流程决策。
+     * 预算是当前进程反馈状态的样板快照，规则执行器不修改该状态。
      */
     private CheckoutAttempt evaluateCheckout(String experimentId, String checkoutId, String userId,
                                              BigDecimal orderAmount, BigDecimal margin,
                                              BigDecimal existingOfferAmount) {
         DemoGroup group = groupFor(experimentId, userId);
-        boolean eligible = orderAmount.compareTo(ORDER_THRESHOLD) >= 0
-                && margin.subtract(HIGH_DISCOUNT).compareTo(MIN_CONTRIBUTION) >= 0
-                && store.actualDiscountSpent(experimentId).add(HIGH_DISCOUNT).compareTo(BUDGET) <= 0;
+        BigDecimal marginAfterMaxOffer = margin.subtract(HIGH_DISCOUNT);
+        BigDecimal remainingBudget = BUDGET.subtract(store.actualDiscountSpent(experimentId));
         String requestId = experimentId + ":" + checkoutId;
         ExecutionResult result = decisions.evaluate(requestId, MarketingDemoFlows.SCENE_CODE,
-                Map.of("eligible", eligible, "inExperiment", group != DemoGroup.CONTROL,
+                Map.of("orderAmount", orderAmount, "marginAfterMaxOffer", marginAfterMaxOffer,
+                        "remainingBudget", remainingBudget, "inExperiment", group != DemoGroup.CONTROL,
                         "highGroup", group == DemoGroup.HIGH));
+        boolean eligible = eligibilityFrom(result);
         BusinessResult conclusion = result.getBusinessResult();
         String recommended = conclusion == null ? "NONE" : offerForConclusion(conclusion.getConclusion());
         Map<String, Long> childVersions = new HashMap<>();
@@ -96,13 +96,51 @@ public class MarketingDemoServiceImpl implements MarketingDemoService {
             }
         }
         CheckoutAttempt attempt = new CheckoutAttempt(experimentId, checkoutId, userId, group,
-                result.getRequestId(), result.getVersionId(), childVersions,
+                result.getRequestId(), result.getVersionId(), childVersions, ruleTraceFrom(result),
                 result.getStatus(), conclusion == null ? null : conclusion.getConclusion(),
-                conclusion == null ? null : conclusion.getReason(), recommended, eligible,
+                conclusion == null ? null : eligible ? conclusion.getReason()
+                        : eligibilityReason(result, conclusion.getReason()), recommended, eligible,
                 orderAmount.setScale(2), margin.setScale(2), existingOfferAmount.setScale(2));
         log.info("[MarketingDemoServiceImpl][checkout] experimentId:{} checkoutId:{} group:{} versionId:{} status:{}",
                 experimentId, checkoutId, group, result.getVersionId(), result.getStatus());
         return store.save(attempt);
+    }
+
+    /** 从资格子流程的实际结论中读取是否合格，不再预先计算布尔值。 */
+    private boolean eligibilityFrom(ExecutionResult result) {
+        Map<?, ?> business = eligibilityBusinessResult(result);
+        if (business == null) return false;
+        Object details = business.get("details");
+        return details instanceof Map && Boolean.TRUE.equals(((Map<?, ?>) details).get("eligible"));
+    }
+
+    private String eligibilityReason(ExecutionResult result, String fallback) {
+        Map<?, ?> business = eligibilityBusinessResult(result);
+        if (business == null) return fallback;
+        Object reason = business.get("reason");
+        return reason instanceof String ? (String) reason : fallback;
+    }
+
+    /** 只从实际资格子流程结果提取规则追溯信息，失败或旧版无明细时返回空。 */
+    private MarketingRuleTrace ruleTraceFrom(ExecutionResult result) {
+        Map<?, ?> business = eligibilityBusinessResult(result);
+        if (business == null || !(business.get("details") instanceof Map)) return null;
+        Map<?, ?> details = (Map<?, ?>) business.get("details");
+        Object code = details.get("ruleSetCode");
+        Object version = details.get("ruleVersionId");
+        if (!(code instanceof String) || !(version instanceof Number)) return null;
+        Object matched = details.get("matchedRuleId");
+        Object reason = business.get("reasonCode");
+        return new MarketingRuleTrace((String) code, ((Number) version).longValue(),
+                matched instanceof String ? (String) matched : null,
+                reason instanceof String ? (String) reason : null);
+    }
+
+    private Map<?, ?> eligibilityBusinessResult(ExecutionResult result) {
+        Object raw = result.getNodeResults().get("eligibilityCall");
+        if (!(raw instanceof Map)) return null;
+        Object business = ((Map<?, ?>) raw).get("businessResult");
+        return business instanceof Map ? (Map<?, ?>) business : null;
     }
 
     /**
@@ -140,7 +178,7 @@ public class MarketingDemoServiceImpl implements MarketingDemoService {
     @Override
     public synchronized MarketingDemoReport runFixture(String experimentId) {
         requireCode(experimentId, "experimentId");
-        flows.setup();
+        flows.ensureInitialized();
         Map<DemoGroup, Integer> counts = new EnumMap<>(DemoGroup.class);
         for (DemoGroup group : DemoGroup.values()) counts.put(group, 0);
         for (int candidate = 1; counts.values().stream().anyMatch(value -> value < 10); candidate++) {

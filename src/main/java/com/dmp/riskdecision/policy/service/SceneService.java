@@ -2,6 +2,7 @@ package com.dmp.riskdecision.policy.service;
 
 import com.dmp.riskdecision.policy.model.SceneInfo;
 import com.dmp.riskdecision.policy.model.ScenePage;
+import com.dmp.riskdecision.policy.model.FlowVersion;
 
 /** 场景基本信息管理用例。 */
 public interface SceneService {
@@ -16,6 +17,9 @@ public interface SceneService {
 
     /** 获取有效场景详情。 */
     SceneInfo get(String sceneCode);
+
+    /** 读取场景当前选中的不可变入口流程版本，区别于流程资产最新发布版本。 */
+    FlowVersion getSelectedFlowVersion(String sceneCode);
 
     /** 按场景码或名称搜索有效场景。 */
     ScenePage search(String keyword, int page, int pageSize);

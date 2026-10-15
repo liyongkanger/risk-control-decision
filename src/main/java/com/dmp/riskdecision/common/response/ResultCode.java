@@ -16,6 +16,8 @@ public enum ResultCode {
     FLOW_CODE_CONFLICT("流程码已存在"),
     /** 请求的资源不存在。 */
     NOT_FOUND("资源不存在"),
+    /** 变量来源调用或结果解析失败。 */
+    VARIABLE_RESOLUTION_FAILED("变量取值失败"),
     /** 请求体超过大小限制。 */
     PAYLOAD_TOO_LARGE("请求体过大"),
     /** 未预期的服务端错误。 */

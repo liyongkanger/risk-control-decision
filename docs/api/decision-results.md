@@ -111,6 +111,8 @@ Content-Type: application/json
 
 `conclusion`、`reasonCode`、`reason` 为非空字符串；`details` 是业务明细对象，缺少明细时为 `{}`；`suggestedAction` 可为 `null`，存在时 `code` 非空且 `parameters` 是对象。营销示例代码不是平台固定枚举。建议动作不表示实际发券、用券或支付完成；这些事件由后续反馈能力记录。
 
+若发布版本中的结果节点配置了 `reasonFromRuleNodeId`，业务结论仍由该 `RESULT` 节点决定，`reasonCode` 和 `reason` 则取自本次实际命中的规则结果，业务明细增加 `ruleSetCode`、`ruleVersionId` 和命中规则时的 `matchedRuleId`。规则节点结果位于 `nodeResults.<节点 ID>`，含 `resultCode`、`reasonCode`、`reason`、可空 `matchedRuleId`、`ruleSetCode` 和固定 `ruleVersionId`。规则输入缺失、类型错误或版本加载失败使 `status=FAILED`、`businessResult=null`，不当作正常业务拒绝。
+
 只含一个结果节点的新发布流程可以返回以下完整响应；版本 ID 与时间依实际环境变化：
 
 ```json

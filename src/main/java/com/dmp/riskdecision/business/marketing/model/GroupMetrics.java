@@ -16,4 +16,7 @@ public class GroupMetrics {
     private BigDecimal totalContributionProfit;
     private BigDecimal averageContributionProfit;
     private BigDecimal paymentConversionRate;
+    private BigDecimal incrementalAverageContributionProfit;
+    private BigDecimal refundRate;
+    private BigDecimal recommendedOfferUseRate;
 }

@@ -5,6 +5,8 @@ export type DemoGroup = 'CONTROL' | 'LOW' | 'HIGH'
 export type DemoCheckout = {
   experimentId: string; checkoutId: string; userId: string; group: DemoGroup
   requestId: string; decidedAt: string; outerVersionId: number; subflowVersionIds: Record<string, number>
+  ruleSetCode: string | null; ruleVersionId: number | null
+  matchedRuleId: string | null; ruleReasonCode: string | null
   decisionStatus: string; decisionConclusion: string | null; decisionReason: string | null
   recommendedOfferCode: string; eligible: boolean
   orderAmount: number; preDiscountMargin: number; existingOfferAmount: number
@@ -15,6 +17,19 @@ export type DemoMetrics = {
   group: DemoGroup; users: number; paidUsers: number; refundedUsers: number
   merchantDiscount: number; totalContributionProfit: number
   averageContributionProfit: number; paymentConversionRate: number
+  incrementalAverageContributionProfit: number | null
+  refundRate: number | null; recommendedOfferUseRate: number | null
+}
+export type DemoStatus = {
+  initialized: boolean
+  ruleCurrentVersionId: number | null
+  eligibilityCurrentVersionId: number | null; eligibilityPinnedRuleVersionId: number | null
+  selectionCurrentVersionId: number | null
+  outerCurrentVersionId: number | null; outerCurrentVersionNumber: number | null
+  outerPinnedEligibilityVersionId: number | null; outerPinnedSelectionVersionId: number | null
+  sceneSelectedOuterVersionId: number | null; sceneSelectedOuterVersionNumber: number | null
+  runningEligibilityVersionId: number | null; runningSelectionVersionId: number | null
+  runningRuleVersionId: number | null
 }
 export type DemoReport = {
   experimentId: string; groups: Record<DemoGroup, DemoMetrics>; attempts: DemoCheckout[]
@@ -40,6 +55,8 @@ const post = async <T>(path: string, body?: object) => readApi<T>(await fetch(`$
 }))
 
 export const setupMarketingDemo = () => post<DemoSetup>('/setup')
+/** 只读查询当前真正运行的规则与流程版本链。 */
+export const getMarketingDemoStatus = async () => readApi<DemoStatus>(await fetch(`${base}/status`))
 export const checkoutMarketingDemo = (input: CheckoutInput) => post<DemoCheckout>('/checkout', input)
 export const feedbackMarketingDemo = (input: FeedbackInput) => post<DemoCheckout>('/feedback', input)
 export const runMarketingFixture = (experimentId: string) => post<DemoReport>('/run-fixture', { experimentId })

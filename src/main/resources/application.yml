@@ -7,6 +7,9 @@ spring:
 liteflow:
   rule-source: flow.el.xml
 
+variable:
+  allowed-hosts: ${RISK_VARIABLE_ALLOWED_HOSTS:localhost,127.0.0.1}
+
 management:
   endpoints:
     web:

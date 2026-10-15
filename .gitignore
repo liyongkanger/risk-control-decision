@@ -7,3 +7,4 @@
 /web/src/.umi/
 /web/src/.umi-production/
 /output/playwright/
+/.local/

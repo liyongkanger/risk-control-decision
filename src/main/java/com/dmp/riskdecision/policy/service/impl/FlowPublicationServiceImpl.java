@@ -117,7 +117,9 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
         Long previous = repository.findPublished(sceneCode).map(FlowVersion::getId).orElse(null);
         FlowVersion version = repository.createVersion(sceneCode, number, graph, compiled.getChainId(), compiled.getEl());
         chains.load(compiled.getChainId(), compiled.getEl());
-        if (!hasSubflow(graph)) verifyWithDemoInput(sceneCode, number, graph, compiled.getChainId());
+        if (!hasSubflow(graph) && !hasExternalComponent(graph)) {
+            verifyWithDemoInput(sceneCode, number, graph, compiled.getChainId());
+        }
         if (hasSubflow(graph)) {
             GraphValidationResult references = subflowValidation.validate(flowCode, graph);
             if (!references.isValid()) throw new GraphCompilationException(references.getIssues());
@@ -166,6 +168,12 @@ public class FlowPublicationServiceImpl implements FlowPublicationService {
         if (!result.isSuccess()) {
             throw new IllegalStateException("Generated LiteFlow chain failed validation", result.getCause());
         }
+    }
+
+    /** 外部查询节点不参与发布时的演示输入执行。 */
+    private static boolean hasExternalComponent(GraphDefinition graph) {
+        return graph.getNodes().stream().anyMatch(node -> "get-variable".equals(node.getComponentKey())
+                || "execute-rule-set".equals(node.getComponentKey()));
     }
 
     private static boolean hasSubflow(GraphDefinition graph) {

@@ -2,12 +2,14 @@ package com.dmp.riskdecision.business.marketing.controller;
 
 import com.dmp.riskdecision.common.response.ApiResponse;
 import com.dmp.riskdecision.business.marketing.service.MarketingDemoService;
+import com.dmp.riskdecision.business.marketing.service.MarketingDemoStatusService;
 import com.dmp.riskdecision.business.marketing.vo.req.CheckoutDemoReq;
 import com.dmp.riskdecision.business.marketing.vo.req.FeedbackDemoReq;
 import com.dmp.riskdecision.business.marketing.vo.req.RunFixtureReq;
 import com.dmp.riskdecision.business.marketing.vo.resp.DemoCheckoutResp;
 import com.dmp.riskdecision.business.marketing.vo.resp.MarketingDemoReportResp;
 import com.dmp.riskdecision.business.marketing.vo.resp.MarketingDemoSetupResp;
+import com.dmp.riskdecision.business.marketing.vo.resp.MarketingDemoStatusResp;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +23,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/demo/checkout-offer")
 public class MarketingDemoController {
     @Resource private MarketingDemoService demo;
+    @Resource private MarketingDemoStatusService status;
+
+    @GetMapping("/status")
+    public ApiResponse<MarketingDemoStatusResp> status() {
+        return ApiResponse.success(new MarketingDemoStatusResp(status.get()));
+    }
 
     @PostMapping("/setup")
     public ApiResponse<MarketingDemoSetupResp> setup() {

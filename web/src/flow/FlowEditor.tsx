@@ -11,10 +11,16 @@ import { marketingDiagramLayout, marketingNodeCaption } from './marketingDiagram
 import { arrangeGraph, isVerticalLayout } from './autoLayout'
 import SubflowNodeInspector from './SubflowNodeInspector'
 import ResultNodeInspector from './ResultNodeInspector'
+import VariableNodeInspector from './VariableNodeInspector'
+import CompareVariableInspector from './CompareVariableInspector'
+import RuleSetNodeInspector from './RuleSetNodeInspector'
+import RuleResultInspector from './RuleResultInspector'
 import DecisionRunResult from './DecisionRunResult'
 import type { FlowEdge, FlowNode, FlowValidation, GraphDefinition, NodeKind } from './types'
 import { getScene } from '../services/scene'
 import { getFlow } from '../services/flow'
+import { listComponentDefinitions } from '../services/componentCatalog'
+import type { ComponentDefinition } from '../services/componentCatalog'
 import './editor.css'
 
 const kinds: NodeKind[] = ['START', 'END', 'COMPONENT', 'PARALLEL_SPLIT', 'PARALLEL_JOIN', 'CONDITION', 'CONDITION_JOIN', 'SUBFLOW', 'RESULT']
@@ -46,6 +52,29 @@ const kindHints: Record<NodeKind, string> = {
   SUBFLOW: '调用固定版本的已发布决策流程；配置需包含流程码、版本 ID 和输入映射。',
 }
 
+function nodeTypeLabel(node: FlowNode): string {
+  if (node.componentKey === 'get-variable') return '获取变量'
+  if (node.componentKey === 'compare-value') return '比较变量'
+  if (node.componentKey === 'execute-rule-set') return '执行规则集'
+  if (node.componentKey === 'rule-result-equals') return '规则结果判断'
+  return labels[node.kind]
+}
+
+function nodeCaption(node: FlowNode): string {
+  if (node.componentKey === 'get-variable' && typeof node.config.variableCode === 'string'
+    && node.config.variableCode) return node.config.variableCode
+  if (node.componentKey === 'compare-value' && node.config.expected !== undefined) {
+    const symbols: Record<string, string> = { EQ: '=', NE: '≠', GT: '>', GTE: '≥', LT: '<', LTE: '≤' }
+    const operator = String(node.config.operator ?? 'EQ')
+    return `${symbols[operator] ?? operator} ${String(node.config.expected)}`
+  }
+  if (node.componentKey === 'execute-rule-set' && typeof node.config.ruleSetCode === 'string'
+    && node.config.ruleSetCode) return node.config.ruleSetCode
+  if (node.componentKey === 'rule-result-equals' && typeof node.config.expectedResultCode === 'string'
+    && node.config.expectedResultCode) return `= ${node.config.expectedResultCode}`
+  return node.id
+}
+
 function drawNode(graph: Graph, node: FlowNode, position: { x: number; y: number },
                   vertical = false, caption?: string) {
   graph.addNode({
@@ -58,10 +87,10 @@ function drawNode(graph: Graph, node: FlowNode, position: { x: number; y: number
     ],
     attrs: {
       body: { fill: '#fff', stroke: colors[node.kind], strokeWidth: 2, rx: 8, ry: 8 },
-      kindTag: { text: `${marks[node.kind]}  ${labels[node.kind]}`, fill: colors[node.kind],
+      kindTag: { text: `${marks[node.kind]}  ${nodeTypeLabel(node)}`, fill: colors[node.kind],
         refX: 12, refY: 0.24, textAnchor: 'start', textVerticalAnchor: 'middle',
         fontSize: 10, fontWeight: 700 },
-      label: { text: caption ?? node.id, fill: '#1f2937', refX: 0.5, refY: 0.67,
+      label: { text: caption ?? nodeCaption(node), fill: '#1f2937', refX: 0.5, refY: 0.67,
         textAnchor: 'middle', textVerticalAnchor: 'middle',
         fontSize: vertical ? 13 : 12, fontWeight: vertical ? 600 : 500 },
     },
@@ -109,6 +138,7 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
   const [nodeCount, setNodeCount] = useState(3)
   const [edgeCount, setEdgeCount] = useState(2)
   const [busy, setBusy] = useState(false)
+  const [componentCatalog, setComponentCatalog] = useState<ComponentDefinition[] | undefined>()
   const [canvasHeight, setCanvasHeight] = useState<number | null>(null)
   const [requiredInputsText, setRequiredInputsText] = useState('')
   const [requiredInputsError, setRequiredInputsError] = useState<string | null>(null)
@@ -156,6 +186,14 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
     setSelected(null)
     refresh(graph)
   }
+
+  useEffect(() => {
+    let active = true
+    void listComponentDefinitions().then((items) => {
+      if (active) setComponentCatalog(items)
+    }).catch((error) => { if (active) setMessage(error instanceof Error ? error.message : '组件目录读取失败') })
+    return () => { active = false }
+  }, [])
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -245,17 +283,27 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
     })
   }
 
-  const addKind = (kind: NodeKind) => {
+  const addKind = (kind: NodeKind, componentKey?: string) => {
     const prefix = kind.toLowerCase().replaceAll('_', '')
     let id = `${prefix}${nextId.current++}`
     while (graph().getCellById(id)) id = `${prefix}${nextId.current++}`
+    const selectedKey = componentKey ?? (kind === 'COMPONENT' ? 'emit-value'
+      : kind === 'CONDITION' ? 'is-positive' : null)
+    const initialConfig = selectedKey
+      ? componentCatalog?.find((item) => item.key === selectedKey)?.defaultConfig
+      : undefined
     drawNode(graph(), {
-      id, kind, componentKey: kind === 'COMPONENT' ? 'emit-value' : kind === 'CONDITION' ? 'is-positive' : null,
+      id, kind, componentKey: selectedKey,
       failurePolicy: kind === 'COMPONENT' || kind === 'CONDITION' || kind === 'SUBFLOW' ? 'FAIL_FAST' : null,
-      config: kind === 'COMPONENT' ? { value: 'demo' } : kind === 'CONDITION' ? { inputKey: 'positive' } : {},
+      config: initialConfig ?? (kind === 'COMPONENT' ? { value: 'demo' }
+        : kind === 'CONDITION' ? { inputKey: 'positive' } : {}),
     }, { x: 190 + (nextId.current % 4) * 85, y: 80 + (nextId.current % 5) * 90 },
     (isAsset && code === 'demoCheckoutDecision')
       || isVerticalLayout(toGraphDefinition(graph(), requiredInputsRef.current)))
+    if (componentKey) {
+      setSelected({ id, type: 'node' })
+      setConfigText(JSON.stringify(initialConfig ?? {}, null, 2))
+    }
   }
 
   const updateNode = (changes: Partial<FlowNode>) => {
@@ -264,8 +312,8 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
     if (!cell?.isNode()) return
     const next = { ...(cell.getData() as FlowNode), ...changes }
     cell.setData(next)
-    cell.attr('label/text', marketingNodeCaption(code, next) ?? next.id)
-    cell.attr('kindTag/text', `${marks[next.kind]}  ${labels[next.kind]}`)
+    cell.attr('label/text', marketingNodeCaption(code, next) ?? nodeCaption(next))
+    cell.attr('kindTag/text', `${marks[next.kind]}  ${nodeTypeLabel(next)}`)
     cell.attr('kindTag/fill', colors[next.kind])
     setValidation(null)
     setValidatedSnapshot(null)
@@ -337,26 +385,46 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
         onChange={(event) => setRunInputText(event.target.value)} /></label>}
     </section>
     <div className="workspace">
-      <aside className="panel palette"><h2>节点类型</h2><p>图中使用相同符号和颜色；点击添加节点。</p>{kinds.map((kind) => <button key={kind} className="palette-item" title={kindHints[kind]} onClick={() => addKind(kind)}><span className="palette-mark" style={{ color: colors[kind] }} aria-hidden="true">{marks[kind]}</span><span>{labels[kind]}</span></button>)}</aside>
+      <aside className="panel palette"><h2>节点类型</h2><p>图中使用相同符号和颜色；点击添加节点。</p>{kinds.map((kind) => <button key={kind} className="palette-item" title={kindHints[kind]} onClick={() => addKind(kind)}><span className="palette-mark" style={{ color: colors[kind] }} aria-hidden="true">{marks[kind]}</span><span>{labels[kind]}</span></button>)}
+        {componentCatalog?.filter((item) => !item.condition && item.key !== 'emit-value').map((item) =>
+          <button key={item.key} className="palette-item" title={`添加${item.displayName}组件`}
+            onClick={() => addKind('COMPONENT', item.key)}><span className="palette-mark" style={{ color: colors.COMPONENT }} aria-hidden="true">↗</span><span>{item.displayName}</span></button>)}</aside>
       <section className="panel canvas-panel"><div className={isAsset && code === 'demoCheckoutDecision' ? 'canvas marketing-canvas' : 'canvas'}
         style={canvasHeight === null ? undefined : { height: canvasHeight }} ref={canvasRef} /></section>
       <aside className="panel inspector"><h2>节点与连线</h2>
         {selectedNode && <div className="fields"><p className="kind-hint">{kindHints[selectedNode.kind]}</p><label>节点 ID<input value={selectedNode.id} readOnly /></label><label>类型<input value={labels[selectedNode.kind]} readOnly /></label>
           {(selectedNode.kind === 'COMPONENT' || selectedNode.kind === 'CONDITION') && <><label>组件<select value={selectedNode.componentKey ?? ''} onChange={(event) => {
             const componentKey = event.target.value
-            const config = selectedNode.kind === 'COMPONENT' ? { value: 'demo' }
+            const config = componentCatalog?.find((item) => item.key === componentKey)?.defaultConfig
+              ?? (selectedNode.kind === 'COMPONENT' ? { value: 'demo' }
               : componentKey === 'equals-value'
                 ? { sourceNodeId: '', path: 'businessResult.conclusion', expected: '' }
-                : { inputKey: 'positive' }
+                : { inputKey: 'positive' })
             updateNode({ componentKey, config })
             setConfigText(JSON.stringify(config, null, 2))
           }}>
-            {selectedNode.componentKey && !componentOptionsFor(selectedNode.kind).includes(selectedNode.componentKey) && <option value={selectedNode.componentKey}>{selectedNode.componentKey}（与节点类型不匹配，请重新选择）</option>}
-            {componentOptionsFor(selectedNode.kind).map((key) => <option key={key} value={key}>{key}</option>)}
+            {selectedNode.componentKey && !componentOptionsFor(selectedNode.kind, componentCatalog).includes(selectedNode.componentKey) && <option value={selectedNode.componentKey}>{selectedNode.componentKey}（与节点类型不匹配，请重新选择）</option>}
+            {componentOptionsFor(selectedNode.kind, componentCatalog).map((key) => <option key={key} value={key}>{componentCatalog?.find((item) => item.key === key)?.displayName ?? key}</option>)}
           </select></label>
-            {selectedNode.kind === 'COMPONENT' && <><label>节点配置 JSON<textarea value={configText} onChange={(event) => setConfigText(event.target.value)} rows={6} /></label>
+            {selectedNode.kind === 'COMPONENT' && selectedNode.componentKey === 'get-variable' &&
+              <VariableNodeInspector key={selectedNode.id} node={selectedNode}
+                onChange={(config) => updateNode({ config })} />}
+            {selectedNode.kind === 'COMPONENT' && selectedNode.componentKey === 'execute-rule-set' &&
+              <RuleSetNodeInspector key={selectedNode.id} node={selectedNode}
+                requiredInputs={requiredInputsRef.current ?? []}
+                candidates={graph().getNodes().map((item) => item.getData() as FlowNode)}
+                onChange={(config) => updateNode({ config })} />}
+            {selectedNode.kind === 'COMPONENT' && !['get-variable', 'execute-rule-set'].includes(selectedNode.componentKey ?? '') && <><label>节点配置 JSON<textarea value={configText} onChange={(event) => setConfigText(event.target.value)} rows={6} /></label>
               <button onClick={() => { try { updateNode({ config: parseJsonObject(configText) }); setMessage('节点配置已更新') } catch (error) { setMessage(error instanceof Error ? error.message : 'JSON 格式错误') } }}>应用配置</button></>}
-            {selectedNode.kind === 'CONDITION' && (selectedNode.componentKey === 'equals-value'
+            {selectedNode.kind === 'CONDITION' && selectedNode.componentKey === 'compare-value' &&
+              <CompareVariableInspector node={selectedNode}
+                candidates={graph().getNodes().map((item) => item.getData() as FlowNode)}
+                onChange={(config) => updateNode({ config })} />}
+            {selectedNode.kind === 'CONDITION' && selectedNode.componentKey === 'rule-result-equals' &&
+              <RuleResultInspector node={selectedNode}
+                candidates={graph().getNodes().map((item) => item.getData() as FlowNode)}
+                onChange={(config) => updateNode({ config })} />}
+            {selectedNode.kind === 'CONDITION' && !['compare-value', 'rule-result-equals'].includes(selectedNode.componentKey ?? '') && (selectedNode.componentKey === 'equals-value'
               ? <><label>上游节点 ID<input value={String(selectedNode.config.sourceNodeId ?? '')} placeholder="如 eligibilityCall"
                   onChange={(event) => updateNode({ config: { ...selectedNode.config, sourceNodeId: event.target.value } })} /></label>
                 <label>结果路径<input value={String(selectedNode.config.path ?? '')} placeholder="businessResult.conclusion"
@@ -366,6 +434,7 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
               : <label>请求输入字段<input value={String(selectedNode.config.inputKey ?? '')} placeholder="如 positive"
                   onChange={(event) => updateNode({ config: { ...selectedNode.config, inputKey: event.target.value } })} /></label>)}</>}
           {selectedNode.kind === 'RESULT' && <ResultNodeInspector key={selectedNode.id} node={selectedNode}
+            candidates={graph().getNodes().map((item) => item.getData() as FlowNode)}
             onChange={(config) => updateNode({ config })} />}
           {selectedNode.kind === 'SUBFLOW' && <SubflowNodeInspector key={selectedNode.id} node={selectedNode}
             ownerFlowCode={ownerFlowCode} onChange={(config) => updateNode({ config })} />}
