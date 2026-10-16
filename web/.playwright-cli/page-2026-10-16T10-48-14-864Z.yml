@@ -1,0 +1,226 @@
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - complementary [ref=e6]:
+      - generic [ref=e7]:
+        - heading "风控决策平台" [level=1] [ref=e21] [cursor=pointer]
+        - menu [ref=e23]:
+          - menuitem [ref=e24] [cursor=pointer]:
+            - link "appstore 场景管理" [ref=e188]:
+              - /url: /scenes
+              - generic [ref=e189]:
+                - img "appstore" [ref=e191]
+                - generic [ref=e194]: 场景管理
+          - menuitem [ref=e32] [cursor=pointer]:
+            - link "apartment 流程资产" [ref=e34]:
+              - /url: /flows
+              - generic [ref=e35]:
+                - img "apartment" [ref=e37]
+                - generic [ref=e40]: 流程资产
+          - menuitem "api 组件管理" [ref=e41] [cursor=pointer]:
+            - generic [ref=e43]:
+              - img "api" [ref=e45]
+              - generic [ref=e48]: 组件管理
+          - menuitem [ref=e49] [cursor=pointer]:
+            - link "database 变量中心" [ref=e51]:
+              - /url: /variable-center
+              - generic [ref=e52]:
+                - img "database" [ref=e54]
+                - generic [ref=e57]: 变量中心
+          - menuitem [ref=e58] [cursor=pointer]:
+            - link "deployment-unit 规则中心" [ref=e60]:
+              - /url: /rule-center
+              - generic [ref=e61]:
+                - img "deployment-unit" [ref=e63]
+                - generic [ref=e66]: 规则中心
+          - menuitem "profile 决策记录" [ref=e67] [cursor=pointer]:
+            - generic [ref=e195]:
+              - img "profile" [ref=e197]
+              - generic [ref=e200]: 决策记录
+          - menuitem [ref=e76] [cursor=pointer]:
+            - link "experiment 营销闭环演示" [ref=e78]:
+              - /url: /marketing-demo
+              - generic [ref=e79]:
+                - img "experiment" [ref=e81]
+                - generic [ref=e84]: 营销闭环演示
+          - menuitem [ref=e85] [cursor=pointer]:
+            - link "partition 流程设计" [ref=e87]:
+              - /url: /flow-design
+              - generic [ref=e88]:
+                - img "partition" [ref=e90]
+                - generic [ref=e93]: 流程设计
+        - generic [ref=e94]: 演示用户
+        - generic [ref=e97] [cursor=pointer]
+    - main [ref=e101]:
+      - generic [ref=e201]:
+        - generic "决策记录" [ref=e205]
+        - generic [ref=e208]:
+          - generic [ref=e209]: 每次执行有独立 ID，可追溯当时的请求、固定版本、业务结果及实际节点轨迹。
+          - generic [ref=e210]:
+            - textbox "筛选场景码" [ref=e212]:
+              - /placeholder: 场景码
+            - textbox "筛选请求标识" [ref=e214]:
+              - /placeholder: 请求标识（精确匹配）
+            - generic [ref=e216] [cursor=pointer]:
+              - generic [ref=e217]:
+                - generic: 全部状态
+                - combobox "筛选执行状态" [ref=e218]
+              - img "down" [ref=e220]
+            - button "查 询" [ref=e224] [cursor=pointer]
+          - generic [ref=e228]:
+            - table [ref=e232]:
+              - rowgroup [ref=e241]:
+                - row [ref=e242]:
+                  - columnheader "记录时间" [ref=e243]
+                  - columnheader "场景" [ref=e244]
+                  - columnheader "请求标识" [ref=e245]
+                  - columnheader "固定版本 ID" [ref=e246]
+                  - columnheader "状态" [ref=e247]
+                  - columnheader "业务结论 / 错误码" [ref=e248]
+                  - columnheader "操作" [ref=e249]
+              - rowgroup [ref=e250]:
+                - row [ref=e251]:
+                  - cell "2026-10-16 18:47:43" [ref=e252]
+                  - cell "demoCheckoutScene" [ref=e253]
+                  - cell "recordLive:order001" [ref=e254]
+                  - cell "3" [ref=e255]
+                  - cell "成功" [ref=e256]
+                  - cell "NO_NEW_OFFER" [ref=e258]
+                  - cell [ref=e259]:
+                    - button "查看链路" [ref=e260] [cursor=pointer]
+            - list [ref=e262]:
+              - listitem [ref=e263]: 共 1 条
+              - listitem "上一页" [ref=e264]:
+                - button [disabled] [ref=e265]:
+                  - img "left" [ref=e266]
+              - listitem "1" [ref=e269] [cursor=pointer]
+              - listitem "下一页" [ref=e271]:
+                - button [disabled] [ref=e272]:
+                  - img "right" [ref=e273]
+              - listitem [ref=e276]:
+                - generic [ref=e277]:
+                  - generic "10 条/页" [ref=e278]:
+                    - text: 10 条/页
+                    - combobox "页码" [ref=e279]
+                  - img "down" [ref=e281]
+  - dialog "决策执行详情" [ref=e285]:
+    - generic [ref=e287]:
+      - button "关闭" [ref=e288] [cursor=pointer]:
+        - img "close" [ref=e289]
+      - generic [ref=e292]: 决策执行详情
+    - generic [ref=e293]:
+      - generic [ref=e294]:
+        - generic [ref=e295]: 执行成功
+        - heading "NO_NEW_OFFER" [level=3] [ref=e296]
+        - paragraph [ref=e297]: 本次不新增优惠
+      - table [ref=e300]:
+        - rowgroup [ref=e301]:
+          - row [ref=e302]:
+            - 'cell "执行 ID : 50d73897-0f62-49cc-83d3-87f3a8521293" [ref=e303]':
+              - generic [ref=e304]:
+                - generic [ref=e305]: "执行 ID :"
+                - generic [ref=e306]: 50d73897-0f62-49cc-83d3-87f3a8521293
+            - 'cell "请求标识 : recordLive:order001" [ref=e307]':
+              - generic [ref=e308]:
+                - generic [ref=e309]: "请求标识 :"
+                - generic [ref=e310]: recordLive:order001
+          - row [ref=e311]:
+            - 'cell "场景 : demoCheckoutScene" [ref=e312]':
+              - generic [ref=e313]:
+                - generic [ref=e314]: "场景 :"
+                - generic [ref=e315]: demoCheckoutScene
+            - 'cell "入口固定版本 ID : 3" [ref=e316]':
+              - generic [ref=e317]:
+                - generic [ref=e318]: "入口固定版本 ID :"
+                - generic [ref=e319]: "3"
+          - row [ref=e320]:
+            - 'cell "执行记录时间 : 2026-10-16 18:47:43" [ref=e321]':
+              - generic [ref=e322]:
+                - generic [ref=e323]: "执行记录时间 :"
+                - generic [ref=e324]: 2026-10-16 18:47:43
+            - 'cell "业务原因码 / 错误码 : NO_NEW_OFFER" [ref=e325]':
+              - generic [ref=e326]:
+                - generic [ref=e327]: "业务原因码 / 错误码 :"
+                - generic [ref=e328]: NO_NEW_OFFER
+      - heading "实际执行的节点" [level=5] [ref=e329]
+      - generic [ref=e330]: 按节点开始时间排列；子流程展开在调用节点下。跳过的节点不会出现在轨迹中。
+      - generic [ref=e331]:
+        - generic [ref=e332]:
+          - generic [ref=e333]:
+            - generic [ref=e334]: "1"
+            - strong [ref=e335]: eligibilityCall
+            - generic [ref=e336]: 成功
+          - generic [ref=e337]: 流程 demoCheckoutScene · v1 · 2026-10-16 10:47:43
+          - generic [ref=e338]: 调用子流程 demoOfferEligibility · 固定版本 ID 1
+          - generic [ref=e339]:
+            - generic [ref=e340]:
+              - generic [ref=e341]:
+                - generic [ref=e342]: "1"
+                - strong [ref=e343]: eligibilityRules
+                - generic [ref=e344]: 成功
+              - generic [ref=e345]: 流程 demoOfferEligibility · v1 · 2026-10-16 10:47:43
+              - group [ref=e346]:
+                - generic "查看该节点输出" [ref=e347] [cursor=pointer]
+            - generic [ref=e348]:
+              - generic [ref=e349]:
+                - generic [ref=e350]: "2"
+                - strong [ref=e351]: qualified
+                - generic [ref=e352]: 成功
+              - generic [ref=e353]: 流程 demoOfferEligibility · v1 · 2026-10-16 10:47:43
+            - generic [ref=e354]:
+              - generic [ref=e355]:
+                - generic [ref=e356]: "3"
+                - strong [ref=e357]: eligibleResult
+                - generic [ref=e358]: 成功
+              - generic [ref=e359]: 流程 demoOfferEligibility · v1 · 2026-10-16 10:47:43
+          - group [ref=e360]:
+            - generic "查看该节点输出" [ref=e361] [cursor=pointer]
+        - generic [ref=e362]:
+          - generic [ref=e363]:
+            - generic [ref=e364]: "2"
+            - strong [ref=e365]: selectionCall
+            - generic [ref=e366]: 成功
+          - generic [ref=e367]: 流程 demoCheckoutScene · v1 · 2026-10-16 10:47:43
+          - generic [ref=e368]: 调用子流程 demoOfferSelection · 固定版本 ID 2
+          - generic [ref=e369]:
+            - generic [ref=e370]:
+              - generic [ref=e371]:
+                - generic [ref=e372]: "1"
+                - strong [ref=e373]: eligibleCheck
+                - generic [ref=e374]: 成功
+              - generic [ref=e375]: 流程 demoOfferSelection · v1 · 2026-10-16 10:47:43
+            - generic [ref=e376]:
+              - generic [ref=e377]:
+                - generic [ref=e378]: "2"
+                - strong [ref=e379]: experimentCheck
+                - generic [ref=e380]: 成功
+              - generic [ref=e381]: 流程 demoOfferSelection · v1 · 2026-10-16 10:47:43
+            - generic [ref=e382]:
+              - generic [ref=e383]:
+                - generic [ref=e384]: "3"
+                - strong [ref=e385]: controlResult
+                - generic [ref=e386]: 成功
+              - generic [ref=e387]: 流程 demoOfferSelection · v1 · 2026-10-16 10:47:43
+          - group [ref=e388]:
+            - generic "查看该节点输出" [ref=e389] [cursor=pointer]
+        - generic [ref=e390]:
+          - generic [ref=e391]:
+            - generic [ref=e392]: "3"
+            - strong [ref=e393]: highCheck
+            - generic [ref=e394]: 成功
+          - generic [ref=e395]: 流程 demoCheckoutScene · v1 · 2026-10-16 10:47:43
+        - generic [ref=e396]:
+          - generic [ref=e397]:
+            - generic [ref=e398]: "4"
+            - strong [ref=e399]: lowCheck
+            - generic [ref=e400]: 成功
+          - generic [ref=e401]: 流程 demoCheckoutScene · v1 · 2026-10-16 10:47:43
+        - generic [ref=e402]:
+          - generic [ref=e403]:
+            - generic [ref=e404]: "5"
+            - strong [ref=e405]: noResult
+            - generic [ref=e406]: 成功
+          - generic [ref=e407]: 流程 demoCheckoutScene · v1 · 2026-10-16 10:47:43
+      - group [ref=e408]:
+        - generic "查看本次输入快照" [ref=e409] [cursor=pointer]
+      - group [ref=e410]:
+        - generic "查看完整执行结果 JSON" [ref=e411] [cursor=pointer]

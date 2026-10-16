@@ -1,7 +1,8 @@
 import type { Graph } from '@antv/x6'
-import type { FlowEdge, FlowNode, GraphDefinition, NodeKind } from './types'
+import type { ContextBinding, FlowEdge, FlowNode, GraphDefinition, NodeKind } from './types'
 
-export function toGraphDefinition(graph: Pick<Graph, 'getNodes' | 'getEdges'>, requiredInputs?: string[]): GraphDefinition {
+export function toGraphDefinition(graph: Pick<Graph, 'getNodes' | 'getEdges'>, requiredInputs?: string[],
+                                  contextBindings?: ContextBinding[]): GraphDefinition {
   const layout: GraphDefinition['layout'] = {}
   const nodes: FlowNode[] = graph.getNodes().map((node) => {
     const data = (node.getData() ?? {}) as Partial<FlowNode>
@@ -23,5 +24,6 @@ export function toGraphDefinition(graph: Pick<Graph, 'getNodes' | 'getEdges'>, r
       branch: data.branch ?? null,
     }
   })
-  return { schemaVersion: 1, ...(requiredInputs ? { requiredInputs } : {}), nodes, edges, layout }
+  return { schemaVersion: 1, ...(requiredInputs ? { requiredInputs } : {}),
+    ...(contextBindings ? { contextBindings } : {}), nodes, edges, layout }
 }

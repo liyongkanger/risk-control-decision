@@ -1,18 +1,37 @@
 import { PageContainer } from '@ant-design/pro-components'
 import { useLocation } from '@umijs/max'
-import { Button, Card, Input, InputNumber, Modal, Select, Space, Table, Typography, message } from 'antd'
-import { useCallback, useEffect, useState } from 'react'
+import { Button, Card, Input, Modal, Space, Table, Typography, message } from 'antd'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createRuleSet, getRuleSet, getRuleSetVersion, listRuleSets, publishRuleSet, testRuleSet,
   testRuleSetVersion, updateRuleDraft } from '../../services/ruleCenter'
-import type { RuleCondition, RuleDefinition, RuleOutcome, RuleSet, RuleSetPage, RuleSetSummary, RuleValueType } from '../../services/ruleCenter'
+import type { RuleDefinition, RuleSet, RuleSetPage, RuleSetSummary } from '../../services/ruleCenter'
 import { parseRuleTestInput } from './ruleInput'
+import { isRuleInputReferenced, renameRuleInput, selectRuleVariable } from './variableSelection'
+import VariablePicker from './VariablePicker'
+import RuleVariableCard from './RuleVariableCard'
+import UnmatchedResultEditor from './UnmatchedResultEditor'
+import { getVariableVersion } from '../../services/variableCenter'
+import type { VariableVersion } from '../../services/variableCenter'
+import { buildRuleTrialSetup, retainRuleTestValues, setRuleTrialField } from './ruleTestSamples'
+import type { RuleTrialField } from './ruleTestSamples'
+import { createDraftRuleRow } from './ruleRowModel'
+import RuleRowEditor from './RuleRowEditor'
+import RuleTrialPanel from './RuleTrialPanel'
+import type { TrialDisplayResult } from './RuleTrialPanel'
+import './rule-center.css'
 
 const emptyDefinition = (): RuleDefinition => ({
-  inputs: [{ name: 'value', type: 'DECIMAL' }], resultCodes: ['PASS', 'REJECT'], rows: [],
+  inputs: [], resultCodes: ['PASS', 'REJECT'], rows: [],
   defaultResult: { resultCode: 'PASS', reasonCode: 'DEFAULT', reason: '符合规则' },
 })
-const operators = ['EQ', 'NE', 'GT', 'GTE', 'LT', 'LTE'] as const
-const typeOptions = ['STRING', 'BOOLEAN', 'DECIMAL'] as const
+
+const parseSampleObject = (raw: string): Record<string, unknown> | null => {
+  try {
+    const value: unknown = JSON.parse(raw)
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown> : null
+  } catch { return null }
+}
 
 /** 编辑并发布有版本的首命中规则表。 */
 export default function RuleCenterPage() {
@@ -32,9 +51,19 @@ export default function RuleCenterPage() {
   const [definition, setDefinition] = useState<RuleDefinition>(emptyDefinition)
   const [dirty, setDirty] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [sample, setSample] = useState('{"value":"100"}')
+  const [sample, setSample] = useState('{}')
+  const [contextSample, setContextSample] = useState('{}')
+  const [samplesLoading, setSamplesLoading] = useState(false)
+  const [trialFields, setTrialFields] = useState<RuleTrialField[]>([])
+  const [trialTarget, setTrialTarget] = useState<'DRAFT' | 'PUBLISHED'>('DRAFT')
+  const [publishedFieldsVersionId, setPublishedFieldsVersionId] = useState<number | null>(null)
+  const [trialError, setTrialError] = useState<string | null>(null)
+  const sampleRequest = useRef(0)
+  const publishedRequest = useRef(0)
   const [testVersionId, setTestVersionId] = useState<number | null>(null)
-  const [result, setResult] = useState<string | null>(null)
+  const [result, setResult] = useState<TrialDisplayResult | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pickerTarget, setPickerTarget] = useState<number | null>(null)
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -43,23 +72,83 @@ export default function RuleCenterPage() {
     finally { setLoading(false) }
   }, [keyword, page, size, notice])
   useEffect(() => { void reload() }, [reload])
-
-  const change = (next: RuleDefinition) => { setDefinition(next); setDirty(true); setResult(null) }
+  const change = (next: RuleDefinition) => {
+    setDefinition(next); setDirty(true); setResult(null); setTrialError(null)
+  }
+  const prepareSamples = async (next: RuleDefinition, preserveExisting = false): Promise<boolean> => {
+    const request = ++sampleRequest.current
+    const previousInput = preserveExisting ? parseSampleObject(sample) : null
+    const previousContext = preserveExisting ? parseSampleObject(contextSample) : null
+    setSamplesLoading(true)
+    try {
+      const setup = await buildRuleTrialSetup(next, getVariableVersion)
+      if (request === sampleRequest.current) {
+        const retained = retainRuleTestValues(setup.samples, {
+          input: previousInput ?? {}, contextValues: previousContext ?? {},
+        })
+        setTrialFields(setup.fields)
+        if (!preserveExisting || previousInput !== null) setSample(JSON.stringify(retained.input, null, 2))
+        if (!preserveExisting || previousContext !== null) {
+          setContextSample(JSON.stringify(retained.contextValues, null, 2))
+        }
+        if (preserveExisting && (previousInput === null || previousContext === null)) {
+          notice.warning('试算样例 JSON 无效，已保留原文；请手动补充新变量')
+        }
+        return true
+      }
+    } catch (error) {
+      if (request === sampleRequest.current) notice.error(error instanceof Error
+        ? error.message : '试算样例准备失败')
+    } finally { if (request === sampleRequest.current) setSamplesLoading(false) }
+    return false
+  }
+  const preparePublishedSamples = async (id: number) => {
+    const request = ++publishedRequest.current
+    setPublishedFieldsVersionId(null)
+    setTrialError(null)
+    setSamplesLoading(true)
+    try {
+      const version = await getRuleSetVersion(id)
+      if (request !== publishedRequest.current) return
+      if (version.code !== code) throw new Error('该版本不属于当前规则集')
+      if (await prepareSamples(version.definition, true) && request === publishedRequest.current) {
+        setPublishedFieldsVersionId(id)
+      }
+    } catch (error) {
+      if (request === publishedRequest.current) setTrialError(error instanceof Error
+        ? error.message : '发布版本读取失败')
+    } finally { if (request === publishedRequest.current) setSamplesLoading(false) }
+  }
   const newRule = () => {
+    sampleRequest.current++
+    publishedRequest.current++
     setExisting(null); setCode(''); setName(''); setDefinition(emptyDefinition());
-    setDirty(true); setResult(null); setSample('{"value":"100"}'); setTestVersionId(null); setOpened(true)
+    setDirty(true); setResult(null); setSample('{}'); setContextSample('{}'); setSamplesLoading(false)
+    setTrialFields([]); setTrialTarget('DRAFT'); setPublishedFieldsVersionId(null)
+    setTrialError(null)
+    setTestVersionId(null)
+    setPickerOpen(false); setOpened(true)
   }
   const openRule = async (item: RuleSetSummary) => {
+    const request = ++sampleRequest.current
+    publishedRequest.current++
     try {
       const current = await getRuleSet(item.code)
+      if (request !== sampleRequest.current) return
       setExisting(current); setCode(current.code); setName(current.name)
       setDefinition(current.definition); setDirty(false); setResult(null); setOpened(true)
+      setTrialTarget('DRAFT'); setTrialError(null); setTrialFields([])
+      setPublishedFieldsVersionId(null)
       setTestVersionId(current.currentVersionId)
-      setSample(JSON.stringify(Object.fromEntries(current.definition.inputs.map((input) =>
-        [input.name, input.type === 'DECIMAL' ? '0' : input.type === 'BOOLEAN' ? false : ''])), null, 2))
+      setSample('{}'); setContextSample('{}')
+      void prepareSamples(current.definition)
     } catch (error) { notice.error(error instanceof Error ? error.message : '规则详情读取失败') }
   }
   const save = async () => {
+    if (definition.inputs.length === 0) { notice.error('请先从变量中心选择至少一个变量'); return }
+    if (definition.rows.some((row) => row.conditions.some((condition) => condition.expected === null))) {
+      notice.error('请填写每个条件的比较值'); return
+    }
     setBusy(true)
     try {
       const next = existing
@@ -87,9 +176,10 @@ export default function RuleCenterPage() {
     setBusy(true)
     try {
       const input = parseRuleTestInput(sample, definition)
-      const value = await testRuleSet(code, input)
-      setResult(`${value.resultCode} · ${value.reasonCode} · ${value.reason} · ${value.matchedRuleId ?? '兜底'}`)
-    } catch (error) { notice.error(error instanceof Error ? error.message : '规则试算失败') }
+      const contextValues = parseRuleTestInput(contextSample, { ...definition, inputs: [] })
+      const value = await testRuleSet(code, input, contextValues)
+      setResult({ evaluation: value, versionLabel: '已保存草稿' }); setTrialError(null)
+    } catch (error) { setResult(null); setTrialError(error instanceof Error ? error.message : '规则试算失败') }
     finally { setBusy(false) }
   }
   const runVersionTest = async () => {
@@ -99,27 +189,40 @@ export default function RuleCenterPage() {
       const version = await getRuleSetVersion(testVersionId)
       if (version.code !== code) throw new Error('该版本不属于当前规则集')
       const input = parseRuleTestInput(sample, version.definition)
-      const value = await testRuleSetVersion(code, testVersionId, input)
-      setResult(`v${version.versionNumber} · ${value.resultCode} · ${value.reasonCode} · ${value.reason} · ${value.matchedRuleId ?? '兜底'}`)
-    } catch (error) { notice.error(error instanceof Error ? error.message : '发布版本试算失败') }
+      const contextValues = parseRuleTestInput(contextSample, { ...version.definition, inputs: [] })
+      const value = await testRuleSetVersion(code, testVersionId, input, contextValues)
+      setResult({ evaluation: value,
+        versionLabel: `发布版 v${version.versionNumber} · ID ${version.id}` }); setTrialError(null)
+    } catch (error) { setResult(null); setTrialError(error instanceof Error ? error.message : '发布版本试算失败') }
     finally { setBusy(false) }
   }
-  const updateInput = (index: number, patch: Partial<RuleDefinition['inputs'][number]>) => change({
-    ...definition, inputs: definition.inputs.map((item, i) => i === index ? { ...item, ...patch } : item),
-  })
+  const updateTrialField = (field: RuleTrialField, value: string | boolean) => {
+    try {
+      if (field.source === 'REQUEST_INPUT') setSample(setRuleTrialField(sample, field.code, value))
+      else setContextSample(setRuleTrialField(contextSample, field.code, value))
+      setResult(null); setTrialError(null)
+    } catch (error) {
+      setTrialError(error instanceof Error ? error.message : '试算数据格式无效')
+    }
+  }
+  const chooseVariable = (variable: VariableVersion) => {
+    try {
+      const previousType = pickerTarget === null ? null : definition.inputs[pickerTarget]?.type
+      const next = selectRuleVariable(definition, variable, pickerTarget ?? undefined)
+      change(next)
+      setPickerOpen(false)
+      void prepareSamples(next, true)
+      if (previousType && previousType !== variable.valueType) {
+        notice.warning('变量类型已改变，相关条件已重置为“等于”；请重新填写比较值')
+      }
+    } catch (error) { notice.error(error instanceof Error ? error.message : '选择变量失败') }
+  }
   const updateRow = (index: number, patch: Partial<RuleDefinition['rows'][number]>) => change({
     ...definition, rows: definition.rows.map((item, i) => i === index ? { ...item, ...patch } : item),
   })
-  const updateCondition = (rowIndex: number, conditionIndex: number, patch: Partial<RuleCondition>) => {
-    const row = definition.rows[rowIndex]
-    updateRow(rowIndex, { conditions: row.conditions.map((item, i) =>
-      i === conditionIndex ? { ...item, ...patch } : item) })
-  }
-  const editOutcome = (outcome: RuleOutcome, patch: Partial<RuleOutcome>) => ({ ...outcome, ...patch })
 
   return <PageContainer title="规则中心">
     {holder}
-    <Typography.Paragraph>规则集按优先级命中第一行；流程引用固定发布版本。变量取值仍由变量中心负责。</Typography.Paragraph>
     <Space style={{ marginBottom: 16 }}>
       <Input.Search aria-label="搜索规则集" value={searchText} placeholder="规则集码或名称"
         onChange={(event) => setSearchText(event.target.value)}
@@ -143,93 +246,72 @@ export default function RuleCenterPage() {
           <label>名称 <Input aria-label="规则集名称" value={name} disabled={!!existing} onChange={(e) => setName(e.target.value)} /></label>
           <span>发布版本 ID：{existing?.currentVersionId ?? '未发布'}</span>
         </Space>
-        <Card size="small" title="输入字段" style={{ marginBottom: 12 }} extra={<Button onClick={() => change({ ...definition,
-          inputs: [...definition.inputs, { name: '', type: 'STRING' }] })}>添加输入</Button>}>
-          {definition.inputs.map((input, index) => <Space key={index} wrap style={{ display: 'flex', marginBottom: 8 }}>
-            <Input aria-label={`输入字段 ${index + 1}`} placeholder="字段名" value={input.name}
-              onChange={(e) => updateInput(index, { name: e.target.value })} />
-            <Select aria-label={`输入类型 ${index + 1}`} value={input.type} style={{ width: 130 }}
-              options={typeOptions.map((value) => ({ value, label: value }))}
-              onChange={(value: RuleValueType) => updateInput(index, { type: value })} />
-            <Button danger onClick={() => change({ ...definition,
-              inputs: definition.inputs.filter((_, i) => i !== index) })}>删除</Button>
-          </Space>)}
+        <Card size="small" title={`规则使用的变量（${definition.inputs.length}）`}
+          style={{ marginBottom: 12 }} extra={<Button onClick={() => {
+          setPickerTarget(null); setPickerOpen(true)
+        }}>搜索添加变量</Button>}>
+          <Typography.Paragraph type="secondary" className="rule-variables-hint">
+            先从变量中心选择固定版本；规则输入名用于下方条件引用，可按业务含义调整。
+          </Typography.Paragraph>
+          {definition.inputs.length === 0 && <Typography.Text type="secondary">
+            先从变量中心选择变量，再添加规则行和比较条件。
+          </Typography.Text>}
+          <div className="rule-variable-list">{definition.inputs.map((input, index) =>
+            <RuleVariableCard key={`${input.variableBinding.variableCode}-${index}`}
+              input={input} index={index}
+              referenced={isRuleInputReferenced(definition, input.name)}
+              onAliasChange={(name) => {
+                try { change(renameRuleInput(definition, index, name)) }
+                catch (error) { notice.error(error instanceof Error ? error.message : '规则输入名无效') }
+              }}
+              onReplace={() => { setPickerTarget(index); setPickerOpen(true) }}
+              onRemove={() => {
+                const next = { ...definition, inputs: definition.inputs.filter((_, i) => i !== index) }
+                change(next); void prepareSamples(next, true)
+              }} />)}</div>
         </Card>
         <Card size="small" title="业务结果码" style={{ marginBottom: 12 }}>
           <Input aria-label="结果码列表" value={definition.resultCodes.join(', ')}
             placeholder="PASS, REJECT" onChange={(e) => change({ ...definition,
               resultCodes: e.target.value.split(/[,，]/).map((item) => item.trim()).filter(Boolean) })} />
         </Card>
-        <Card size="small" title="规则行（优先级小的先判断）" style={{ marginBottom: 12 }}
-          extra={<Button onClick={() => change({ ...definition, rows: [...definition.rows, {
-            id: '', priority: (definition.rows.at(-1)?.priority ?? 0) + 10,
-            conditions: [{ input: definition.inputs[0]?.name ?? '', operator: 'EQ', expected: '' }],
-            result: { resultCode: definition.resultCodes[0] ?? '', reasonCode: '', reason: '' },
-          }] })}>添加规则行</Button>}>
-          {definition.rows.map((row, index) => <Card key={index} size="small" style={{ marginBottom: 10 }}
-            title={<Space><Input aria-label={`规则行标识 ${index + 1}`} placeholder="规则行标识" value={row.id}
-              onChange={(e) => updateRow(index, { id: e.target.value })} />
-              <InputNumber aria-label={`优先级 ${index + 1}`} min={0} value={row.priority}
-                onChange={(value) => updateRow(index, { priority: value ?? 0 })} /></Space>}
-            extra={<Button danger onClick={() => change({ ...definition,
-              rows: definition.rows.filter((_, i) => i !== index) })}>删除行</Button>}>
-            {row.conditions.map((condition, ci) => {
-              const type = definition.inputs.find((input) => input.name === condition.input)?.type ?? 'STRING'
-              return <Space key={ci} wrap style={{ display: 'flex', marginBottom: 8 }}>
-                <Select aria-label={`条件字段 ${index + 1}-${ci + 1}`} value={condition.input} style={{ width: 165 }}
-                  options={definition.inputs.map((input) => ({ value: input.name, label: input.name }))}
-                  onChange={(value) => updateCondition(index, ci, { input: value })} />
-                <Select aria-label={`比较符 ${index + 1}-${ci + 1}`} value={condition.operator} style={{ width: 100 }}
-                  options={operators.filter((op) => type === 'DECIMAL' || op === 'EQ' || op === 'NE')
-                    .map((value) => ({ value, label: value }))}
-                  onChange={(value: RuleCondition['operator']) => updateCondition(index, ci, { operator: value })} />
-                {type === 'BOOLEAN' ? <Select aria-label={`预期值 ${index + 1}-${ci + 1}`}
-                  value={String(condition.expected)} style={{ width: 110 }}
-                  options={[{ value: 'true', label: 'true' }, { value: 'false', label: 'false' }]}
-                  onChange={(value) => updateCondition(index, ci, { expected: value === 'true' })} />
-                  : type === 'DECIMAL' ? <Input aria-label={`预期值 ${index + 1}-${ci + 1}`}
-                    placeholder="精确十进制，如 100.05" value={String(condition.expected ?? '')}
-                    onChange={(event) => updateCondition(index, ci, { expected: event.target.value })} />
-                    : <Input aria-label={`预期值 ${index + 1}-${ci + 1}`} value={String(condition.expected ?? '')}
-                      onChange={(e) => updateCondition(index, ci, { expected: e.target.value })} />}
-                <Button danger onClick={() => updateRow(index, { conditions: row.conditions.filter((_, i) => i !== ci) })}>删除条件</Button>
-              </Space>
-            })}
-            <Button size="small" onClick={() => updateRow(index, { conditions: [...row.conditions,
-              { input: definition.inputs[0]?.name ?? '', operator: 'EQ', expected: '' }] })}>添加 AND 条件</Button>
-            <Space wrap style={{ display: 'flex', marginTop: 12 }}>
-              <Select aria-label={`结果码 ${index + 1}`} value={row.result.resultCode} style={{ width: 160 }}
-                options={definition.resultCodes.map((value) => ({ value, label: value }))}
-                onChange={(value) => updateRow(index, { result: editOutcome(row.result, { resultCode: value }) })} />
-              <Input aria-label={`原因码 ${index + 1}`} placeholder="原因码" value={row.result.reasonCode}
-                onChange={(e) => updateRow(index, { result: editOutcome(row.result, { reasonCode: e.target.value }) })} />
-              <Input aria-label={`原因 ${index + 1}`} placeholder="原因" value={row.result.reason}
-                onChange={(e) => updateRow(index, { result: editOutcome(row.result, { reason: e.target.value }) })} />
-            </Space>
-          </Card>)}
+        <Card size="small" title="规则行" style={{ marginBottom: 12 }}
+          extra={<Button type="primary" disabled={definition.inputs.length === 0}
+            onClick={() => change({ ...definition,
+              rows: [...definition.rows, createDraftRuleRow(definition)] })}>添加规则行</Button>}>
+          <Typography.Paragraph type="secondary">按优先级从小到大依次判断；每行条件全部满足后返回结果，不再继续判断后续行。</Typography.Paragraph>
+          {definition.rows.length === 0 && <div className="rule-row-empty">
+            {definition.inputs.length === 0 ? '先在上方选择变量，再添加规则行。' : '还没有规则行，点击右上角添加。'}
+          </div>}
+          {definition.rows.map((row, index) => <RuleRowEditor key={index} row={row} index={index}
+            inputs={definition.inputs} resultCodes={definition.resultCodes}
+            onChange={(next) => updateRow(index, next)}
+            onRemove={() => change({ ...definition,
+              rows: definition.rows.filter((_, i) => i !== index) })} />)}
         </Card>
-        <Card size="small" title="兜底结果" style={{ marginBottom: 12 }}><Space wrap>
-          <Select aria-label="兜底结果码" value={definition.defaultResult.resultCode} style={{ width: 160 }}
-            options={definition.resultCodes.map((value) => ({ value, label: value }))}
-            onChange={(value) => change({ ...definition, defaultResult: editOutcome(definition.defaultResult, { resultCode: value }) })} />
-          <Input aria-label="兜底原因码" value={definition.defaultResult.reasonCode}
-            onChange={(e) => change({ ...definition, defaultResult: editOutcome(definition.defaultResult, { reasonCode: e.target.value }) })} />
-          <Input aria-label="兜底原因" value={definition.defaultResult.reason}
-            onChange={(e) => change({ ...definition, defaultResult: editOutcome(definition.defaultResult, { reason: e.target.value }) })} />
-        </Space></Card>
-        <Card size="small" title="模拟试算"><Typography.Paragraph type="secondary">
-          DECIMAL 小数请用 JSON 字符串输入，如 {`{"amount":"0.10000000000000001"}`}，避免浏览器舍入。
-        </Typography.Paragraph><Input.TextArea aria-label="试算输入 JSON" value={sample} rows={3}
-          onChange={(e) => setSample(e.target.value)} />
-          <Space wrap style={{ marginTop: 8 }}>
-            <Button disabled={!existing || dirty || busy} onClick={() => void runTest()}>试算草稿</Button>
-            <InputNumber aria-label="试算发布版本 ID" min={1} placeholder="发布版本 ID" value={testVersionId}
-              onChange={(value) => setTestVersionId(value)} />
-            <Button disabled={!existing || !testVersionId || busy}
-              onClick={() => void runVersionTest()}>试算发布版本</Button>
-          </Space>
-          {result && <Typography.Paragraph style={{ marginTop: 8 }}>{result}</Typography.Paragraph>}
-        </Card>
+        <UnmatchedResultEditor value={definition.defaultResult} resultCodes={definition.resultCodes}
+          ruleCount={definition.rows.length}
+          onChange={(defaultResult) => change({ ...definition, defaultResult })} />
+        <RuleTrialPanel fields={trialFields} requestText={sample} contextText={contextSample}
+          onRequestTextChange={(text) => { setSample(text); setResult(null); setTrialError(null) }}
+          onContextTextChange={(text) => { setContextSample(text); setResult(null); setTrialError(null) }}
+          onFieldChange={updateTrialField} loading={samplesLoading} busy={busy}
+          hasSavedDraft={!!existing} draftDirty={dirty}
+          target={trialTarget} onTargetChange={(target) => {
+            setTrialTarget(target); setResult(null); setTrialError(null)
+            publishedRequest.current++
+            if (target === 'PUBLISHED' && testVersionId) void preparePublishedSamples(testVersionId)
+            if (target === 'DRAFT') void prepareSamples(definition, true)
+          }}
+          versionId={testVersionId} onVersionIdChange={(id) => {
+            publishedRequest.current++; sampleRequest.current++
+            setSamplesLoading(false); setPublishedFieldsVersionId(null)
+            setTestVersionId(id); setResult(null); setTrialError(null)
+          }}
+          versionFieldsReady={publishedFieldsVersionId === testVersionId}
+          onLoadPublishedFields={() => { if (testVersionId) void preparePublishedSamples(testVersionId) }}
+          onRunDraft={() => void runTest()} onRunPublished={() => void runVersionTest()}
+          result={result} error={trialError} />
       </div>
       <Space style={{ marginTop: 16 }}>
         <Button type="primary" loading={busy} disabled={!dirty} onClick={() => void save()}>保存草稿</Button>
@@ -237,5 +319,8 @@ export default function RuleCenterPage() {
         {dirty && <Typography.Text type="warning">当前有未保存修改</Typography.Text>}
       </Space>
     </Modal>
+    {pickerOpen && <VariablePicker open selectedVersionId={pickerTarget === null ? undefined
+      : definition.inputs[pickerTarget]?.variableBinding.variableVersionId}
+      onCancel={() => setPickerOpen(false)} onChoose={chooseVariable} />}
   </PageContainer>
 }

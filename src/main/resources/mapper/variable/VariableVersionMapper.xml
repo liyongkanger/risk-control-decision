@@ -4,6 +4,7 @@
     <resultMap id="versionMap" type="com.dmp.riskdecision.component.variable.mapper.VariableVersionRow">
         <id property="id" column="id"/>
         <result property="variableCode" column="variable_code"/>
+        <result property="categoryCode" column="category_code"/>
         <result property="variableName" column="variable_name"/>
         <result property="versionNumber" column="version_number"/>
         <result property="valueType" column="value_type"/>
@@ -11,21 +12,33 @@
         <result property="url" column="url"/>
         <result property="timeoutMs" column="timeout_ms"/>
         <result property="parameterNamesJson" column="parameter_names_json"/>
+        <result property="dependencyVersionIdsJson" column="dependency_version_ids_json"/>
         <result property="resultPath" column="result_path"/>
         <result property="inserttime" column="inserttime"/>
         <result property="updatetime" column="updatetime"/>
         <result property="isactive" column="isactive"/>
     </resultMap>
     <select id="current" resultMap="versionMap">
-        SELECT * FROM tb_variable_version WHERE variable_code = #{variableCode} AND isactive = 1
-        ORDER BY version_number DESC LIMIT 1
+        SELECT v.*, COALESCE(c.category_code, 'OTHER') category_code FROM tb_variable_version v
+        LEFT JOIN tb_variable_category c ON c.variable_code = v.variable_code AND c.isactive = 1
+        WHERE v.variable_code = #{variableCode} AND v.isactive = 1
+        ORDER BY v.version_number DESC LIMIT 1
+    </select>
+    <select id="version" resultMap="versionMap">
+        SELECT v.*, COALESCE(c.category_code, 'OTHER') category_code FROM tb_variable_version v
+        LEFT JOIN tb_variable_category c ON c.variable_code = v.variable_code AND c.isactive = 1
+        WHERE v.id = #{id} AND v.isactive = 1
     </select>
     <select id="search" resultMap="versionMap">
-        SELECT v.* FROM tb_variable_version v
+        SELECT v.*, COALESCE(c.category_code, 'OTHER') category_code FROM tb_variable_version v
         INNER JOIN (SELECT variable_code, MAX(version_number) version_number
                     FROM tb_variable_version WHERE isactive = 1 GROUP BY variable_code) latest
           ON latest.variable_code = v.variable_code AND latest.version_number = v.version_number
+        LEFT JOIN tb_variable_category c ON c.variable_code = v.variable_code AND c.isactive = 1
         WHERE v.isactive = 1 AND (v.variable_code LIKE #{pattern} OR v.variable_name LIKE #{pattern})
+        <if test="categoryCode != null">AND COALESCE(c.category_code, 'OTHER') = #{categoryCode}</if>
+        <if test="sourceType != null">AND v.source_type = #{sourceType}</if>
+        <if test="valueType != null">AND v.value_type = #{valueType}</if>
         ORDER BY v.variable_code ASC LIMIT #{pageSize} OFFSET #{offset}
     </select>
     <select id="count" resultType="long">
@@ -33,6 +46,18 @@
             FROM tb_variable_version WHERE isactive = 1 GROUP BY variable_code) latest
         INNER JOIN tb_variable_version v
           ON latest.variable_code = v.variable_code AND latest.version_number = v.version_number
+        LEFT JOIN tb_variable_category c ON c.variable_code = v.variable_code AND c.isactive = 1
         WHERE v.isactive = 1 AND (v.variable_code LIKE #{pattern} OR v.variable_name LIKE #{pattern})
+        <if test="categoryCode != null">AND COALESCE(c.category_code, 'OTHER') = #{categoryCode}</if>
+        <if test="sourceType != null">AND v.source_type = #{sourceType}</if>
+        <if test="valueType != null">AND v.value_type = #{valueType}</if>
     </select>
+    <insert id="insertCategory">
+        INSERT INTO tb_variable_category (variable_code, category_code)
+        VALUES (#{variableCode}, #{categoryCode})
+    </insert>
+    <update id="updateCategory">
+        UPDATE tb_variable_category SET category_code = #{categoryCode}
+        WHERE variable_code = #{variableCode} AND isactive = 1
+    </update>
 </mapper>

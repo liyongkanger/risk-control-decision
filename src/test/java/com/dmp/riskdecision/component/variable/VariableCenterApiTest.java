@@ -29,10 +29,14 @@ class VariableCenterApiTest {
         assertThat(catalog).contains("get-variable", "compare-value").doesNotContain("http-json-get");
         assertThat(send("GET", "/api/rpc-operations", null).statusCode()).isEqualTo(404);
         AtomicInteger calls = new AtomicInteger();
+        String locatorCode = "userId" + System.nanoTime();
+        JsonNode locator = data(send("POST", "/api/variables",
+                "{\"variableCode\":\"" + locatorCode + "\",\"variableName\":\"用户标识\","
+                        + "\"valueType\":\"STRING\",\"sourceType\":\"REQUEST_INPUT\"}"));
         HttpServer remote = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
         remote.createContext("/lookup", exchange -> {
             calls.incrementAndGet();
-            assertThat(exchange.getRequestURI().getRawQuery()).isEqualTo("userId=user123");
+            assertThat(exchange.getRequestURI().getRawQuery()).isEqualTo(locatorCode + "=user123");
             byte[] body = "{\"data\":{\"amount\":12.50}}".getBytes(StandardCharsets.UTF_8);
             exchange.sendResponseHeaders(200, body.length);
             exchange.getResponseBody().write(body);
@@ -44,7 +48,8 @@ class VariableCenterApiTest {
             String url = "http://localhost:" + remote.getAddress().getPort() + "/lookup";
             String body = "{\"variableCode\":\"" + code + "\",\"variableName\":\"权益金额\","
                     + "\"valueType\":\"DECIMAL\",\"sourceType\":\"HTTP_GET\",\"url\":\"" + url
-                    + "\",\"timeoutMs\":1000,\"parameterNames\":[\"userId\"],"
+                    + "\",\"timeoutMs\":1000,\"parameterNames\":[\"" + locatorCode + "\"],"
+                    + "\"dependencyVersionIds\":{\"" + locatorCode + "\":" + locator.get("id").asLong() + "},"
                     + "\"resultPath\":\"data.amount\"}";
             JsonNode first = data(send("POST", "/api/variables", body));
             assertThat(first.get("versionNumber").asInt()).isEqualTo(1);
@@ -52,7 +57,7 @@ class VariableCenterApiTest {
             assertThat(data(send("GET", "/api/variables?keyword=" + code + "&page=1&pageSize=10", null))
                     .get("total").asInt()).isEqualTo(1);
             JsonNode tested = data(send("POST", "/api/variables/" + code + "/test",
-                    "{\"input\":{\"userId\":\"user123\"}}"));
+                    "{\"input\":{\"" + locatorCode + "\":\"user123\"}}"));
             assertThat(tested.get("value").decimalValue()).isEqualByComparingTo("12.50");
             assertThat(calls.get()).isEqualTo(1);
             JsonNode second = data(send("PUT", "/api/variables/" + code,
@@ -61,7 +66,7 @@ class VariableCenterApiTest {
             assertThat(second.get("versionNumber").asInt()).isEqualTo(2);
             assertThat(second.get("id").asLong()).isNotEqualTo(first.get("id").asLong());
             HttpResponse<String> failedSource = send("POST", "/api/variables/" + code + "/test",
-                    "{\"input\":{\"userId\":\"user123\"}}");
+                    "{\"input\":{\"" + locatorCode + "\":\"user123\"}}");
             assertThat(failedSource.statusCode()).isEqualTo(502);
             assertThat(json.readTree(failedSource.body()).get("code").asText())
                     .isEqualTo("VARIABLE_RESOLUTION_FAILED");

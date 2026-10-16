@@ -1,0 +1,228 @@
+- generic [ref=f3e1]:
+  - generic [ref=f3e4]:
+    - complementary [ref=f3e6]:
+      - generic [ref=f3e7]:
+        - heading "风控决策平台" [level=1] [ref=f3e21] [cursor=pointer]
+        - menu [ref=f3e23]:
+          - menuitem [ref=f3e24] [cursor=pointer]:
+            - link "appstore 场景管理" [ref=f3e26]:
+              - /url: /scenes
+              - generic [ref=f3e27]:
+                - img "appstore" [ref=f3e29]
+                - generic [ref=f3e32]: 场景管理
+          - menuitem [ref=f3e33] [cursor=pointer]:
+            - link "apartment 流程资产" [ref=f3e35]:
+              - /url: /flows
+              - generic [ref=f3e36]:
+                - img "apartment" [ref=f3e38]
+                - generic [ref=f3e41]: 流程资产
+          - menuitem "api 组件管理" [ref=f3e42] [cursor=pointer]:
+            - generic [ref=f3e44]:
+              - img "api" [ref=f3e46]
+              - generic [ref=f3e49]: 组件管理
+          - menuitem "database 变量中心" [ref=f3e50] [cursor=pointer]:
+            - generic [ref=f3e52]:
+              - img "database" [ref=f3e54]
+              - generic [ref=f3e57]: 变量中心
+          - menuitem [ref=f3e58] [cursor=pointer]:
+            - link "deployment-unit 规则中心" [ref=f3e60]:
+              - /url: /rule-center
+              - generic [ref=f3e61]:
+                - img "deployment-unit" [ref=f3e63]
+                - generic [ref=f3e66]: 规则中心
+          - menuitem [ref=f3e67] [cursor=pointer]:
+            - link "experiment 营销闭环演示" [ref=f3e69]:
+              - /url: /marketing-demo
+              - generic [ref=f3e70]:
+                - img "experiment" [ref=f3e72]
+                - generic [ref=f3e75]: 营销闭环演示
+          - menuitem [ref=f3e76] [cursor=pointer]:
+            - link "partition 流程设计" [ref=f3e78]:
+              - /url: /flow-design
+              - generic [ref=f3e79]:
+                - img "partition" [ref=f3e81]
+                - generic [ref=f3e84]: 流程设计
+        - generic [ref=f3e85]: 演示用户
+        - generic [ref=f3e88] [cursor=pointer]
+    - main [ref=f3e92]:
+      - generic [ref=f3e93]:
+        - generic "变量中心" [ref=f3e97]
+        - generic [ref=f3e100]:
+          - generic [ref=f3e101]: 变量可来自流程请求、本流程上游节点或外部只读来源。外部来源的参数名须引用已有变量码。流程发布后固定变量版本。
+          - generic [ref=f3e102]:
+            - generic [ref=f3e104]:
+              - searchbox "搜索变量" [ref=f3e105]
+              - button [ref=f3e106] [cursor=pointer]:
+                - img "search" [ref=f3e108]
+            - button "新建变量" [ref=f3e112] [cursor=pointer]
+          - generic [ref=f3e116]:
+            - table [ref=f3e120]:
+              - rowgroup [ref=f3e121]:
+                - row [ref=f3e122]:
+                  - columnheader "变量码" [ref=f3e123]
+                  - columnheader "名称" [ref=f3e124]
+                  - columnheader "类型" [ref=f3e125]
+                  - columnheader "当前版本" [ref=f3e126]
+                  - columnheader "来源" [ref=f3e127]
+                  - columnheader "取值路径" [ref=f3e128]
+                  - columnheader "操作" [ref=f3e129]
+              - rowgroup [ref=f3e130]:
+                - row [ref=f3e131]:
+                  - cell "checkoutId" [ref=f3e132]
+                  - cell "checkoutId" [ref=f3e133]
+                  - cell "STRING" [ref=f3e134]
+                  - cell "v1" [ref=f3e135]
+                  - cell "REQUEST_INPUT" [ref=f3e136]
+                  - cell "—" [ref=f3e137]
+                  - cell [ref=f3e138]:
+                    - generic [ref=f3e139]:
+                      - button "试取值" [ref=f3e141] [cursor=pointer]
+                      - button "更新版本" [ref=f3e144] [cursor=pointer]
+                - row [ref=f3e146]:
+                  - cell "demoMarginAfterMaxOffer" [ref=f3e147]
+                  - cell "演示预计优惠后毛利" [ref=f3e148]
+                  - cell "DECIMAL" [ref=f3e149]
+                  - cell "v1" [ref=f3e150]
+                  - cell "DEMO_MARKETING" [ref=f3e151]
+                  - cell "marginAfterMaxOffer" [ref=f3e152]
+                  - cell [ref=f3e153]:
+                    - generic [ref=f3e154]:
+                      - button "试取值" [ref=f3e156] [cursor=pointer]
+                      - button "更新版本" [ref=f3e159] [cursor=pointer]
+                - row [ref=f3e161]:
+                  - cell "demoOrderAmount" [ref=f3e162]
+                  - cell "演示订单金额" [ref=f3e163]
+                  - cell "DECIMAL" [ref=f3e164]
+                  - cell "v1" [ref=f3e165]
+                  - cell "DEMO_MARKETING" [ref=f3e166]
+                  - cell "orderAmount" [ref=f3e167]
+                  - cell [ref=f3e168]:
+                    - generic [ref=f3e169]:
+                      - button "试取值" [ref=f3e171] [cursor=pointer]
+                      - button "更新版本" [ref=f3e174] [cursor=pointer]
+                - row [ref=f3e176]:
+                  - cell "demoRemainingBudget" [ref=f3e177]
+                  - cell "演示活动剩余预算" [ref=f3e178]
+                  - cell "DECIMAL" [ref=f3e179]
+                  - cell "v1" [ref=f3e180]
+                  - cell "DEMO_MARKETING" [ref=f3e181]
+                  - cell "remainingBudget" [ref=f3e182]
+                  - cell [ref=f3e183]:
+                    - generic [ref=f3e184]:
+                      - button "试取值" [ref=f3e186] [cursor=pointer]
+                      - button "更新版本" [ref=f3e189] [cursor=pointer]
+                - row [ref=f3e191]:
+                  - cell "experimentId" [ref=f3e192]
+                  - cell "experimentId" [ref=f3e193]
+                  - cell "STRING" [ref=f3e194]
+                  - cell "v1" [ref=f3e195]
+                  - cell "REQUEST_INPUT" [ref=f3e196]
+                  - cell "—" [ref=f3e197]
+                  - cell [ref=f3e198]:
+                    - generic [ref=f3e199]:
+                      - button "试取值" [ref=f3e201] [cursor=pointer]
+                      - button "更新版本" [ref=f3e204] [cursor=pointer]
+                - row [ref=f3e206]:
+                  - cell "lowGroupUsersUnified" [ref=f3e207]
+                  - cell "Low group users" [ref=f3e208]
+                  - cell "DECIMAL" [ref=f3e209]
+                  - cell "v1" [ref=f3e210]
+                  - cell "HTTP_GET" [ref=f3e211]
+                  - cell "data.groups.LOW.users" [ref=f3e212]
+                  - cell [ref=f3e213]:
+                    - generic [ref=f3e214]:
+                      - button "试取值" [ref=f3e216] [cursor=pointer]
+                      - button "更新版本" [ref=f3e219] [cursor=pointer]
+                - row [ref=f3e360]:
+                  - cell "reviewInitializedFlag" [ref=f3e361]
+                  - cell "演示初始化状态" [ref=f3e362]
+                  - cell "STRING" [ref=f3e363]
+                  - cell "v1" [ref=f3e364]
+                  - cell "HTTP_GET" [ref=f3e365]
+                  - cell "data.initialized" [ref=f3e366]
+                  - cell [ref=f3e367]:
+                    - generic [ref=f3e368]:
+                      - button "试取值" [ref=f3e370] [cursor=pointer]
+                      - button "更新版本" [ref=f3e373] [cursor=pointer]
+                - row [ref=f3e221]:
+                  - cell "uid" [ref=f3e222]
+                  - cell "uid" [ref=f3e223]
+                  - cell "STRING" [ref=f3e224]
+                  - cell "v1" [ref=f3e225]
+                  - cell "REQUEST_INPUT" [ref=f3e226]
+                  - cell "—" [ref=f3e227]
+                  - cell [ref=f3e228]:
+                    - generic [ref=f3e229]:
+                      - button "试取值" [ref=f3e231] [cursor=pointer]
+                      - button "更新版本" [ref=f3e234] [cursor=pointer]
+            - list [ref=f3e236]:
+              - listitem [ref=f3e237]: 共 8 条
+              - listitem "上一页" [ref=f3e238]:
+                - button [disabled] [ref=f3e239]:
+                  - img "left" [ref=f3e240]
+              - listitem "1" [ref=f3e243] [cursor=pointer]
+              - listitem "下一页" [ref=f3e245]:
+                - button [disabled] [ref=f3e246]:
+                  - img "right" [ref=f3e247]
+              - listitem [ref=f3e250]:
+                - generic [ref=f3e251]:
+                  - generic "10 条/页" [ref=f3e252]:
+                    - text: 10 条/页
+                    - combobox "页码" [ref=f3e253]
+                  - img "down" [ref=f3e255]
+  - generic [ref=f3e258]:
+    - dialog "更新 reviewInitializedFlag · v1" [active]:
+      - generic [ref=f3e259]:
+        - button "关闭" [ref=f3e260] [cursor=pointer]:
+          - generic "关闭" [ref=f3e261]:
+            - img "close" [ref=f3e262]
+        - generic [ref=f3e265]: 更新 reviewInitializedFlag · v1
+        - generic [ref=f3e268]:
+          - generic [ref=f3e270]:
+            - generic "变量码" [ref=f3e272]: "* 变量码"
+            - textbox "* 变量码" [disabled] [ref=f3e276]: reviewInitializedFlag
+          - generic [ref=f3e278]:
+            - generic "变量名称" [ref=f3e280]: "* 变量名称"
+            - textbox "* 变量名称" [ref=f3e284]: 演示初始化状态
+          - generic [ref=f3e286]:
+            - generic "返回类型" [ref=f3e288]: "* 返回类型"
+            - generic [ref=f3e292] [cursor=pointer]:
+              - generic "STRING" [ref=f3e293]:
+                - text: STRING
+                - combobox "* 返回类型" [ref=f3e294]
+              - img "down" [ref=f3e296]
+          - generic [ref=f3e300]:
+            - generic "来源类型" [ref=f3e302]: "* 来源类型"
+            - generic [ref=f3e306] [cursor=pointer]:
+              - generic "只读 HTTP GET" [ref=f3e307]:
+                - text: 只读 HTTP GET
+                - combobox "* 来源类型" [ref=f3e308]
+              - img "down" [ref=f3e310]
+          - generic [ref=f3e314]:
+            - generic "固定 GET URL" [ref=f3e316]: "* 固定 GET URL"
+            - textbox "* 固定 GET URL" [ref=f3e320]:
+              - /placeholder: http://localhost:9199/lookup
+              - text: http://localhost:8081/api/demo/checkout-offer/status
+          - generic [ref=f3e322]:
+            - generic "超时（毫秒）" [ref=f3e324]: "* 超时（毫秒）"
+            - generic [ref=f3e328]:
+              - spinbutton "* 超时（毫秒）" [ref=f3e329]: "1000"
+              - generic:
+                - button "Increase Value" [ref=f3e330] [cursor=pointer]:
+                  - img "up" [ref=f3e331]
+                - button "Decrease Value" [ref=f3e334] [cursor=pointer]:
+                  - img "down" [ref=f3e335]
+          - generic [ref=f3e339]:
+            - generic "依赖变量码（逗号分隔）" [ref=f3e341]
+            - textbox "依赖变量码（逗号分隔）" [ref=f3e345]:
+              - /placeholder: userId
+              - text: uid
+          - generic [ref=f3e346]: "保存时固定这些变量的当前版本 ID。 现有依赖：uid #1"
+          - generic [ref=f3e348]:
+            - generic "JSON 取值路径" [ref=f3e350]: "* JSON 取值路径"
+            - textbox "* JSON 取值路径" [ref=f3e354]:
+              - /placeholder: data.amount
+              - text: data.initialized
+        - generic [ref=f3e355]:
+          - button "取 消" [ref=f3e356] [cursor=pointer]
+          - button "确 定" [ref=f3e358] [cursor=pointer]

@@ -7,7 +7,6 @@ import com.yomahub.liteflow.annotation.LiteflowComponent;
 import com.yomahub.liteflow.core.NodeComponent;
 import jakarta.annotation.Resource;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.Map;
 
 /** 按发布时固定的变量版本读取强类型单值，并写入当前节点结果。 */
@@ -22,16 +21,9 @@ public class GetVariableNodeAdapter extends NodeComponent {
         Instant started = Instant.now();
         try {
             Map<String, Object> config = context.getNodeConfigs().get(nodeId);
-            @SuppressWarnings("unchecked") Map<String, String> mappings =
-                    (Map<String, String>) config.get("inputMappings");
-            Map<String, Object> parameters = new HashMap<>();
-            for (Map.Entry<String, String> mapping : mappings.entrySet()) {
-                Object value = context.getInput().get(mapping.getValue());
-                if (value == null) throw new IllegalArgumentException("Variable input is missing: " + mapping.getValue());
-                parameters.put(mapping.getKey(), value);
-            }
-            Object value = variables.resolve(((Number) config.get("versionId")).longValue(),
-                    (String) config.get("variableCode"), parameters);
+            Object value = variables.resolveInFlow(((Number) config.get("versionId")).longValue(),
+                    (String) config.get("variableCode"), context.getInput(),
+                    context.getNodeResults(), context.getContextBindings());
             context.getNodeResults().put(nodeId, value);
             context.getTraces().add(new NodeTrace(context.getRequestId(), context.getSceneCode(),
                     context.getVersion(), nodeId, started, Instant.now(), "SUCCEEDED", null));

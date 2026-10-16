@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 public class DecisionAssembler {
     public EvaluateDecisionResp toEvaluateResp(ExecutionResult result) {
         EvaluateDecisionResp response = new EvaluateDecisionResp();
+        response.setExecutionId(result.getExecutionId());
         response.setRequestId(result.getRequestId());
         response.setSceneCode(result.getSceneCode());
         response.setVersionId(result.getVersionId());

@@ -1,0 +1,185 @@
+- generic [ref=e4]:
+  - complementary [ref=e6]:
+    - generic [ref=e7]:
+      - heading "风控决策平台" [level=1] [ref=e21] [cursor=pointer]
+      - menu [ref=e23]:
+        - menuitem [ref=e24] [cursor=pointer]:
+          - link "appstore 场景管理" [ref=e188]:
+            - /url: /scenes
+            - generic [ref=e189]:
+              - img "appstore" [ref=e191]
+              - generic [ref=e194]: 场景管理
+        - menuitem [ref=e32] [cursor=pointer]:
+          - link "apartment 流程资产" [ref=e306]:
+            - /url: /flows
+            - generic [ref=e307]:
+              - img "apartment" [ref=e309]
+              - generic [ref=e312]: 流程资产
+        - menuitem "api 组件管理" [ref=e41] [cursor=pointer]:
+          - generic [ref=e43]:
+            - img "api" [ref=e45]
+            - generic [ref=e48]: 组件管理
+        - menuitem [ref=e49] [cursor=pointer]:
+          - link "database 变量中心" [ref=e51]:
+            - /url: /variable-center
+            - generic [ref=e52]:
+              - img "database" [ref=e54]
+              - generic [ref=e57]: 变量中心
+        - menuitem [ref=e58] [cursor=pointer]:
+          - link "deployment-unit 规则中心" [ref=e60]:
+            - /url: /rule-center
+            - generic [ref=e61]:
+              - img "deployment-unit" [ref=e63]
+              - generic [ref=e66]: 规则中心
+        - menuitem [ref=e67] [cursor=pointer]:
+          - link "profile 决策记录" [ref=e69]:
+            - /url: /decision-records
+            - generic [ref=e70]:
+              - img "profile" [ref=e72]
+              - generic [ref=e75]: 决策记录
+        - menuitem [ref=e76] [cursor=pointer]:
+          - link "experiment 营销闭环演示" [ref=e78]:
+            - /url: /marketing-demo
+            - generic [ref=e79]:
+              - img "experiment" [ref=e81]
+              - generic [ref=e84]: 营销闭环演示
+        - menuitem [ref=e85] [cursor=pointer]:
+          - link "partition 流程设计" [ref=e87]:
+            - /url: /flow-design
+            - generic [ref=e88]:
+              - img "partition" [ref=e90]
+              - generic [ref=e93]: 流程设计
+      - generic [ref=e94]: 演示用户
+      - generic [ref=e97] [cursor=pointer]
+  - main [ref=e101]:
+    - generic [ref=e313]:
+      - generic [ref=e314]:
+        - navigation [ref=e315]:
+          - list [ref=e316]:
+            - listitem [ref=e317]:
+              - link "流程资产" [ref=e319] [cursor=pointer]:
+                - /url: /flows
+            - listitem [aria-hidden] [ref=e320]: /
+            - listitem [ref=e321]: 流程设计
+        - generic "流程设计" [ref=e324]
+      - main [ref=e328]:
+        - generic [ref=e329]:
+          - generic [ref=e330]:
+            - generic [ref=e331]:
+              - paragraph [ref=e332]: RISK CONTROL DECISION
+              - heading "演示结算优惠决策 · 流程设计" [level=1] [ref=e333]
+              - paragraph [ref=e334]: X6 编辑 · LiteFlow 执行
+            - generic [ref=e335]:
+              - generic [ref=e336]: 流程码
+              - textbox "流程码" [ref=e337]: demoCheckoutDecision
+          - generic [ref=e338]:
+            - generic [ref=e339]:
+              - button "加载草稿" [ref=e340] [cursor=pointer]
+              - button "保存草稿" [ref=e341] [cursor=pointer]
+              - button "载入示例模板" [ref=e342] [cursor=pointer]
+              - button "载入全节点示例" [ref=e343] [cursor=pointer]
+              - button "校验流程" [ref=e344] [cursor=pointer]
+              - button "发布版本" [disabled] [ref=e345]
+              - button "放大" [ref=e346] [cursor=pointer]
+              - button "缩小" [ref=e347] [cursor=pointer]
+              - button "适应画布" [ref=e348] [cursor=pointer]
+              - button "一键整理" [ref=e349] [cursor=pointer]
+            - generic [ref=e350]: 草稿 r1 · 11 节点 · 12 连线
+          - generic [ref=e351]:
+            - generic [ref=e352]:
+              - text: 本流程必需输入字段（逗号或换行分隔）
+              - textbox "本流程必需输入字段（逗号或换行分隔）" [ref=e353]:
+                - /placeholder: 如 userId, orderAmount
+                - text: uid, checkoutId, experimentId, inExperiment, highGroup
+            - generic [ref=e354]:
+              - heading "流程上下文变量绑定" [level=3] [ref=e355]
+              - paragraph [ref=e356]: 每个变量在本流程绑定一个上游生产节点。标量节点结果的路径留空；对象结果填写字段路径。
+              - button "添加上下文绑定" [ref=e357] [cursor=pointer]
+          - generic [ref=e358]:
+            - complementary [ref=e359]:
+              - heading "节点类型" [level=2] [ref=e360]
+              - paragraph [ref=e361]: 图中使用相同符号和颜色；点击添加节点。
+              - button "开始" [ref=e362] [cursor=pointer]:
+                - generic [aria-hidden] [ref=e363]: ▶
+              - button "结束" [ref=e365] [cursor=pointer]:
+                - generic [aria-hidden] [ref=e366]: ■
+              - button "组件" [ref=e368] [cursor=pointer]:
+                - generic [aria-hidden] [ref=e369]: ●
+              - button "并行拆分" [ref=e371] [cursor=pointer]:
+                - generic [aria-hidden] [ref=e372]: ⇉
+              - button "并行汇合" [ref=e374] [cursor=pointer]:
+                - generic [aria-hidden] [ref=e375]: ⇇
+              - button "条件" [ref=e377] [cursor=pointer]:
+                - generic [aria-hidden] [ref=e378]: ◇
+              - button "条件汇合" [ref=e380] [cursor=pointer]:
+                - generic [aria-hidden] [ref=e381]: ◆
+              - button "决策子流程" [ref=e383] [cursor=pointer]:
+                - generic [aria-hidden] [ref=e384]: ↳
+              - button "业务结果" [ref=e386] [cursor=pointer]:
+                - generic [aria-hidden] [ref=e387]: ✓
+              - button "执行规则集" [ref=e389] [cursor=pointer]:
+                - generic [aria-hidden] [ref=e390]: ↗
+              - button "获取变量" [ref=e392] [cursor=pointer]:
+                - generic [aria-hidden] [ref=e393]: ↗
+            - img [ref=e399]:
+              - generic [ref=e401]:
+                - generic [ref=e402]:
+                  - generic [ref=e404]: ▶ 开始
+                  - generic [ref=e405]: 开始
+                - generic [ref=e408]:
+                  - generic [ref=e410]: ↳ 决策子流程
+                  - generic [ref=e411]: "优惠资格 · #1"
+                - generic [ref=e416]:
+                  - generic [ref=e418]: ↳ 决策子流程
+                  - generic [ref=e419]: "优惠选择 · #2"
+                - generic [ref=e424]:
+                  - generic [ref=e426]: ◇ 条件
+                  - generic [ref=e427]: 建议高额券？
+                - generic [ref=e432]:
+                  - generic [ref=e434]: ✓ 业务结果
+                  - generic [ref=e435]: 推荐 18 元券
+                - generic [ref=e440]:
+                  - generic [ref=e442]: ◇ 条件
+                  - generic [ref=e443]: 建议低额券？
+                - generic [ref=e448]:
+                  - generic [ref=e450]: ✓ 业务结果
+                  - generic [ref=e451]: 推荐 5 元券
+                - generic [ref=e456]:
+                  - generic [ref=e458]: ✓ 业务结果
+                  - generic [ref=e459]: 不新增优惠
+                - generic [ref=e464]:
+                  - generic [ref=e466]: ◆ 条件汇合
+                  - generic [ref=e467]: 低额分支汇合
+                - generic [ref=e472]:
+                  - generic [ref=e474]: ◆ 条件汇合
+                  - generic [ref=e475]: 最终结果汇合
+                - generic [ref=e480]:
+                  - generic [ref=e482]: ■ 结束
+                  - generic [ref=e483]: 结束
+                - generic [ref=e487] [cursor=pointer]
+                - generic [ref=e489] [cursor=pointer]
+                - generic [ref=e491] [cursor=pointer]
+                - generic [ref=e492]:
+                  - generic [ref=e493] [cursor=pointer]
+                  - generic [ref=e494]: "true"
+                - generic [ref=e497]:
+                  - generic [ref=e498] [cursor=pointer]
+                  - generic [ref=e499]: "false"
+                - generic [ref=e502]:
+                  - generic [ref=e503] [cursor=pointer]
+                  - generic [ref=e504]: "true"
+                - generic [ref=e507]:
+                  - generic [ref=e508] [cursor=pointer]
+                  - generic [ref=e509]: "false"
+                - generic [ref=e513] [cursor=pointer]
+                - generic [ref=e515] [cursor=pointer]
+                - generic [ref=e517] [cursor=pointer]
+                - generic [ref=e519] [cursor=pointer]
+                - generic [ref=e521] [cursor=pointer]
+            - complementary [ref=e522]:
+              - heading "节点与连线" [level=2] [ref=e523]
+              - paragraph [ref=e524]: 点击画布中的节点或连线，可编辑配置与分支标签。
+              - generic [ref=e525]:
+                - heading "校验结果" [level=2] [ref=e526]
+                - paragraph [ref=e527]: 尚无问题
+          - status [ref=e528]: 已加载草稿 r1

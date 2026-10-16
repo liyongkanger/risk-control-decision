@@ -1,0 +1,303 @@
+- generic [ref=f6e1]:
+  - generic [ref=f6e4]:
+    - complementary [ref=f6e6]:
+      - generic [ref=f6e7]:
+        - heading "风控决策平台" [level=1] [ref=f6e21] [cursor=pointer]
+        - menu [ref=f6e23]:
+          - menuitem [ref=f6e24] [cursor=pointer]:
+            - link "appstore 场景管理" [ref=f6e26]:
+              - /url: /scenes
+              - generic [ref=f6e27]:
+                - img "appstore" [ref=f6e29]
+                - generic [ref=f6e32]: 场景管理
+          - menuitem [ref=f6e33] [cursor=pointer]:
+            - link "apartment 流程资产" [ref=f6e35]:
+              - /url: /flows
+              - generic [ref=f6e36]:
+                - img "apartment" [ref=f6e38]
+                - generic [ref=f6e41]: 流程资产
+          - menuitem "api 组件管理" [ref=f6e42] [cursor=pointer]:
+            - generic [ref=f6e44]:
+              - img "api" [ref=f6e46]
+              - generic [ref=f6e49]: 组件管理
+          - menuitem [ref=f6e50] [cursor=pointer]:
+            - link "database 变量中心" [ref=f6e52]:
+              - /url: /variable-center
+              - generic [ref=f6e53]:
+                - img "database" [ref=f6e55]
+                - generic [ref=f6e58]: 变量中心
+          - menuitem "deployment-unit 规则中心" [ref=f6e59] [cursor=pointer]:
+            - generic [ref=f6e61]:
+              - img "deployment-unit" [ref=f6e63]
+              - generic [ref=f6e66]: 规则中心
+          - menuitem [ref=f6e67] [cursor=pointer]:
+            - link "experiment 营销闭环演示" [ref=f6e69]:
+              - /url: /marketing-demo
+              - generic [ref=f6e70]:
+                - img "experiment" [ref=f6e72]
+                - generic [ref=f6e75]: 营销闭环演示
+          - menuitem [ref=f6e76] [cursor=pointer]:
+            - link "partition 流程设计" [ref=f6e78]:
+              - /url: /flow-design
+              - generic [ref=f6e79]:
+                - img "partition" [ref=f6e81]
+                - generic [ref=f6e84]: 流程设计
+        - generic [ref=f6e85]: 演示用户
+        - generic [ref=f6e88] [cursor=pointer]
+    - main [ref=f6e92]:
+      - generic [ref=f6e93]:
+        - generic "规则中心" [ref=f6e97]
+        - generic [ref=f6e100]:
+          - generic [ref=f6e101]:
+            - generic [ref=f6e103]:
+              - searchbox "搜索规则集" [ref=f6e104]
+              - button [ref=f6e105] [cursor=pointer]:
+                - img "search" [ref=f6e107]
+            - button "新建规则集" [ref=f6e111] [cursor=pointer]
+          - generic [ref=f6e115]:
+            - table [ref=f6e119]:
+              - rowgroup [ref=f6e120]:
+                - row [ref=f6e121]:
+                  - columnheader "规则集码" [ref=f6e122]
+                  - columnheader "名称" [ref=f6e123]
+                  - columnheader "草稿修订号" [ref=f6e124]
+                  - columnheader "当前发布版本 ID" [ref=f6e125]
+                  - columnheader "操作" [ref=f6e126]
+              - rowgroup [ref=f6e127]:
+                - row [ref=f6e128]:
+                  - cell "demoOfferEligibilityRules" [ref=f6e129]
+                  - cell "演示优惠资格规则" [ref=f6e130]
+                  - cell "1" [ref=f6e131]
+                  - cell "1" [ref=f6e132]
+                  - cell [ref=f6e133]:
+                    - button "编辑 / 试算" [ref=f6e134] [cursor=pointer]
+            - list [ref=f6e136]:
+              - listitem [ref=f6e137]: 共 1 条
+              - listitem "上一页" [ref=f6e138]:
+                - button [disabled] [ref=f6e139]:
+                  - img "left" [ref=f6e140]
+              - listitem "1" [ref=f6e143] [cursor=pointer]
+              - listitem "下一页" [ref=f6e145]:
+                - button [disabled] [ref=f6e146]:
+                  - img "right" [ref=f6e147]
+              - listitem [ref=f6e150]:
+                - generic [ref=f6e151]:
+                  - generic "10 条/页" [ref=f6e152]:
+                    - text: 10 条/页
+                    - combobox "页码" [ref=f6e153]
+                  - img "down" [ref=f6e155]
+  - generic [ref=f6e158]:
+    - dialog "规则集 demoOfferEligibilityRules · 草稿 r1":
+      - generic [ref=f6e159]:
+        - button "关闭" [active] [ref=f6e160] [cursor=pointer]:
+          - generic "关闭" [ref=f6e161]:
+            - img "close" [ref=f6e162]
+        - generic [ref=f6e165]: 规则集 demoOfferEligibilityRules · 草稿 r1
+        - generic [ref=f6e167]:
+          - generic [ref=f6e168]:
+            - generic [ref=f6e169]:
+              - generic [ref=f6e171]:
+                - text: 规则集码
+                - textbox "规则集码" [disabled] [ref=f6e172]: demoOfferEligibilityRules
+              - generic [ref=f6e174]:
+                - text: 名称
+                - textbox "规则集名称" [disabled] [ref=f6e175]: 演示优惠资格规则
+              - generic [ref=f6e176]: 发布版本 ID：1
+            - generic [ref=f6e178]:
+              - generic [ref=f6e180]:
+                - generic [ref=f6e181]: 规则使用的变量
+                - button "搜索添加变量" [ref=f6e183] [cursor=pointer]
+              - generic [ref=f6e185]:
+                - generic [ref=f6e186]:
+                  - textbox "规则输入名 1" [ref=f6e188]:
+                    - /placeholder: 规则输入名
+                    - text: orderAmount
+                  - generic [ref=f6e189]: DECIMAL
+                  - generic [ref=f6e190]: demoOrderAmount · 版本 ID 4
+                  - button "更换变量" [ref=f6e193] [cursor=pointer]
+                  - button "删 除" [ref=f6e196] [cursor=pointer]
+                - generic [ref=f6e198]:
+                  - textbox "规则输入名 2" [ref=f6e200]:
+                    - /placeholder: 规则输入名
+                    - text: marginAfterMaxOffer
+                  - generic [ref=f6e201]: DECIMAL
+                  - generic [ref=f6e202]: demoMarginAfterMaxOffer · 版本 ID 5
+                  - button "更换变量" [ref=f6e205] [cursor=pointer]
+                  - button "删 除" [ref=f6e208] [cursor=pointer]
+                - generic [ref=f6e210]:
+                  - textbox "规则输入名 3" [ref=f6e212]:
+                    - /placeholder: 规则输入名
+                    - text: remainingBudget
+                  - generic [ref=f6e213]: DECIMAL
+                  - generic [ref=f6e214]: demoRemainingBudget · 版本 ID 6
+                  - button "更换变量" [ref=f6e217] [cursor=pointer]
+                  - button "删 除" [ref=f6e220] [cursor=pointer]
+            - generic [ref=f6e222]:
+              - generic [ref=f6e223]: 业务结果码
+              - textbox "结果码列表" [ref=f6e227]:
+                - /placeholder: PASS, REJECT
+                - text: ELIGIBLE, INELIGIBLE
+            - generic [ref=f6e228]:
+              - generic [ref=f6e230]:
+                - generic [ref=f6e231]: 规则行（优先级小的先判断）
+                - button "添加规则行" [ref=f6e233] [cursor=pointer]
+              - generic [ref=f6e235]:
+                - generic [ref=f6e236]:
+                  - generic [ref=f6e238]:
+                    - generic [ref=f6e240]:
+                      - textbox "规则行标识 1" [ref=f6e242]:
+                        - /placeholder: 规则行标识
+                        - text: order-threshold
+                      - generic [ref=f6e244]:
+                        - spinbutton "优先级 1" [ref=f6e245]: "10"
+                        - generic:
+                          - button "Increase Value" [ref=f6e246] [cursor=pointer]:
+                            - img "up" [ref=f6e247]
+                          - button "Decrease Value" [ref=f6e250] [cursor=pointer]:
+                            - img "down" [ref=f6e251]
+                    - button "删除行" [ref=f6e255] [cursor=pointer]
+                  - generic [ref=f6e257]:
+                    - generic [ref=f6e258]:
+                      - generic [ref=f6e260] [cursor=pointer]:
+                        - generic "orderAmount" [ref=f6e261]:
+                          - text: orderAmount
+                          - combobox "条件字段 1-1" [ref=f6e262]
+                        - img "down" [ref=f6e264]
+                      - generic [ref=f6e268] [cursor=pointer]:
+                        - generic "LT" [ref=f6e269]:
+                          - text: LT
+                          - combobox "比较符 1-1" [ref=f6e270]
+                        - img "down" [ref=f6e272]
+                      - textbox "预期值 1-1" [ref=f6e276]:
+                        - /placeholder: 精确十进制，如 100.05
+                        - text: "100"
+                      - button "删除条件" [ref=f6e278] [cursor=pointer]
+                    - button "添加 AND 条件" [ref=f6e280] [cursor=pointer]
+                    - generic [ref=f6e282]:
+                      - generic [ref=f6e284] [cursor=pointer]:
+                        - generic "INELIGIBLE" [ref=f6e285]:
+                          - text: INELIGIBLE
+                          - combobox "结果码 1" [ref=f6e286]
+                        - img "down" [ref=f6e288]
+                      - textbox "原因码 1" [ref=f6e292]:
+                        - /placeholder: 原因码
+                        - text: ORDER_BELOW_THRESHOLD
+                      - textbox "原因 1" [ref=f6e294]:
+                        - /placeholder: 原因
+                        - text: 订单金额不足 100 元
+                - generic [ref=f6e295]:
+                  - generic [ref=f6e297]:
+                    - generic [ref=f6e299]:
+                      - textbox "规则行标识 2" [ref=f6e301]:
+                        - /placeholder: 规则行标识
+                        - text: margin-floor
+                      - generic [ref=f6e303]:
+                        - spinbutton "优先级 2" [ref=f6e304]: "20"
+                        - generic:
+                          - button "Increase Value" [ref=f6e305] [cursor=pointer]:
+                            - img "up" [ref=f6e306]
+                          - button "Decrease Value" [ref=f6e309] [cursor=pointer]:
+                            - img "down" [ref=f6e310]
+                    - button "删除行" [ref=f6e314] [cursor=pointer]
+                  - generic [ref=f6e316]:
+                    - generic [ref=f6e317]:
+                      - generic [ref=f6e319] [cursor=pointer]:
+                        - generic "marginAfterMaxOffer" [ref=f6e320]:
+                          - text: marginAfterMaxOffer
+                          - combobox "条件字段 2-1" [ref=f6e321]
+                        - img "down" [ref=f6e323]
+                      - generic [ref=f6e327] [cursor=pointer]:
+                        - generic "LT" [ref=f6e328]:
+                          - text: LT
+                          - combobox "比较符 2-1" [ref=f6e329]
+                        - img "down" [ref=f6e331]
+                      - textbox "预期值 2-1" [ref=f6e335]:
+                        - /placeholder: 精确十进制，如 100.05
+                        - text: "10"
+                      - button "删除条件" [ref=f6e337] [cursor=pointer]
+                    - button "添加 AND 条件" [ref=f6e339] [cursor=pointer]
+                    - generic [ref=f6e341]:
+                      - generic [ref=f6e343] [cursor=pointer]:
+                        - generic "INELIGIBLE" [ref=f6e344]:
+                          - text: INELIGIBLE
+                          - combobox "结果码 2" [ref=f6e345]
+                        - img "down" [ref=f6e347]
+                      - textbox "原因码 2" [ref=f6e351]:
+                        - /placeholder: 原因码
+                        - text: MARGIN_BELOW_FLOOR
+                      - textbox "原因 2" [ref=f6e353]:
+                        - /placeholder: 原因
+                        - text: 预计贡献利润不足 10 元
+                - generic [ref=f6e354]:
+                  - generic [ref=f6e356]:
+                    - generic [ref=f6e358]:
+                      - textbox "规则行标识 3" [ref=f6e360]:
+                        - /placeholder: 规则行标识
+                        - text: budget-limit
+                      - generic [ref=f6e362]:
+                        - spinbutton "优先级 3" [ref=f6e363]: "30"
+                        - generic:
+                          - button "Increase Value" [ref=f6e364] [cursor=pointer]:
+                            - img "up" [ref=f6e365]
+                          - button "Decrease Value" [ref=f6e368] [cursor=pointer]:
+                            - img "down" [ref=f6e369]
+                    - button "删除行" [ref=f6e373] [cursor=pointer]
+                  - generic [ref=f6e375]:
+                    - generic [ref=f6e376]:
+                      - generic [ref=f6e378] [cursor=pointer]:
+                        - generic "remainingBudget" [ref=f6e379]:
+                          - text: remainingBudget
+                          - combobox "条件字段 3-1" [ref=f6e380]
+                        - img "down" [ref=f6e382]
+                      - generic [ref=f6e386] [cursor=pointer]:
+                        - generic "LT" [ref=f6e387]:
+                          - text: LT
+                          - combobox "比较符 3-1" [ref=f6e388]
+                        - img "down" [ref=f6e390]
+                      - textbox "预期值 3-1" [ref=f6e394]:
+                        - /placeholder: 精确十进制，如 100.05
+                        - text: "18"
+                      - button "删除条件" [ref=f6e396] [cursor=pointer]
+                    - button "添加 AND 条件" [ref=f6e398] [cursor=pointer]
+                    - generic [ref=f6e400]:
+                      - generic [ref=f6e402] [cursor=pointer]:
+                        - generic "INELIGIBLE" [ref=f6e403]:
+                          - text: INELIGIBLE
+                          - combobox "结果码 3" [ref=f6e404]
+                        - img "down" [ref=f6e406]
+                      - textbox "原因码 3" [ref=f6e410]:
+                        - /placeholder: 原因码
+                        - text: BUDGET_INSUFFICIENT
+                      - textbox "原因 3" [ref=f6e412]:
+                        - /placeholder: 原因
+                        - text: 活动预算不足
+            - generic [ref=f6e413]:
+              - generic [ref=f6e414]: 兜底结果
+              - generic [ref=f6e418]:
+                - generic [ref=f6e420] [cursor=pointer]:
+                  - generic "ELIGIBLE" [ref=f6e421]:
+                    - text: ELIGIBLE
+                    - combobox "兜底结果码" [ref=f6e422]
+                  - img "down" [ref=f6e424]
+                - textbox "兜底原因码" [ref=f6e428]: QUALIFIED
+                - textbox "兜底原因" [ref=f6e430]: 满足优惠资格
+            - generic [ref=f6e431]:
+              - generic [ref=f6e432]: 模拟试算
+              - generic [ref=f6e435]:
+                - generic [ref=f6e436]: "DECIMAL 小数请用 JSON 字符串输入，如 {\"amount\":\"0.10000000000000001\"}，避免浏览器舍入。"
+                - textbox "试算输入 JSON" [ref=f6e437]: "{ \"uid\": \"\", \"experimentId\": \"\", \"checkoutId\": \"\" }"
+                - generic [ref=f6e438]: 流程上下文变量临时样例 JSON（按变量码填写，仅用于本次试算）
+                - textbox "临时流程上下文样例 JSON" [ref=f6e439]: "{}"
+                - generic [ref=f6e440]:
+                  - button "试算草稿" [ref=f6e442] [cursor=pointer]
+                  - generic [ref=f6e445]:
+                    - spinbutton "试算发布版本 ID" [ref=f6e446]: "1"
+                    - generic:
+                      - button "Increase Value" [ref=f6e447] [cursor=pointer]:
+                        - img "up" [ref=f6e448]
+                      - button "Decrease Value" [disabled] [ref=f6e451]:
+                        - img "down" [ref=f6e452]
+                  - button "试算发布版本" [ref=f6e456] [cursor=pointer]
+          - generic [ref=f6e458]:
+            - button "保存草稿" [disabled] [ref=f6e460]
+            - button "发布版本" [ref=f6e462] [cursor=pointer]

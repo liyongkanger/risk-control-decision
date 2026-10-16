@@ -3,8 +3,9 @@ import { readApi } from './http'
 export type RuleValueType = 'STRING' | 'BOOLEAN' | 'DECIMAL'
 export type RuleCondition = { input: string; operator: 'EQ' | 'NE' | 'GT' | 'GTE' | 'LT' | 'LTE'; expected: unknown }
 export type RuleOutcome = { resultCode: string; reasonCode: string; reason: string }
+export type RuleVariableBinding = { variableCode: string; variableVersionId: number }
 export type RuleDefinition = {
-  inputs: { name: string; type: RuleValueType }[]
+  inputs: { name: string; type: RuleValueType; variableBinding: RuleVariableBinding }[]
   resultCodes: string[]
   rows: { id: string; priority: number; conditions: RuleCondition[]; result: RuleOutcome }[]
   defaultResult: RuleOutcome
@@ -46,17 +47,18 @@ export async function updateRuleDraft(code: string, expectedRevision: number,
 }
 
 /** 用当前草稿和模拟输入试算。 */
-export async function testRuleSet(code: string, input: Record<string, unknown>): Promise<RuleEvaluation> {
+export async function testRuleSet(code: string, input: Record<string, unknown>,
+  contextValues: Record<string, unknown> = {}): Promise<RuleEvaluation> {
   return readApi<RuleEvaluation>(await fetch(`${path(code)}/test`, {
-    method: 'POST', headers: jsonHeaders, body: JSON.stringify({ input }),
+    method: 'POST', headers: jsonHeaders, body: JSON.stringify({ input, contextValues }),
   }))
 }
 
 /** 用指定不可变版本试算，以复现历史流程使用的规则结论。 */
 export async function testRuleSetVersion(code: string, id: number,
-  input: Record<string, unknown>): Promise<RuleEvaluation> {
+  input: Record<string, unknown>, contextValues: Record<string, unknown> = {}): Promise<RuleEvaluation> {
   return readApi<RuleEvaluation>(await fetch(`${path(code)}/versions/${id}/test`, {
-    method: 'POST', headers: jsonHeaders, body: JSON.stringify({ input }),
+    method: 'POST', headers: jsonHeaders, body: JSON.stringify({ input, contextValues }),
   }))
 }
 

@@ -1,0 +1,120 @@
+- generic [ref=e4]:
+  - complementary [ref=e6]:
+    - generic [ref=e7]:
+      - heading "风控决策平台" [level=1] [ref=e21] [cursor=pointer]
+      - menu [ref=e23]:
+        - menuitem [ref=e24] [cursor=pointer]:
+          - link "appstore 场景管理" [ref=e188]:
+            - /url: /scenes
+            - generic [ref=e189]:
+              - img "appstore" [ref=e191]
+              - generic [ref=e194]: 场景管理
+        - menuitem "apartment 流程资产" [ref=e32] [cursor=pointer]:
+          - generic [ref=e195]:
+            - img "apartment" [ref=e197]
+            - generic [ref=e200]: 流程资产
+        - menuitem "api 组件管理" [ref=e41] [cursor=pointer]:
+          - generic [ref=e43]:
+            - img "api" [ref=e45]
+            - generic [ref=e48]: 组件管理
+        - menuitem [ref=e49] [cursor=pointer]:
+          - link "database 变量中心" [ref=e51]:
+            - /url: /variable-center
+            - generic [ref=e52]:
+              - img "database" [ref=e54]
+              - generic [ref=e57]: 变量中心
+        - menuitem [ref=e58] [cursor=pointer]:
+          - link "deployment-unit 规则中心" [ref=e60]:
+            - /url: /rule-center
+            - generic [ref=e61]:
+              - img "deployment-unit" [ref=e63]
+              - generic [ref=e66]: 规则中心
+        - menuitem [ref=e67] [cursor=pointer]:
+          - link "profile 决策记录" [ref=e69]:
+            - /url: /decision-records
+            - generic [ref=e70]:
+              - img "profile" [ref=e72]
+              - generic [ref=e75]: 决策记录
+        - menuitem [ref=e76] [cursor=pointer]:
+          - link "experiment 营销闭环演示" [ref=e78]:
+            - /url: /marketing-demo
+            - generic [ref=e79]:
+              - img "experiment" [ref=e81]
+              - generic [ref=e84]: 营销闭环演示
+        - menuitem [ref=e85] [cursor=pointer]:
+          - link "partition 流程设计" [ref=e87]:
+            - /url: /flow-design
+            - generic [ref=e88]:
+              - img "partition" [ref=e90]
+              - generic [ref=e93]: 流程设计
+      - generic [ref=e94]: 演示用户
+      - generic [ref=e97] [cursor=pointer]
+  - main [ref=e101]:
+    - generic [ref=e201]:
+      - generic "流程资产" [ref=e205]
+      - generic [ref=e209]:
+        - generic [ref=e210]:
+          - generic [ref=e211]: 流程可独立发布，并作为多个场景的入口复用。
+          - button "新建流程" [ref=e212] [cursor=pointer]
+        - generic [ref=e216]:
+          - searchbox "按流程码或名称搜索" [ref=e218]
+          - button [ref=e220] [cursor=pointer]:
+            - img "search" [ref=e222]
+        - generic [ref=e227]:
+          - table [ref=e231]:
+            - rowgroup [ref=e239]:
+              - row [ref=e240]:
+                - columnheader "流程码" [ref=e241]
+                - columnheader "流程名称" [ref=e242]
+                - columnheader "类型" [ref=e243]
+                - columnheader "当前版本" [ref=e244]
+                - columnheader "更新时间" [ref=e245]
+                - columnheader "操作" [ref=e246]
+            - rowgroup [ref=e247]:
+              - row [ref=e248]:
+                - cell "demoCheckoutScene" [ref=e249]
+                - cell "演示结算场景" [ref=e250]
+                - cell "决策流程" [ref=e251]
+                - cell "未发布" [ref=e252]
+                - cell "2026-10-16 18:53:44" [ref=e253]
+                - cell [ref=e254]:
+                  - button "设计流程" [ref=e255] [cursor=pointer]
+              - row [ref=e257]:
+                - cell "demoCheckoutDecision" [ref=e258]
+                - cell "演示结算优惠决策" [ref=e259]
+                - cell "决策流程" [ref=e260]
+                - cell "v1" [ref=e261]
+                - cell "2026-10-16 18:53:44" [ref=e262]
+                - cell [ref=e263]:
+                  - button "设计流程" [ref=e264] [cursor=pointer]
+              - row [ref=e266]:
+                - cell "demoOfferSelection" [ref=e267]
+                - cell "演示优惠选择决策" [ref=e268]
+                - cell "决策流程" [ref=e269]
+                - cell "v1" [ref=e270]
+                - cell "2026-10-16 18:53:44" [ref=e271]
+                - cell [ref=e272]:
+                  - button "设计流程" [ref=e273] [cursor=pointer]
+              - row [ref=e275]:
+                - cell "demoOfferEligibility" [ref=e276]
+                - cell "演示优惠资格决策" [ref=e277]
+                - cell "决策流程" [ref=e278]
+                - cell "v1" [ref=e279]
+                - cell "2026-10-16 18:53:44" [ref=e280]
+                - cell [ref=e281]:
+                  - button "设计流程" [ref=e282] [cursor=pointer]
+          - list [ref=e284]:
+            - listitem [ref=e285]: 共 4 条
+            - listitem "上一页" [ref=e286]:
+              - button [disabled] [ref=e287]:
+                - img "left" [ref=e288]
+            - listitem "1" [ref=e291] [cursor=pointer]
+            - listitem "下一页" [ref=e293]:
+              - button [disabled] [ref=e294]:
+                - img "right" [ref=e295]
+            - listitem [ref=e298]:
+              - generic [ref=e299]:
+                - generic "10 条/页" [ref=e300]:
+                  - text: 10 条/页
+                  - combobox "页码" [ref=e301]
+                - img "down" [ref=e303]

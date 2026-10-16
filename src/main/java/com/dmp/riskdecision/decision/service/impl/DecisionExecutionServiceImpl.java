@@ -7,13 +7,16 @@ import com.dmp.riskdecision.decision.model.BusinessResult;
 import com.dmp.riskdecision.decision.model.ExecutionResult;
 import com.dmp.riskdecision.decision.model.SuggestedAction;
 import com.dmp.riskdecision.decision.service.DecisionExecutionService;
+import com.dmp.riskdecision.decision.service.DecisionRecordService;
 import com.dmp.riskdecision.orchestrator.graph.GraphNode;
+import com.dmp.riskdecision.orchestrator.graph.FlowContextBinding;
 import com.dmp.riskdecision.orchestrator.graph.NodeKind;
 import com.dmp.riskdecision.policy.model.FlowVersion;
 import com.dmp.riskdecision.policy.repository.SceneFlowRepository;
 import jakarta.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -31,6 +34,8 @@ public class DecisionExecutionServiceImpl implements DecisionExecutionService {
     private LiteFlowChainService chains;
     @Resource
     private LiteFlowExecutionService execution;
+    @Resource
+    private DecisionRecordService records;
 
     public DecisionExecutionServiceImpl() {
     }
@@ -53,9 +58,13 @@ public class DecisionExecutionServiceImpl implements DecisionExecutionService {
     @Override
     public ExecutionResult evaluate(String requestId, String sceneCode, Map<String, Object> input) {
         if (sceneCode == null || sceneCode.isBlank()) throw new IllegalArgumentException("sceneCode is required");
+        if (requestId != null && requestId.length() > 191) {
+            throw new IllegalArgumentException("requestId is too long");
+        }
         FlowVersion version = repository.findPublished(sceneCode)
                 .orElseThrow(() -> new NoSuchElementException("Published scene not found: " + sceneCode));
-        return evaluateVersion(requestId, sceneCode, version, input);
+        ExecutionResult result = evaluateVersion(requestId, sceneCode, version, input);
+        return records == null ? result : result.withExecutionId(records.save(result, input));
     }
 
     /** 按已固定的不可变版本运行流程，供子流程调用复用。 */
@@ -71,7 +80,9 @@ public class DecisionExecutionServiceImpl implements DecisionExecutionService {
             }
         }
         LiteFlowRunResult response = execution.execute(version.getChainId(), id, sceneCode,
-                version.getVersionNumber(), input, configs);
+                version.getVersionNumber(), input, configs,
+                version.getGraph().getContextBindings().stream().collect(Collectors.toMap(
+                        FlowContextBinding::getVariableCode, binding -> binding)));
         boolean missingResult = response.isSuccess() && response.getBusinessResultConfig() == null
                 && version.getGraph().getNodes().stream().anyMatch(node -> node.getKind() == NodeKind.RESULT);
         boolean succeeded = response.isSuccess() && !missingResult;

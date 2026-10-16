@@ -52,7 +52,9 @@ public class RuleSetController {
 
     @PostMapping("/{code}/test")
     public ApiResponse<RuleEvaluationResp> test(@PathVariable String code, @RequestBody TestRuleSetReq request) {
-        return ApiResponse.success(new RuleEvaluationResp(rules.testDraft(code, request.getInput() == null ? Map.of() : request.getInput())));
+        return ApiResponse.success(new RuleEvaluationResp(rules.testDraft(code,
+                request.getInput() == null ? Map.of() : request.getInput(),
+                request.getContextValues() == null ? Map.of() : request.getContextValues())));
     }
 
     @PostMapping("/{code}/versions/{id}/test")
@@ -60,8 +62,9 @@ public class RuleSetController {
                                                        @RequestBody TestRuleSetReq request) {
         RuleSetVersion version = rules.requireVersion(id);
         if (!code.equals(version.getCode())) throw new IllegalArgumentException("Rule version does not belong to rule set");
-        return ApiResponse.success(new RuleEvaluationResp(rules.evaluateVersion(id,
-                request.getInput() == null ? Map.of() : request.getInput())));
+        return ApiResponse.success(new RuleEvaluationResp(rules.testVersion(id,
+                request.getInput() == null ? Map.of() : request.getInput(),
+                request.getContextValues() == null ? Map.of() : request.getContextValues())));
     }
 
     @PostMapping("/{code}/publish")

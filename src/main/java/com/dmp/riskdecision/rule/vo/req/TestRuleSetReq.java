@@ -7,4 +7,5 @@ import lombok.Data;
 @Data
 public class TestRuleSetReq {
     private Map<String, Object> input;
+    private Map<String, Object> contextValues;
 }

@@ -11,6 +11,7 @@ export default [
   ] },
   { path: '/variable-center', name: '变量中心', icon: 'database', component: './variable-center' },
   { path: '/rule-center', name: '规则中心', icon: 'deploymentUnit', component: './rule-center' },
+  { path: '/decision-records', name: '决策记录', icon: 'profile', component: './decision-records' },
   { path: '/marketing-demo', name: '营销闭环演示', icon: 'experiment', component: './marketing-demo' },
   { path: '/flows/:flowCode/editor', name: '流程设计', hideInMenu: true, component: './flows/editor' },
   { path: '/flow-design', name: '流程设计', icon: 'partition', component: './flow-design' },

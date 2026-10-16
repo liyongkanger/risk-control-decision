@@ -4,7 +4,8 @@ import { readApi } from './http'
 export type DemoGroup = 'CONTROL' | 'LOW' | 'HIGH'
 export type DemoCheckout = {
   experimentId: string; checkoutId: string; userId: string; group: DemoGroup
-  requestId: string; decidedAt: string; outerVersionId: number; subflowVersionIds: Record<string, number>
+  executionId: string | null; requestId: string; decidedAt: string
+  outerVersionId: number; subflowVersionIds: Record<string, number>
   ruleSetCode: string | null; ruleVersionId: number | null
   matchedRuleId: string | null; ruleReasonCode: string | null
   decisionStatus: string; decisionConclusion: string | null; decisionReason: string | null

@@ -17,17 +17,27 @@ function New-Edge([string]$Id, [string]$Source, [string]$Target, $Branch) {
 }
 
 $null = Send-Json 'POST' '/api/demo/checkout-offer/run-fixture' @{ experimentId = 'variableReview' }
-$variableCode = 'lowGroupUsers'
+$locatorCode = 'experimentId'
+try { $locator = Invoke-RestMethod -Uri "$ApiBase/api/variables/$locatorCode" }
+catch {
+    $locator = Send-Json 'POST' '/api/variables' @{
+        variableCode = $locatorCode; variableName = 'Experiment ID'; valueType = 'STRING'
+        sourceType = 'REQUEST_INPUT'; parameterNames = @(); categoryCode = 'CAMPAIGN'
+    }
+}
+$variableCode = 'lowGroupUsersUnified'
 try { $variable = Invoke-RestMethod -Uri "$ApiBase/api/variables/$variableCode" }
 catch {
     $variable = Send-Json 'POST' '/api/variables' @{
         variableCode = $variableCode; variableName = 'Low group users'; valueType = 'DECIMAL'
         sourceType = 'HTTP_GET'; url = "$ApiBase/api/demo/checkout-offer/report"
-        timeoutMs = 1000; parameterNames = @('experimentId'); resultPath = 'data.groups.LOW.users'
+        timeoutMs = 1000; parameterNames = @('experimentId')
+        dependencyVersionIds = @{ experimentId = $locator.data.id }; resultPath = 'data.groups.LOW.users'
+        categoryCode = 'CAMPAIGN'
     }
 }
 $variableId = $variable.data.id
-$flowCode = 'variableCanvasDemo'
+$flowCode = 'variableCanvasUnifiedDemo'
 try { $null = Invoke-RestMethod -Uri "$ApiBase/api/flows/$flowCode" }
 catch { $null = Send-Json 'POST' '/api/flows' @{ flowCode = $flowCode; flowName = 'Variable center sample' } }
 
@@ -38,7 +48,6 @@ $graph = @{
         (New-Node 'start' 'START' $null $null @{})
         (New-Node 'getUsers' 'COMPONENT' 'get-variable' 'FAIL_FAST' @{
             variableCode = $variableCode; versionId = $variableId
-            inputMappings = @{ experimentId = 'experimentId' }
         })
         (New-Node 'check' 'CONDITION' 'compare-value' 'FAIL_FAST' @{
             sourceNodeId = 'getUsers'; valueType = 'DECIMAL'; operator = 'GTE'; expected = 10
@@ -79,7 +88,7 @@ if ($null -eq $published) {
     $null = Send-Json 'POST' "/api/flows/$flowCode/publish" @{ expectedRevision = $draft.data.revision }
 }
 
-$sceneCode = 'variableCanvasScene'
+$sceneCode = 'variableCanvasUnifiedScene'
 try { $null = Invoke-RestMethod -Uri "$ApiBase/api/scenes/$sceneCode" }
 catch { $null = Send-Json 'POST' '/api/scenes' @{
     sceneCode = $sceneCode; sceneName = 'Variable center sample'; description = 'Read a typed variable'

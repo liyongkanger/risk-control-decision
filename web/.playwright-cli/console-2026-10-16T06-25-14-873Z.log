@@ -1,0 +1,4 @@
+[      28ms] [LOG] [HMR] connecting... @ http://localhost:8000/_root-of-the-server___1qi8s76zd8oon.async.js:81
+[      29ms] [LOG] [utoopack] connecting... @ http://localhost:8000/_root-of-the-server___1qi8s76zd8oon.async.js:81
+[      32ms] [LOG] [HMR] connected @ http://localhost:8000/_root-of-the-server___1qi8s76zd8oon.async.js:81
+[     106ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:8000/_root-of-the-server___1qi8s76zd8oon.async.js:81

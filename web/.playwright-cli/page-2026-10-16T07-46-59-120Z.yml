@@ -1,0 +1,214 @@
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - complementary [ref=e6]:
+      - generic [ref=e7]:
+        - heading "风控决策平台" [level=1] [ref=e21] [cursor=pointer]
+        - menu [ref=e23]:
+          - menuitem [ref=e24] [cursor=pointer]:
+            - link "appstore 场景管理" [ref=e26]:
+              - /url: /scenes
+              - generic [ref=e27]:
+                - img "appstore" [ref=e29]
+                - generic [ref=e32]: 场景管理
+          - menuitem [ref=e33] [cursor=pointer]:
+            - link "apartment 流程资产" [ref=e35]:
+              - /url: /flows
+              - generic [ref=e36]:
+                - img "apartment" [ref=e38]
+                - generic [ref=e41]: 流程资产
+          - menuitem "api 组件管理" [ref=e42] [cursor=pointer]:
+            - generic [ref=e44]:
+              - img "api" [ref=e46]
+              - generic [ref=e49]: 组件管理
+          - menuitem "database 变量中心" [ref=e50] [cursor=pointer]:
+            - generic [ref=e52]:
+              - img "database" [ref=e54]
+              - generic [ref=e57]: 变量中心
+          - menuitem [ref=e58] [cursor=pointer]:
+            - link "deployment-unit 规则中心" [ref=e60]:
+              - /url: /rule-center
+              - generic [ref=e61]:
+                - img "deployment-unit" [ref=e63]
+                - generic [ref=e66]: 规则中心
+          - menuitem [ref=e67] [cursor=pointer]:
+            - link "experiment 营销闭环演示" [ref=e69]:
+              - /url: /marketing-demo
+              - generic [ref=e70]:
+                - img "experiment" [ref=e72]
+                - generic [ref=e75]: 营销闭环演示
+          - menuitem [ref=e76] [cursor=pointer]:
+            - link "partition 流程设计" [ref=e78]:
+              - /url: /flow-design
+              - generic [ref=e79]:
+                - img "partition" [ref=e81]
+                - generic [ref=e84]: 流程设计
+        - generic [ref=e85]: 演示用户
+        - generic [ref=e88] [cursor=pointer]
+    - main [ref=e92]:
+      - generic [ref=e93]:
+        - generic "变量中心" [ref=e97]
+        - generic [ref=e100]:
+          - generic [ref=e101]: 变量可来自流程请求、本流程上游节点或外部只读来源。外部来源的参数名须引用已有变量码。流程发布后固定变量版本。
+          - generic [ref=e102]:
+            - generic [ref=e104]:
+              - searchbox "搜索变量" [ref=e105]
+              - button [ref=e106] [cursor=pointer]:
+                - img "search" [ref=e108]
+            - generic [ref=e112] [cursor=pointer]:
+              - generic [ref=e113]:
+                - generic: 全部分类
+                - combobox "按分类筛选" [expanded] [active] [ref=e114]:
+                  - listbox:
+                    - option "用户": USER
+                    - option "交易/订单": TRANSACTION
+              - img "down" [ref=e116]
+            - generic [ref=e120] [cursor=pointer]:
+              - generic [ref=e121]:
+                - generic: 全部来源
+                - combobox "按来源筛选" [ref=e122]
+              - img "down" [ref=e124]
+            - generic [ref=e128] [cursor=pointer]:
+              - generic [ref=e129]:
+                - generic: 全部返回类型
+                - combobox "按返回类型筛选" [ref=e130]
+              - img "down" [ref=e132]
+            - button "新建变量" [ref=e136] [cursor=pointer]
+          - generic [ref=e140]:
+            - table [ref=e144]:
+              - rowgroup [ref=e145]:
+                - row [ref=e146]:
+                  - columnheader "变量码" [ref=e147]
+                  - columnheader "名称" [ref=e148]
+                  - columnheader "分类" [ref=e149]
+                  - columnheader "类型" [ref=e150]
+                  - columnheader "当前版本" [ref=e151]
+                  - columnheader "来源" [ref=e152]
+                  - columnheader "取值路径" [ref=e153]
+                  - columnheader "操作" [ref=e154]
+              - rowgroup [ref=e155]:
+                - row [ref=e156]:
+                  - cell "checkoutId" [ref=e157]
+                  - cell "checkoutId" [ref=e158]
+                  - cell "交易/订单" [ref=e159]
+                  - cell "STRING" [ref=e160]
+                  - cell "v1" [ref=e161]
+                  - cell "REQUEST_INPUT" [ref=e162]
+                  - cell "—" [ref=e163]
+                  - cell [ref=e164]:
+                    - generic [ref=e165]:
+                      - button "试取值" [ref=e167] [cursor=pointer]
+                      - button "更新版本" [ref=e170] [cursor=pointer]
+                      - button "修改分类" [ref=e173] [cursor=pointer]
+                - row [ref=e175]:
+                  - cell "demoMarginAfterMaxOffer" [ref=e176]
+                  - cell "演示预计优惠后毛利" [ref=e177]
+                  - cell "交易/订单" [ref=e178]
+                  - cell "DECIMAL" [ref=e179]
+                  - cell "v1" [ref=e180]
+                  - cell "DEMO_MARKETING" [ref=e181]
+                  - cell "marginAfterMaxOffer" [ref=e182]
+                  - cell [ref=e183]:
+                    - generic [ref=e184]:
+                      - button "试取值" [ref=e186] [cursor=pointer]
+                      - button "更新版本" [ref=e189] [cursor=pointer]
+                      - button "修改分类" [ref=e192] [cursor=pointer]
+                - row [ref=e194]:
+                  - cell "demoOrderAmount" [ref=e195]
+                  - cell "演示订单金额" [ref=e196]
+                  - cell "交易/订单" [ref=e197]
+                  - cell "DECIMAL" [ref=e198]
+                  - cell "v1" [ref=e199]
+                  - cell "DEMO_MARKETING" [ref=e200]
+                  - cell "orderAmount" [ref=e201]
+                  - cell [ref=e202]:
+                    - generic [ref=e203]:
+                      - button "试取值" [ref=e205] [cursor=pointer]
+                      - button "更新版本" [ref=e208] [cursor=pointer]
+                      - button "修改分类" [ref=e211] [cursor=pointer]
+                - row [ref=e213]:
+                  - cell "demoRemainingBudget" [ref=e214]
+                  - cell "演示活动剩余预算" [ref=e215]
+                  - cell "额度/预算" [ref=e216]
+                  - cell "DECIMAL" [ref=e217]
+                  - cell "v1" [ref=e218]
+                  - cell "DEMO_MARKETING" [ref=e219]
+                  - cell "remainingBudget" [ref=e220]
+                  - cell [ref=e221]:
+                    - generic [ref=e222]:
+                      - button "试取值" [ref=e224] [cursor=pointer]
+                      - button "更新版本" [ref=e227] [cursor=pointer]
+                      - button "修改分类" [ref=e230] [cursor=pointer]
+                - row [ref=e232]:
+                  - cell "experimentId" [ref=e233]
+                  - cell "experimentId" [ref=e234]
+                  - cell "活动/实验" [ref=e235]
+                  - cell "STRING" [ref=e236]
+                  - cell "v1" [ref=e237]
+                  - cell "REQUEST_INPUT" [ref=e238]
+                  - cell "—" [ref=e239]
+                  - cell [ref=e240]:
+                    - generic [ref=e241]:
+                      - button "试取值" [ref=e243] [cursor=pointer]
+                      - button "更新版本" [ref=e246] [cursor=pointer]
+                      - button "修改分类" [ref=e249] [cursor=pointer]
+                - row [ref=e251]:
+                  - cell "lowGroupUsersUnified" [ref=e252]
+                  - cell "Low group users" [ref=e253]
+                  - cell "活动/实验" [ref=e254]
+                  - cell "DECIMAL" [ref=e255]
+                  - cell "v1" [ref=e256]
+                  - cell "HTTP_GET" [ref=e257]
+                  - cell "data.groups.LOW.users" [ref=e258]
+                  - cell [ref=e259]:
+                    - generic [ref=e260]:
+                      - button "试取值" [ref=e262] [cursor=pointer]
+                      - button "更新版本" [ref=e265] [cursor=pointer]
+                      - button "修改分类" [ref=e268] [cursor=pointer]
+                - row [ref=e270]:
+                  - cell "reviewInitializedFlag" [ref=e271]
+                  - cell "演示初始化状态" [ref=e272]
+                  - cell "其他" [ref=e273]
+                  - cell "BOOLEAN" [ref=e274]
+                  - cell "v2" [ref=e275]
+                  - cell "HTTP_GET" [ref=e276]
+                  - cell "data.initialized" [ref=e277]
+                  - cell [ref=e278]:
+                    - generic [ref=e279]:
+                      - button "试取值" [ref=e281] [cursor=pointer]
+                      - button "更新版本" [ref=e284] [cursor=pointer]
+                      - button "修改分类" [ref=e287] [cursor=pointer]
+                - row [ref=e289]:
+                  - cell "uid" [ref=e290]
+                  - cell "uid" [ref=e291]
+                  - cell "用户" [ref=e292]
+                  - cell "STRING" [ref=e293]
+                  - cell "v1" [ref=e294]
+                  - cell "REQUEST_INPUT" [ref=e295]
+                  - cell "—" [ref=e296]
+                  - cell [ref=e297]:
+                    - generic [ref=e298]:
+                      - button "试取值" [ref=e300] [cursor=pointer]
+                      - button "更新版本" [ref=e303] [cursor=pointer]
+                      - button "修改分类" [ref=e306] [cursor=pointer]
+            - list [ref=e308]:
+              - listitem [ref=e309]: 共 8 条
+              - listitem "上一页" [ref=e310]:
+                - button [disabled] [ref=e311]:
+                  - img "left" [ref=e312]
+              - listitem "1" [ref=e315] [cursor=pointer]
+              - listitem "下一页" [ref=e317]:
+                - button [disabled] [ref=e318]:
+                  - img "right" [ref=e319]
+              - listitem [ref=e322]:
+                - generic [ref=e323]:
+                  - generic "10 条/页" [ref=e324]:
+                    - text: 10 条/页
+                    - combobox "页码" [ref=e325]
+                  - img "down" [ref=e327]
+  - generic [ref=e335]:
+    - generic "用户" [ref=e336] [cursor=pointer]
+    - generic "交易/订单" [ref=e338] [cursor=pointer]
+    - generic "活动/实验" [ref=e340] [cursor=pointer]
+    - generic "额度/预算" [ref=e342] [cursor=pointer]
+    - generic "风险指标" [ref=e344] [cursor=pointer]
+    - generic "其他" [ref=e346] [cursor=pointer]

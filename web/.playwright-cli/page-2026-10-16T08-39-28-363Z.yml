@@ -1,0 +1,203 @@
+- generic [ref=f2e1]:
+  - generic [ref=f2e4]:
+    - complementary [ref=f2e6]:
+      - generic [ref=f2e7]:
+        - heading "风控决策平台" [level=1] [ref=f2e21] [cursor=pointer]
+        - menu [ref=f2e23]:
+          - menuitem [ref=f2e24] [cursor=pointer]:
+            - link "appstore 场景管理" [ref=f2e26]:
+              - /url: /scenes
+              - generic [ref=f2e27]:
+                - img "appstore" [ref=f2e29]
+                - generic [ref=f2e32]: 场景管理
+          - menuitem [ref=f2e33] [cursor=pointer]:
+            - link "apartment 流程资产" [ref=f2e35]:
+              - /url: /flows
+              - generic [ref=f2e36]:
+                - img "apartment" [ref=f2e38]
+                - generic [ref=f2e41]: 流程资产
+          - menuitem "api 组件管理" [ref=f2e42] [cursor=pointer]:
+            - generic [ref=f2e44]:
+              - img "api" [ref=f2e46]
+              - generic [ref=f2e49]: 组件管理
+          - menuitem [ref=f2e50] [cursor=pointer]:
+            - link "database 变量中心" [ref=f2e52]:
+              - /url: /variable-center
+              - generic [ref=f2e53]:
+                - img "database" [ref=f2e55]
+                - generic [ref=f2e58]: 变量中心
+          - menuitem "deployment-unit 规则中心" [ref=f2e59] [cursor=pointer]:
+            - generic [ref=f2e61]:
+              - img "deployment-unit" [ref=f2e63]
+              - generic [ref=f2e66]: 规则中心
+          - menuitem [ref=f2e67] [cursor=pointer]:
+            - link "experiment 营销闭环演示" [ref=f2e69]:
+              - /url: /marketing-demo
+              - generic [ref=f2e70]:
+                - img "experiment" [ref=f2e72]
+                - generic [ref=f2e75]: 营销闭环演示
+          - menuitem [ref=f2e76] [cursor=pointer]:
+            - link "partition 流程设计" [ref=f2e78]:
+              - /url: /flow-design
+              - generic [ref=f2e79]:
+                - img "partition" [ref=f2e81]
+                - generic [ref=f2e84]: 流程设计
+        - generic [ref=f2e85]: 演示用户
+        - generic [ref=f2e88] [cursor=pointer]
+    - main [ref=f2e92]:
+      - generic [ref=f2e93]:
+        - generic "规则中心" [ref=f2e97]
+        - generic [ref=f2e100]:
+          - generic [ref=f2e101]:
+            - generic [ref=f2e103]:
+              - searchbox "搜索规则集" [ref=f2e104]
+              - button [ref=f2e105] [cursor=pointer]:
+                - img "search" [ref=f2e107]
+            - button "新建规则集" [ref=f2e111] [cursor=pointer]
+          - generic [ref=f2e115]:
+            - table [ref=f2e119]:
+              - rowgroup [ref=f2e120]:
+                - row [ref=f2e121]:
+                  - columnheader "规则集码" [ref=f2e122]
+                  - columnheader "名称" [ref=f2e123]
+                  - columnheader "草稿修订号" [ref=f2e124]
+                  - columnheader "当前发布版本 ID" [ref=f2e125]
+                  - columnheader "操作" [ref=f2e126]
+              - rowgroup [ref=f2e127]:
+                - row [ref=f2e128]:
+                  - cell "demoOfferEligibilityRules" [ref=f2e129]
+                  - cell "演示优惠资格规则" [ref=f2e130]
+                  - cell "1" [ref=f2e131]
+                  - cell "1" [ref=f2e132]
+                  - cell [ref=f2e133]:
+                    - button "编辑 / 试算" [ref=f2e134] [cursor=pointer]
+            - list [ref=f2e136]:
+              - listitem [ref=f2e137]: 共 1 条
+              - listitem "上一页" [ref=f2e138]:
+                - button [disabled] [ref=f2e139]:
+                  - img "left" [ref=f2e140]
+              - listitem "1" [ref=f2e143] [cursor=pointer]
+              - listitem "下一页" [ref=f2e145]:
+                - button [disabled] [ref=f2e146]:
+                  - img "right" [ref=f2e147]
+              - listitem [ref=f2e150]:
+                - generic [ref=f2e151]:
+                  - generic "10 条/页" [ref=f2e152]:
+                    - text: 10 条/页
+                    - combobox "页码" [ref=f2e153]
+                  - img "down" [ref=f2e155]
+  - generic [ref=f2e158]:
+    - dialog "新建规则集":
+      - generic [ref=f2e159]:
+        - button "关闭" [ref=f2e160] [cursor=pointer]:
+          - generic "关闭" [ref=f2e161]:
+            - img "close" [ref=f2e162]
+        - generic [ref=f2e165]: 新建规则集
+        - generic [ref=f2e167]:
+          - generic [ref=f2e168]:
+            - generic [ref=f2e169]:
+              - generic [ref=f2e171]:
+                - text: 规则集码
+                - textbox "规则集码" [ref=f2e172]
+              - generic [ref=f2e174]:
+                - text: 名称
+                - textbox "规则集名称" [ref=f2e175]
+              - generic [ref=f2e176]: 发布版本 ID：未发布
+            - generic [ref=f2e178]:
+              - generic [ref=f2e180]:
+                - generic [ref=f2e181]: 规则使用的变量
+                - button "搜索添加变量" [ref=f2e183] [cursor=pointer]
+              - generic [ref=f2e185]: 先从变量中心选择变量，再添加规则行和比较条件。
+            - generic [ref=f2e186]:
+              - generic [ref=f2e187]: 业务结果码
+              - textbox "结果码列表" [ref=f2e191]:
+                - /placeholder: PASS, REJECT
+                - text: PASS, REJECT
+            - generic [ref=f2e194]:
+              - generic [ref=f2e195]: 规则行（优先级小的先判断）
+              - button "添加规则行" [ref=f2e197] [cursor=pointer]
+            - generic [ref=f2e199]:
+              - generic [ref=f2e200]: 兜底结果
+              - generic [ref=f2e204]:
+                - generic [ref=f2e206] [cursor=pointer]:
+                  - generic "PASS" [ref=f2e207]:
+                    - text: PASS
+                    - combobox "兜底结果码" [ref=f2e208]
+                  - img "down" [ref=f2e210]
+                - textbox "兜底原因码" [ref=f2e214]: DEFAULT
+                - textbox "兜底原因" [ref=f2e216]: 符合规则
+            - generic [ref=f2e217]:
+              - generic [ref=f2e218]: 模拟试算
+              - generic [ref=f2e221]:
+                - generic [ref=f2e222]: "DECIMAL 小数请用 JSON 字符串输入，如 {\"amount\":\"0.10000000000000001\"}，避免浏览器舍入。"
+                - textbox "试算输入 JSON" [ref=f2e223]: "{}"
+                - generic [ref=f2e224]: 流程上下文变量临时样例 JSON（按变量码填写，仅用于本次试算）
+                - textbox "临时流程上下文样例 JSON" [ref=f2e225]: "{}"
+                - generic [ref=f2e226]:
+                  - button "试算草稿" [disabled] [ref=f2e228]
+                  - generic [ref=f2e230]:
+                    - spinbutton "试算发布版本 ID" [ref=f2e231]
+                    - generic:
+                      - button "Increase Value" [ref=f2e232] [cursor=pointer]:
+                        - img "up" [ref=f2e233]
+                      - button "Decrease Value" [ref=f2e236] [cursor=pointer]:
+                        - img "down" [ref=f2e237]
+                  - button "试算发布版本" [disabled] [ref=f2e241]
+          - generic [ref=f2e242]:
+            - button "保存草稿" [ref=f2e244] [cursor=pointer]
+            - button "发布版本" [disabled] [ref=f2e247]
+            - generic [ref=f2e248]: 当前有未保存修改
+  - generic [ref=f2e249]:
+    - dialog "从变量中心选择变量":
+      - generic [ref=f2e250]:
+        - button "关闭" [ref=f2e251] [cursor=pointer]:
+          - generic "关闭" [ref=f2e252]:
+            - img "close" [ref=f2e253]
+        - generic [ref=f2e256]: 从变量中心选择变量
+        - generic [ref=f2e258]:
+          - generic [ref=f2e259]:
+            - generic [ref=f2e261]:
+              - searchbox "搜索变量中心变量" [active] [ref=f2e262]: demoOrderAmount
+              - button [ref=f2e263] [cursor=pointer]:
+                - img "search" [ref=f2e265]
+            - generic [ref=f2e269] [cursor=pointer]:
+              - generic [ref=f2e270]:
+                - generic: 全部分类
+                - combobox "按变量分类筛选" [ref=f2e271]
+              - img "down" [ref=f2e273]
+          - generic [ref=f2e278]:
+            - table [ref=f2e282]:
+              - rowgroup [ref=f2e283]:
+                - row [ref=f2e284]:
+                  - columnheader "变量码" [ref=f2e285]
+                  - columnheader "名称" [ref=f2e286]
+                  - columnheader "分类" [ref=f2e287]
+                  - columnheader "类型" [ref=f2e288]
+                  - columnheader "来源" [ref=f2e289]
+                  - columnheader "版本" [ref=f2e290]
+                  - columnheader "操作" [ref=f2e291]
+              - rowgroup [ref=f2e292]:
+                - row [ref=f2e313]:
+                  - cell "demoOrderAmount" [ref=f2e314]
+                  - cell "演示订单金额" [ref=f2e315]
+                  - cell "交易/订单" [ref=f2e316]
+                  - cell "DECIMAL" [ref=f2e317]
+                  - cell "DEMO_MARKETING" [ref=f2e318]
+                  - cell "v1" [ref=f2e319]
+                  - cell [ref=f2e320]:
+                    - button "选择变量" [ref=f2e321] [cursor=pointer]
+            - list [ref=f2e373]:
+              - listitem [ref=f2e374]: 共 1 条
+              - listitem "上一页" [ref=f2e375]:
+                - button [disabled] [ref=f2e376]:
+                  - img "left" [ref=f2e377]
+              - listitem "1" [ref=f2e380] [cursor=pointer]
+              - listitem "下一页" [ref=f2e382]:
+                - button [disabled] [ref=f2e383]:
+                  - img "right" [ref=f2e384]
+              - listitem [ref=f2e387]:
+                - generic [ref=f2e388]:
+                  - generic "10 条/页" [ref=f2e389]:
+                    - text: 10 条/页
+                    - combobox "页码" [ref=f2e390]
+                  - img "down" [ref=f2e392]

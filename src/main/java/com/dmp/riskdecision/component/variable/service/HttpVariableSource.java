@@ -27,12 +27,17 @@ import tools.jackson.databind.ObjectMapper;
 
 /** 从已登记的只读 HTTP 来源提取一个声明类型的变量值。 */
 @Service
-public class HttpVariableSource {
+public class HttpVariableSource implements VariableSource {
     private static final int MAX_RESPONSE_BYTES = 65536;
     private final HttpClient client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build();
     private final ObjectMapper json = new ObjectMapper();
 
+    /** {@inheritDoc} */
+    @Override
+    public String sourceType() { return "HTTP_GET"; }
+
     /** 仅发送 GET；任何来源错误、空值或类型不符都使本次取值失败。 */
+    @Override
     public Object fetch(VariableVersion version, Map<String, Object> parameters) {
         if (!parameters.keySet().equals(new HashSet<>(version.getParameterNames()))) {
             throw new IllegalArgumentException("Variable parameters do not match the definition");

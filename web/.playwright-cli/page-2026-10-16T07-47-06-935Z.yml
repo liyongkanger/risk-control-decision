@@ -1,0 +1,116 @@
+- generic [ref=e4]:
+  - complementary [ref=e6]:
+    - generic [ref=e7]:
+      - heading "风控决策平台" [level=1] [ref=e21] [cursor=pointer]
+      - menu [ref=e23]:
+        - menuitem [ref=e24] [cursor=pointer]:
+          - link "appstore 场景管理" [ref=e26]:
+            - /url: /scenes
+            - generic [ref=e27]:
+              - img "appstore" [ref=e29]
+              - generic [ref=e32]: 场景管理
+        - menuitem [ref=e33] [cursor=pointer]:
+          - link "apartment 流程资产" [ref=e35]:
+            - /url: /flows
+            - generic [ref=e36]:
+              - img "apartment" [ref=e38]
+              - generic [ref=e41]: 流程资产
+        - menuitem "api 组件管理" [ref=e42] [cursor=pointer]:
+          - generic [ref=e44]:
+            - img "api" [ref=e46]
+            - generic [ref=e49]: 组件管理
+        - menuitem "database 变量中心" [ref=e50] [cursor=pointer]:
+          - generic [ref=e52]:
+            - img "database" [ref=e54]
+            - generic [ref=e57]: 变量中心
+        - menuitem [ref=e58] [cursor=pointer]:
+          - link "deployment-unit 规则中心" [ref=e60]:
+            - /url: /rule-center
+            - generic [ref=e61]:
+              - img "deployment-unit" [ref=e63]
+              - generic [ref=e66]: 规则中心
+        - menuitem [ref=e67] [cursor=pointer]:
+          - link "experiment 营销闭环演示" [ref=e69]:
+            - /url: /marketing-demo
+            - generic [ref=e70]:
+              - img "experiment" [ref=e72]
+              - generic [ref=e75]: 营销闭环演示
+        - menuitem [ref=e76] [cursor=pointer]:
+          - link "partition 流程设计" [ref=e78]:
+            - /url: /flow-design
+            - generic [ref=e79]:
+              - img "partition" [ref=e81]
+              - generic [ref=e84]: 流程设计
+      - generic [ref=e85]: 演示用户
+      - generic [ref=e88] [cursor=pointer]
+  - main [ref=e92]:
+    - generic [ref=e93]:
+      - generic "变量中心" [ref=e97]
+      - generic [ref=e100]:
+        - generic [ref=e101]: 变量可来自流程请求、本流程上游节点或外部只读来源。外部来源的参数名须引用已有变量码。流程发布后固定变量版本。
+        - generic [ref=e102]:
+          - generic [ref=e104]:
+            - searchbox "搜索变量" [ref=e105]
+            - button [ref=e106] [cursor=pointer]:
+              - img "search" [ref=e108]
+          - generic [ref=e111]:
+            - generic: 用户
+            - generic [ref=e112] [cursor=pointer]:
+              - generic "用户" [ref=e348]:
+                - text: 用户
+                - combobox "按分类筛选" [active] [ref=e114]
+              - img "down" [ref=e116]
+              - button "Clear" [ref=e349]:
+                - img "close-circle" [ref=e350]
+          - generic [ref=e120] [cursor=pointer]:
+            - generic [ref=e121]:
+              - generic: 全部来源
+              - combobox "按来源筛选" [ref=e122]
+            - img "down" [ref=e124]
+          - generic [ref=e128] [cursor=pointer]:
+            - generic [ref=e129]:
+              - generic: 全部返回类型
+              - combobox "按返回类型筛选" [ref=e130]
+            - img "down" [ref=e132]
+          - button "新建变量" [ref=e136] [cursor=pointer]
+        - generic [ref=e140]:
+          - table [ref=e144]:
+            - rowgroup [ref=e145]:
+              - row [ref=e146]:
+                - columnheader "变量码" [ref=e147]
+                - columnheader "名称" [ref=e148]
+                - columnheader "分类" [ref=e149]
+                - columnheader "类型" [ref=e150]
+                - columnheader "当前版本" [ref=e151]
+                - columnheader "来源" [ref=e152]
+                - columnheader "取值路径" [ref=e153]
+                - columnheader "操作" [ref=e154]
+            - rowgroup [ref=e155]:
+              - row [ref=e289]:
+                - cell "uid" [ref=e290]
+                - cell "uid" [ref=e291]
+                - cell "用户" [ref=e292]
+                - cell "STRING" [ref=e293]
+                - cell "v1" [ref=e294]
+                - cell "REQUEST_INPUT" [ref=e295]
+                - cell "—" [ref=e296]
+                - cell [ref=e297]:
+                  - generic [ref=e298]:
+                    - button "试取值" [ref=e300] [cursor=pointer]
+                    - button "更新版本" [ref=e303] [cursor=pointer]
+                    - button "修改分类" [ref=e306] [cursor=pointer]
+          - list [ref=e308]:
+            - listitem [ref=e309]: 共 1 条
+            - listitem "上一页" [ref=e310]:
+              - button [disabled] [ref=e311]:
+                - img "left" [ref=e312]
+            - listitem "1" [ref=e315] [cursor=pointer]
+            - listitem "下一页" [ref=e317]:
+              - button [disabled] [ref=e318]:
+                - img "right" [ref=e319]
+            - listitem [ref=e322]:
+              - generic [ref=e323]:
+                - generic "10 条/页" [ref=e324]:
+                  - text: 10 条/页
+                  - combobox "页码" [ref=e325]
+                - img "down" [ref=e327]

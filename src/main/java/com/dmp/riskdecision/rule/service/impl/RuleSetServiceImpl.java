@@ -16,6 +16,8 @@ import com.dmp.riskdecision.rule.model.RuleSetVersion;
 import com.dmp.riskdecision.rule.service.RuleEvaluator;
 import com.dmp.riskdecision.rule.service.RuleDefinitionValidator;
 import com.dmp.riskdecision.rule.service.RuleSetService;
+import com.dmp.riskdecision.rule.service.RuleVariableBindingService;
+import com.dmp.riskdecision.orchestrator.graph.FlowContextBinding;
 import jakarta.annotation.Resource;
 import java.util.Map;
 import java.util.HashMap;
@@ -35,6 +37,7 @@ public class RuleSetServiceImpl implements RuleSetService {
     @Resource private RuleVersionMapper versions;
     @Resource private RuleEvaluator evaluator;
     @Resource private RuleDefinitionValidator validator;
+    @Resource private RuleVariableBindingService bindings;
     private final ObjectMapper json = JsonMapper.builder()
             .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS).build();
 
@@ -43,6 +46,7 @@ public class RuleSetServiceImpl implements RuleSetService {
     public RuleSetSnapshot create(String code, String name, RuleDefinition definition) {
         requireIdentity(code, name);
         validator.requireValid(definition);
+        bindings.requireValid(definition, false);
         normalizeDecimals(definition);
         RuleSetRow row = new RuleSetRow();
         row.setRuleSetCode(code);
@@ -59,6 +63,7 @@ public class RuleSetServiceImpl implements RuleSetService {
     @Override
     public RuleSetSnapshot updateDraft(String code, long expectedRevision, RuleDefinition definition) {
         validator.requireValid(definition);
+        bindings.requireValid(definition, false);
         normalizeDecimals(definition);
         int changed = sets.saveDraft(code, expectedRevision, json.writeValueAsString(definition));
         if (changed != 1) {
@@ -80,6 +85,7 @@ public class RuleSetServiceImpl implements RuleSetService {
         }
         RuleDefinition definition = parse(current.getDraftJson());
         validator.requireValid(definition);
+        bindings.requireValid(definition, true);
         RuleVersionRow next = new RuleVersionRow();
         next.setRuleSetCode(code);
         next.setVersionNumber(versions.maxVersion(code) + 1);
@@ -127,17 +133,44 @@ public class RuleSetServiceImpl implements RuleSetService {
     /** {@inheritDoc} */
     @Override
     public RuleEvaluation evaluateVersion(long id, Map<String, Object> input) {
+        return evaluateVersion(id, input, Map.of(), Map.of());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public RuleEvaluation evaluateVersion(long id, Map<String, Object> input,
+                                          Map<String, Object> nodeResults,
+                                          Map<String, FlowContextBinding> contextBindings) {
         RuleSetVersion version = requireVersion(id);
-        return evaluator.evaluate(version.getDefinition(), version.getCode(), id, input);
+        return evaluator.evaluate(version.getDefinition(), version.getCode(), id,
+                bindings.resolve(version.getDefinition(), input, nodeResults, contextBindings));
     }
 
     /** {@inheritDoc} */
     @Override
     public RuleEvaluation testDraft(String code, Map<String, Object> input) {
+        return testDraft(code, input, Map.of());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public RuleEvaluation testDraft(String code, Map<String, Object> input,
+                                    Map<String, Object> contextValues) {
         RuleSetRow row = requireRow(code);
         RuleDefinition definition = parse(row.getDraftJson());
         validator.requireValid(definition);
-        return evaluator.evaluate(definition, code, 0, input);
+        bindings.requireValid(definition, false);
+        return evaluator.evaluate(definition, code, 0,
+                bindings.resolveForTest(definition, input, contextValues));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public RuleEvaluation testVersion(long id, Map<String, Object> input,
+                                      Map<String, Object> contextValues) {
+        RuleSetVersion version = requireVersion(id);
+        return evaluator.evaluate(version.getDefinition(), version.getCode(), id,
+                bindings.resolveForTest(version.getDefinition(), input, contextValues));
     }
 
     private RuleSetRow requireRow(String code) {

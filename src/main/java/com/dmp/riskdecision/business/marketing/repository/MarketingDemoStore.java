@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
+import lombok.Getter;
 import org.springframework.stereotype.Repository;
 
 /** 仅保存当前应用进程中的模拟结算和幂等反馈事件。 */
@@ -15,6 +17,45 @@ import org.springframework.stereotype.Repository;
 public class MarketingDemoStore {
     private final Map<String, CheckoutAttempt> attempts = new ConcurrentHashMap<>();
     private final Map<String, String> eventFingerprints = new ConcurrentHashMap<>();
+    private final Map<String, CheckoutFact> checkoutFacts = new ConcurrentHashMap<>();
+    // LiteFlow 全局节点可能属于另一 Spring 上下文；本线程决策显式绑定登记事实的仓储。
+    private static final ThreadLocal<MarketingDemoStore> CURRENT = new ThreadLocal<>();
+
+    /** 登记页面提供的本次模拟结算事实，供变量中心按业务标识读取。 */
+    public synchronized void stageCheckout(String experimentId, String checkoutId, String uid,
+                                           BigDecimal orderAmount, BigDecimal margin,
+                                           BigDecimal existingOfferAmount) {
+        String key = key(experimentId, checkoutId);
+        CheckoutFact next = new CheckoutFact(uid, orderAmount, margin, existingOfferAmount,
+                actualDiscountSpent(experimentId));
+        CheckoutFact prior = checkoutFacts.putIfAbsent(key, next);
+        if (prior != null && !prior.sameValues(next)) {
+            throw new IllegalStateException("Checkout ID already has different staged facts");
+        }
+    }
+
+    /** 返回本线程决策正在使用的仓储；普通变量试取值可回退注入的本地仓储。 */
+    public static MarketingDemoStore currentForThread() { return CURRENT.get(); }
+
+    /** 只在同步决策执行范围内绑定仓储，结束后恢复原线程状态。 */
+    public <T> T withCurrentFacts(Supplier<T> decision) {
+        MarketingDemoStore previous = CURRENT.get();
+        CURRENT.set(this);
+        try { return decision.get(); }
+        finally {
+            if (previous == null) CURRENT.remove();
+            else CURRENT.set(previous);
+        }
+    }
+
+    /** 按实验、结算和用户三重标识读取模拟事实，避免同一用户多笔结算混用。 */
+    public CheckoutFact requireStaged(String experimentId, String checkoutId, String uid) {
+        CheckoutFact fact = checkoutFacts.get(key(experimentId, checkoutId));
+        if (fact == null || !fact.getUid().equals(uid)) {
+            throw new NoSuchElementException("Marketing checkout facts not found");
+        }
+        return fact;
+    }
 
     public Optional<CheckoutAttempt> find(String experimentId, String checkoutId) {
         return Optional.ofNullable(attempts.get(key(experimentId, checkoutId)));
@@ -83,5 +124,31 @@ public class MarketingDemoStore {
 
     private static String key(String experimentId, String id) {
         return experimentId + ":" + id;
+    }
+
+    /** 一次结算的原始模拟业务事实；资格计算不在流程请求中传输这些金额。 */
+    @Getter
+    public static class CheckoutFact {
+        private final String uid;
+        private final BigDecimal orderAmount;
+        private final BigDecimal preDiscountMargin;
+        private final BigDecimal existingOfferAmount;
+        private final BigDecimal discountSpentAtDecision;
+
+        public CheckoutFact(String uid, BigDecimal orderAmount, BigDecimal preDiscountMargin,
+                            BigDecimal existingOfferAmount, BigDecimal discountSpentAtDecision) {
+            this.uid = uid;
+            this.orderAmount = orderAmount;
+            this.preDiscountMargin = preDiscountMargin;
+            this.existingOfferAmount = existingOfferAmount;
+            this.discountSpentAtDecision = discountSpentAtDecision;
+        }
+
+        private boolean sameValues(CheckoutFact other) {
+            return uid.equals(other.uid)
+                    && orderAmount.compareTo(other.orderAmount) == 0
+                    && preDiscountMargin.compareTo(other.preDiscountMargin) == 0
+                    && existingOfferAmount.compareTo(other.existingOfferAmount) == 0;
+        }
     }
 }

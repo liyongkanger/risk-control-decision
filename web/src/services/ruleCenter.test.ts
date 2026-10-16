@@ -11,7 +11,8 @@ it('uses fixed rule versions and draft revisions in requests', async () => {
   vi.stubGlobal('fetch', fetchMock)
   await listRuleSets('eligibility', 2, 20)
   expect(fetchMock).toHaveBeenCalledWith('/api/rule-sets?keyword=eligibility&page=2&pageSize=20')
-  const definition = { inputs: [{ name: 'amount', type: 'DECIMAL' as const }],
+  const definition = { inputs: [{ name: 'amount', type: 'DECIMAL' as const,
+    variableBinding: { variableCode: 'amount', variableVersionId: 1 } }],
     resultCodes: ['ELIGIBLE'], rows: [],
     defaultResult: { resultCode: 'ELIGIBLE', reasonCode: 'QUALIFIED', reason: '通过' } }
   await createRuleSet('eligibility', '资格', definition)
@@ -20,13 +21,13 @@ it('uses fixed rule versions and draft revisions in requests', async () => {
   expect(fetchMock).toHaveBeenLastCalledWith('/api/rule-sets/eligibility/draft', expect.objectContaining({
     method: 'PUT', body: expect.stringContaining('"expectedRevision":3'),
   }))
-  await testRuleSet('eligibility', { amount: 100 })
+  await testRuleSet('eligibility', { amount: 100 }, { approved: true })
   expect(fetchMock).toHaveBeenLastCalledWith('/api/rule-sets/eligibility/test', expect.objectContaining({
-    method: 'POST', body: '{"input":{"amount":100}}',
+    method: 'POST', body: '{"input":{"amount":100},"contextValues":{"approved":true}}',
   }))
   await testRuleSetVersion('eligibility', 12, { amount: '0.10000000000000001' })
   expect(fetchMock).toHaveBeenLastCalledWith('/api/rule-sets/eligibility/versions/12/test',
-    expect.objectContaining({ method: 'POST', body: '{"input":{"amount":"0.10000000000000001"}}' }))
+    expect.objectContaining({ method: 'POST', body: '{"input":{"amount":"0.10000000000000001"},"contextValues":{}}' }))
   await publishRuleSet('eligibility', 3)
   expect(fetchMock).toHaveBeenLastCalledWith('/api/rule-sets/eligibility/publish', expect.objectContaining({
     method: 'POST', body: '{"expectedRevision":3}',

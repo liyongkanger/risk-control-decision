@@ -18,6 +18,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -50,8 +51,9 @@ class VariableFlowIntegrationTest {
             String flowCode = "variableFlow" + suffix;
             String sceneCode = "variableScene" + suffix;
             String url = "http://localhost:" + remote.getAddress().getPort() + "/margin";
+            long locatorVersionId = requireUserIdVariable().getId();
             VariableVersion first = variables.create(code, "优惠前毛利", VariableValueType.DECIMAL,
-                    "HTTP_GET", url, 1000, List.of("userId"), "data.margin");
+                    "HTTP_GET", url, 1000, List.of("userId"), "data.margin", Map.of("userId", locatorVersionId));
             GraphDefinition graph = graph(code, first.getId());
             flows.create(flowCode, "变量查询决策");
             assertThat(flows.validate(flowCode,
@@ -69,7 +71,7 @@ class VariableFlowIntegrationTest {
                     .isEqualByComparingTo("25.50");
             assertThat(calls.get()).isEqualTo(1);
             variables.update(code, 1, "毛利新版", VariableValueType.DECIMAL,
-                    "HTTP_GET", url, 1000, List.of("userId"), "data.margin");
+                    "HTTP_GET", url, 1000, List.of("userId"), "data.margin", Map.of("userId", locatorVersionId));
             assertThat(decisions.evaluate("variable-test-two", sceneCode, Map.of("userId", "user123"))
                     .getBusinessResult().getConclusion()).isEqualTo("ELIGIBLE");
             assertThat(flows.validate(flowCode, graph).isValid()).isFalse();
@@ -83,6 +85,7 @@ class VariableFlowIntegrationTest {
         remote.createContext("/boolean", exchange -> respond(exchange, "{\"value\":true}"));
         remote.start();
         try {
+            long locatorVersionId = requireUserIdVariable().getId();
             for (VariableValueType type : List.of(VariableValueType.STRING, VariableValueType.BOOLEAN)) {
                 String suffix = type.name() + System.nanoTime();
                 String code = "typed" + suffix;
@@ -91,7 +94,7 @@ class VariableFlowIntegrationTest {
                 String path = type == VariableValueType.STRING ? "string" : "boolean";
                 VariableVersion version = variables.create(code, "类型测试", type, "HTTP_GET",
                         "http://localhost:" + remote.getAddress().getPort() + "/" + path,
-                        1000, List.of("userId"), "value");
+                        1000, List.of("userId"), "value", Map.of("userId", locatorVersionId));
                 Object expected = type == VariableValueType.STRING ? "GOLD" : true;
                 GraphDefinition graph = graph(code, version.getId(), type, expected, "EQ");
                 flows.create(flowCode, "变量类型流程");
@@ -113,6 +116,14 @@ class VariableFlowIntegrationTest {
         exchange.close();
     }
 
+    private VariableVersion requireUserIdVariable() {
+        try { return variables.current("userId"); }
+        catch (NoSuchElementException missing) {
+            return variables.create("userId", "用户标识", VariableValueType.STRING,
+                    "REQUEST_INPUT", null, 0, List.of(), null);
+        }
+    }
+
     private static GraphDefinition graph(String variableCode, long versionId) {
         return graph(variableCode, versionId, VariableValueType.DECIMAL, 20, "GTE");
     }
@@ -122,7 +133,7 @@ class VariableFlowIntegrationTest {
         GraphDefinition result = new GraphDefinition(1, List.of(
                 node("start", NodeKind.START, null, Map.of()),
                 node("margin", NodeKind.COMPONENT, "get-variable", Map.of("variableCode", variableCode,
-                        "versionId", versionId, "inputMappings", Map.of("userId", "userId"))),
+                        "versionId", versionId)),
                 node("check", NodeKind.CONDITION, "compare-value", Map.of("sourceNodeId", "margin",
                         "operator", operator, "valueType", type.name(), "expected", expected)),
                 node("yes", NodeKind.RESULT, null, Map.of("conclusion", "ELIGIBLE", "reasonCode", "MARGIN", "reason", "满足")),

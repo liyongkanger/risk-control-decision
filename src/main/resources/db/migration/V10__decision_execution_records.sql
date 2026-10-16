@@ -1,0 +1,20 @@
+CREATE TABLE `tb_decision_execution_record` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `execution_id` VARCHAR(36) NOT NULL COMMENT '单次执行标识',
+    `request_id` VARCHAR(191) NOT NULL COMMENT '调用方请求标识，可重复',
+    `scene_code` VARCHAR(64) NOT NULL COMMENT '场景码',
+    `version_id` BIGINT NOT NULL COMMENT '本次固定的入口流程版本ID',
+    `status` VARCHAR(16) NOT NULL COMMENT '执行状态',
+    `conclusion` TEXT NULL COMMENT '最终业务结论',
+    `error_code` VARCHAR(64) NULL COMMENT '执行错误码',
+    `input_json` LONGTEXT NOT NULL COMMENT '本次请求输入快照',
+    `result_json` LONGTEXT NOT NULL COMMENT '本次执行结果与轨迹快照',
+    `inserttime` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '插入时间',
+    `updatetime` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `isactive` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '逻辑删除标识，1有效',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uniq_execution_id` (`execution_id`),
+    KEY `idx_scene_record` (`scene_code`, `id`),
+    KEY `idx_request_id` (`request_id`),
+    KEY `idx_status_record` (`status`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='场景决策执行快照';

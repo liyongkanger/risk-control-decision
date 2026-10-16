@@ -1,0 +1,358 @@
+- generic [ref=e4]:
+  - complementary [ref=e6]:
+    - generic [ref=e7]:
+      - heading "风控决策平台" [level=1] [ref=e21] [cursor=pointer]
+      - menu [ref=e23]:
+        - menuitem [ref=e24] [cursor=pointer]:
+          - link "appstore 场景管理" [ref=e196]:
+            - /url: /scenes
+            - generic [ref=e197]:
+              - img "appstore" [ref=e199]
+              - generic [ref=e202]: 场景管理
+        - menuitem [ref=e32] [cursor=pointer]:
+          - link "apartment 流程资产" [ref=e34]:
+            - /url: /flows
+            - generic [ref=e35]:
+              - img "apartment" [ref=e37]
+              - generic [ref=e40]: 流程资产
+        - menuitem "api 组件管理" [ref=e41] [cursor=pointer]:
+          - generic [ref=e43]:
+            - img "api" [ref=e45]
+            - generic [ref=e48]: 组件管理
+        - menuitem [ref=e49] [cursor=pointer]:
+          - link "database 变量中心" [ref=e51]:
+            - /url: /variable-center
+            - generic [ref=e52]:
+              - img "database" [ref=e54]
+              - generic [ref=e57]: 变量中心
+        - menuitem [ref=e58] [cursor=pointer]:
+          - link "deployment-unit 规则中心" [ref=e60]:
+            - /url: /rule-center
+            - generic [ref=e61]:
+              - img "deployment-unit" [ref=e63]
+              - generic [ref=e66]: 规则中心
+        - menuitem "experiment 营销闭环演示" [ref=e67] [cursor=pointer]:
+          - generic [ref=e203]:
+            - img "experiment" [ref=e205]
+            - generic [ref=e208]: 营销闭环演示
+        - menuitem [ref=e76] [cursor=pointer]:
+          - link "partition 流程设计" [ref=e78]:
+            - /url: /flow-design
+            - generic [ref=e79]:
+              - img "partition" [ref=e81]
+              - generic [ref=e84]: 流程设计
+      - generic [ref=e85]: 演示用户
+      - generic [ref=e88] [cursor=pointer]
+  - main [ref=e92]:
+    - generic [ref=e209]:
+      - generic "结算优惠营销工作台" [ref=e213]
+      - generic [ref=e217]:
+        - alert [ref=e219]:
+          - img "info-circle" [ref=e221]
+          - generic [ref=e224]:
+            - generic [ref=e225]: 可运行模拟场景
+            - generic [ref=e226]: 规则、流程发布和决策执行使用真实平台能力；订单、支付与退款反馈保存在当前服务进程，重启后清空。
+        - generic [ref=e228]:
+          - generic [ref=e229]: 当前实验
+          - generic [ref=e233]:
+            - generic [ref=e234]: 实验 ID
+            - generic [ref=e236]:
+              - searchbox "实验 ID" [ref=e237]: demoCheckout
+              - button "切换 / 刷新" [ref=e238] [cursor=pointer]
+            - generic [ref=e241]:
+              - text: 正在查看
+              - strong [ref=e242]: demoCheckout
+        - generic [ref=e244]:
+          - generic [ref=e246]:
+            - generic [ref=e247]: 1. 当前策略与运行版本
+            - button "loading 刷新策略状态" [ref=e251] [cursor=pointer]:
+              - generic:
+                - img "loading"
+              - generic [ref=e252]: 刷新策略状态
+          - generic [ref=e253]:
+            - alert [ref=e254]:
+              - img "info-circle" [ref=e256]
+              - generic [ref=e259]:
+                - generic [ref=e260]: 当前运行链可执行
+                - generic [ref=e261]: 新规则或新流程发布后，当前场景会继续使用已选中的固定版本。
+            - table [ref=e268]:
+              - rowgroup [ref=e269]:
+                - row [ref=e270]:
+                  - columnheader "资产" [ref=e271]
+                  - columnheader "资产当前发布" [ref=e272]
+                  - columnheader "场景实际运行" [ref=e273]
+                  - columnheader "状态" [ref=e274]
+              - rowgroup [ref=e275]:
+                - row [ref=e276]:
+                  - cell [ref=e277]:
+                    - link "资格规则集" [ref=e278] [cursor=pointer]:
+                      - /url: /rule-center?keyword=demoOfferEligibilityRules
+                  - cell "#1" [ref=e279]
+                  - cell "#1" [ref=e280]
+                  - cell "已应用" [ref=e281]
+                - row [ref=e283]:
+                  - cell [ref=e284]:
+                    - link "资格子流程" [ref=e285] [cursor=pointer]:
+                      - /url: /flows/demoOfferEligibility/editor
+                  - cell "#1" [ref=e286]
+                  - cell "#1" [ref=e287]
+                  - cell "已应用" [ref=e288]
+                - row [ref=e290]:
+                  - cell [ref=e291]:
+                    - link "优惠选择子流程" [ref=e292] [cursor=pointer]:
+                      - /url: /flows/demoOfferSelection/editor
+                  - cell "#2" [ref=e293]
+                  - cell "#2" [ref=e294]
+                  - cell "已应用" [ref=e295]
+                - row [ref=e297]:
+                  - cell [ref=e298]:
+                    - link "外层结算流程" [ref=e299] [cursor=pointer]:
+                      - /url: /flows/demoCheckoutDecision/editor
+                  - cell "#3" [ref=e300]
+                  - cell "#3" [ref=e301]
+                  - cell "已应用" [ref=e302]
+            - heading "下一版待处理" [level=5] [ref=e304]
+            - text: 当前发布资产与运行链已对齐。
+        - generic [ref=e306]:
+          - generic [ref=e308]:
+            - generic [ref=e309]: 2. 试决策
+            - generic [ref=e312]:
+              - generic [ref=e313]: 页面金额用于登记模拟结算事实；决策流程只接收用户、结算单和实验标识，再由变量中心读取订单与预算数据。
+              - generic [ref=e314]:
+                - button "运行 30 人固定样本" [ref=e316] [cursor=pointer]
+                - generic [ref=e318]: 固定样本会执行真实流程，支付人数由模拟数据预设。
+              - generic [ref=e319]:
+                - generic [ref=e321]:
+                  - generic "结算 ID" [ref=e323]: "* 结算 ID :"
+                  - textbox "* 结算 ID :" [ref=e327]:
+                    - /placeholder: order001
+                - generic [ref=e329]:
+                  - generic "用户 ID" [ref=e331]: "* 用户 ID :"
+                  - textbox "* 用户 ID :" [ref=e335]:
+                    - /placeholder: user001
+                - generic [ref=e337]:
+                  - generic "订单金额" [ref=e339]: "* 订单金额 :"
+                  - generic [ref=e343]:
+                    - spinbutton "* 订单金额 :" [ref=e344]: "120.00"
+                    - generic:
+                      - button "Increase Value" [ref=e345] [cursor=pointer]:
+                        - img "up" [ref=e346]
+                      - button "Decrease Value" [ref=e349] [cursor=pointer]:
+                        - img "down" [ref=e350]
+                - generic [ref=e354]:
+                  - generic "优惠前毛利" [ref=e356]: "* 优惠前毛利 :"
+                  - generic [ref=e360]:
+                    - spinbutton "* 优惠前毛利 :" [ref=e361]: "30.00"
+                    - generic:
+                      - button "Increase Value" [ref=e362] [cursor=pointer]:
+                        - img "up" [ref=e363]
+                      - button "Decrease Value" [ref=e366] [cursor=pointer]:
+                        - img "down" [ref=e367]
+                - generic [ref=e371]:
+                  - generic "已有优惠" [ref=e373]: "* 已有优惠 :"
+                  - generic [ref=e377]:
+                    - spinbutton "* 已有优惠 :" [ref=e378]: "0.00"
+                    - generic:
+                      - button "Increase Value" [ref=e379] [cursor=pointer]:
+                        - img "up" [ref=e380]
+                      - button "Decrease Value" [disabled] [ref=e383]:
+                        - img "down" [ref=e384]
+                - button "执行单笔决策" [ref=e392] [cursor=pointer]
+          - generic [ref=e395]:
+            - generic [ref=e396]: 3. 实际反馈
+            - generic [ref=e399]: 先执行单笔决策，或在逐笔记录中选择一笔。
+        - generic [ref=e401]:
+          - generic [ref=e402]: 4. 效果复盘
+          - generic [ref=e405]:
+            - generic [ref=e406]: 这里是当前进程的模拟反馈。未支付用户计入合格用户分母，退款后利润为零；少量样本不代表真实营销收益。
+            - generic [ref=e407]:
+              - generic [ref=e409]:
+                - generic [ref=e410]: 对照组
+                - generic [ref=e413]:
+                  - generic [ref=e414]:
+                    - generic [ref=e415]: 人均贡献利润（元）
+                    - generic [ref=e417]: "6.00"
+                  - generic [ref=e419]: 相对对照组：基线
+                  - generic [ref=e420]:
+                    - generic [ref=e421]: 合格用户 10 · 支付转化 20.00%
+                    - generic [ref=e423]: 实际商家优惠 0.00 元
+                    - generic [ref=e425]: 退款率 0.00% · 推荐券实际使用率 样本不足
+              - generic [ref=e428]:
+                - generic [ref=e429]: 低额券组
+                - generic [ref=e432]:
+                  - generic [ref=e433]:
+                    - generic [ref=e434]: 人均贡献利润（元）
+                    - generic [ref=e436]: "7.50"
+                  - generic [ref=e438]:
+                    - text: 相对对照组：
+                    - generic [ref=e439]: +1.50 元/人
+                  - generic [ref=e440]:
+                    - generic [ref=e441]: 合格用户 10 · 支付转化 30.00%
+                    - generic [ref=e443]: 实际商家优惠 15.00 元
+                    - generic [ref=e445]: 退款率 0.00% · 推荐券实际使用率 30.00%
+              - generic [ref=e448]:
+                - generic [ref=e449]: 高额券组
+                - generic [ref=e452]:
+                  - generic [ref=e453]:
+                    - generic [ref=e454]: 人均贡献利润（元）
+                    - generic [ref=e456]: "4.80"
+                  - generic [ref=e458]:
+                    - text: 相对对照组：
+                    - generic [ref=e459]: "-1.20 元/人"
+                  - generic [ref=e460]:
+                    - generic [ref=e461]: 合格用户 10 · 支付转化 40.00%
+                    - generic [ref=e463]: 实际商家优惠 72.00 元
+                    - generic [ref=e465]: 退款率 0.00% · 推荐券实际使用率 40.00%
+            - generic [ref=e467]: 固定 30 人样本的预期人均利润：对照 6.00、低额 7.50、高额 4.80 元；增量为低额 +1.50、高额 -1.20 元/人。
+        - generic [ref=e469]:
+          - generic [ref=e470]: 逐笔记录（30）
+          - generic [ref=e473]:
+            - generic [ref=e474]: 选择一笔记录可继续回传反馈；查看详情可核对推荐、实际优惠与执行版本。
+            - generic [ref=e477]:
+              - table [ref=e481]:
+                - rowgroup [ref=e482]:
+                  - row [ref=e483]:
+                    - columnheader "结算 ID" [ref=e484]
+                    - columnheader "用户" [ref=e485]
+                    - columnheader "组别" [ref=e486]
+                    - columnheader "结论" [ref=e487]
+                    - columnheader "推荐券" [ref=e488]
+                    - columnheader "实际券" [ref=e489]
+                    - columnheader "状态" [ref=e490]
+                    - columnheader "贡献利润（元）" [ref=e491]
+                    - columnheader "操作" [ref=e492]
+                - rowgroup [ref=e493]:
+                  - row [ref=e494]:
+                    - cell "fixture-demoUser0001" [ref=e495]
+                    - cell "demoUser0001" [ref=e496]
+                    - cell "高额券组" [ref=e497]
+                    - cell "HIGH_VALUE_OFFER" [ref=e498]
+                    - cell "HIGH_18_OFF_100" [ref=e499]
+                    - cell "HIGH_18_OFF_100" [ref=e500]
+                    - cell "已支付" [ref=e501]
+                    - cell "12.00" [ref=e502]
+                    - cell [ref=e503]:
+                      - button "查看详情" [ref=e504] [cursor=pointer]
+                  - row [ref=e506]:
+                    - cell "fixture-demoUser0002" [ref=e507]
+                    - cell "demoUser0002" [ref=e508]
+                    - cell "对照组" [ref=e509]
+                    - cell "NO_NEW_OFFER" [ref=e510]
+                    - cell "NONE" [ref=e511]
+                    - cell "NONE" [ref=e512]
+                    - cell "已支付" [ref=e513]
+                    - cell "30.00" [ref=e514]
+                    - cell [ref=e515]:
+                      - button "查看详情" [ref=e516] [cursor=pointer]
+                  - row [ref=e518]:
+                    - cell "fixture-demoUser0003" [ref=e519]
+                    - cell "demoUser0003" [ref=e520]
+                    - cell "低额券组" [ref=e521]
+                    - cell "LOW_VALUE_OFFER" [ref=e522]
+                    - cell "LOW_5_OFF_100" [ref=e523]
+                    - cell "LOW_5_OFF_100" [ref=e524]
+                    - cell "已支付" [ref=e525]
+                    - cell "25.00" [ref=e526]
+                    - cell [ref=e527]:
+                      - button "查看详情" [ref=e528] [cursor=pointer]
+                  - row [ref=e530]:
+                    - cell "fixture-demoUser0004" [ref=e531]
+                    - cell "demoUser0004" [ref=e532]
+                    - cell "高额券组" [ref=e533]
+                    - cell "HIGH_VALUE_OFFER" [ref=e534]
+                    - cell "HIGH_18_OFF_100" [ref=e535]
+                    - cell "HIGH_18_OFF_100" [ref=e536]
+                    - cell "已支付" [ref=e537]
+                    - cell "12.00" [ref=e538]
+                    - cell [ref=e539]:
+                      - button "查看详情" [ref=e540] [cursor=pointer]
+                  - row [ref=e542]:
+                    - cell "fixture-demoUser0005" [ref=e543]
+                    - cell "demoUser0005" [ref=e544]
+                    - cell "对照组" [ref=e545]
+                    - cell "NO_NEW_OFFER" [ref=e546]
+                    - cell "NONE" [ref=e547]
+                    - cell "NONE" [ref=e548]
+                    - cell "已支付" [ref=e549]
+                    - cell "30.00" [ref=e550]
+                    - cell [ref=e551]:
+                      - button "查看详情" [ref=e552] [cursor=pointer]
+                  - row [ref=e554]:
+                    - cell "fixture-demoUser0006" [ref=e555]
+                    - cell "demoUser0006" [ref=e556]
+                    - cell "低额券组" [ref=e557]
+                    - cell "LOW_VALUE_OFFER" [ref=e558]
+                    - cell "LOW_5_OFF_100" [ref=e559]
+                    - cell "LOW_5_OFF_100" [ref=e560]
+                    - cell "已支付" [ref=e561]
+                    - cell "25.00" [ref=e562]
+                    - cell [ref=e563]:
+                      - button "查看详情" [ref=e564] [cursor=pointer]
+                  - row [ref=e566]:
+                    - cell "fixture-demoUser0007" [ref=e567]
+                    - cell "demoUser0007" [ref=e568]
+                    - cell "高额券组" [ref=e569]
+                    - cell "HIGH_VALUE_OFFER" [ref=e570]
+                    - cell "HIGH_18_OFF_100" [ref=e571]
+                    - cell "HIGH_18_OFF_100" [ref=e572]
+                    - cell "已支付" [ref=e573]
+                    - cell "12.00" [ref=e574]
+                    - cell [ref=e575]:
+                      - button "查看详情" [ref=e576] [cursor=pointer]
+                  - row [ref=e578]:
+                    - cell "fixture-demoUser0008" [ref=e579]
+                    - cell "demoUser0008" [ref=e580]
+                    - cell "对照组" [ref=e581]
+                    - cell "NO_NEW_OFFER" [ref=e582]
+                    - cell "NONE" [ref=e583]
+                    - cell "NONE" [ref=e584]
+                    - cell "未支付" [ref=e585]
+                    - cell "0.00" [ref=e586]
+                    - cell [ref=e587]:
+                      - button "查看详情" [ref=e588] [cursor=pointer]
+                  - row [ref=e590]:
+                    - cell "fixture-demoUser0009" [ref=e591]
+                    - cell "demoUser0009" [ref=e592]
+                    - cell "低额券组" [ref=e593]
+                    - cell "LOW_VALUE_OFFER" [ref=e594]
+                    - cell "LOW_5_OFF_100" [ref=e595]
+                    - cell "LOW_5_OFF_100" [ref=e596]
+                    - cell "已支付" [ref=e597]
+                    - cell "25.00" [ref=e598]
+                    - cell [ref=e599]:
+                      - button "查看详情" [ref=e600] [cursor=pointer]
+                  - row [ref=e602]:
+                    - cell "fixture-demoUser0010" [ref=e603]
+                    - cell "demoUser0010" [ref=e604]
+                    - cell "高额券组" [ref=e605]
+                    - cell "HIGH_VALUE_OFFER" [ref=e606]
+                    - cell "HIGH_18_OFF_100" [ref=e607]
+                    - cell "HIGH_18_OFF_100" [ref=e608]
+                    - cell "已支付" [ref=e609]
+                    - cell "12.00" [ref=e610]
+                    - cell [ref=e611]:
+                      - button "查看详情" [ref=e612] [cursor=pointer]
+              - list [ref=e614]:
+                - listitem "上一页" [ref=e615]:
+                  - button [disabled] [ref=e616]:
+                    - img "left" [ref=e617]
+                - listitem "1" [ref=e620] [cursor=pointer]
+                - listitem "2" [ref=e622] [cursor=pointer]
+                - listitem "3" [ref=e624] [cursor=pointer]
+                - listitem "下一页" [ref=e626] [cursor=pointer]:
+                  - button [ref=e627]:
+                    - img "right" [ref=e628]
+        - generic [ref=e632]:
+          - generic [ref=e633]: 5. 准备下一版
+          - generic [ref=e636]:
+            - generic [ref=e637]: 当前运行链已对齐。查看上方利润差值后，可在规则中心调整下一版资格规则。
+            - generic [ref=e638]:
+              - link "编辑资格规则" [ref=e640] [cursor=pointer]:
+                - /url: /rule-center?keyword=demoOfferEligibilityRules
+              - link "设计资格流程" [ref=e642] [cursor=pointer]:
+                - /url: /flows/demoOfferEligibility/editor
+              - link "设计优惠选择流程" [ref=e644] [cursor=pointer]:
+                - /url: /flows/demoOfferSelection/editor
+              - link "设计外层流程" [ref=e646] [cursor=pointer]:
+                - /url: /flows/demoCheckoutDecision/editor
+              - button "返回后刷新策略状态" [ref=e648] [cursor=pointer]

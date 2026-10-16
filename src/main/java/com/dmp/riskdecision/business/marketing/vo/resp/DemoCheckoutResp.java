@@ -15,6 +15,7 @@ public class DemoCheckoutResp {
     private final String checkoutId;
     private final String userId;
     private final DemoGroup group;
+    private final String executionId;
     private final String requestId;
     private final Instant decidedAt;
     private final long outerVersionId;
@@ -43,6 +44,7 @@ public class DemoCheckoutResp {
         checkoutId = attempt.getCheckoutId();
         userId = attempt.getUserId();
         group = attempt.getGroup();
+        executionId = attempt.getExecutionId();
         requestId = attempt.getRequestId();
         decidedAt = attempt.getDecidedAt();
         outerVersionId = attempt.getOuterVersionId();

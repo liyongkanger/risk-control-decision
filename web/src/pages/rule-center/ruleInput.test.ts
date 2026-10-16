@@ -3,7 +3,8 @@ import { parseRuleTestInput } from './ruleInput'
 import type { RuleDefinition } from '../../services/ruleCenter'
 
 const definition: RuleDefinition = {
-  inputs: [{ name: 'amount', type: 'DECIMAL' }], resultCodes: ['PASS'], rows: [],
+  inputs: [{ name: 'amount', type: 'DECIMAL', variableBinding: {
+    variableCode: 'amount', variableVersionId: 1 } }], resultCodes: ['PASS'], rows: [],
   defaultResult: { resultCode: 'PASS', reasonCode: 'OK', reason: '通过' },
 }
 

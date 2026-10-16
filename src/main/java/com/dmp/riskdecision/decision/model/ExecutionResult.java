@@ -7,6 +7,7 @@ import java.util.Objects;
 
 /** 决策执行结果。 */
 public class ExecutionResult {
+    private final String executionId;
     private final String requestId;
     private final String sceneCode;
     private final long versionId;
@@ -22,9 +23,16 @@ public class ExecutionResult {
 
     public ExecutionResult(String requestId, String sceneCode, long versionId, String status, Map<String, Object> nodeResults,
                            List<NodeTrace> trace, String errorCode, BusinessResult businessResult) {
+        this(null, requestId, sceneCode, versionId, status, nodeResults, trace, errorCode, businessResult);
+    }
+
+    public ExecutionResult(String executionId, String requestId, String sceneCode, long versionId, String status,
+                           Map<String, Object> nodeResults, List<NodeTrace> trace, String errorCode,
+                           BusinessResult businessResult) {
         if ("FAILED".equals(status) && businessResult != null) {
             throw new IllegalArgumentException("failed execution cannot have a business result");
         }
+        this.executionId = executionId;
         this.requestId = requestId;
         this.sceneCode = sceneCode;
         this.versionId = versionId;
@@ -63,6 +71,16 @@ public class ExecutionResult {
         return errorCode;
     }
 
+    /** 保存后附上单次执行标识，不修改已有执行结果。 */
+    public ExecutionResult withExecutionId(String id) {
+        return new ExecutionResult(id, requestId, sceneCode, versionId, status,
+                nodeResults, trace, errorCode, businessResult);
+    }
+
+    public String getExecutionId() {
+        return executionId;
+    }
+
     public BusinessResult getBusinessResult() {
         return businessResult;
     }
@@ -76,7 +94,8 @@ public class ExecutionResult {
             return false;
         }
         ExecutionResult that = (ExecutionResult) other;
-        return Objects.equals(requestId, that.requestId)
+        return Objects.equals(executionId, that.executionId)
+                && Objects.equals(requestId, that.requestId)
                 && Objects.equals(sceneCode, that.sceneCode)
                 && versionId == that.versionId
                 && Objects.equals(status, that.status)
@@ -88,6 +107,7 @@ public class ExecutionResult {
 
     @Override
     public int hashCode() {
-        return Objects.hash(requestId, sceneCode, versionId, status, nodeResults, trace, errorCode, businessResult);
+        return Objects.hash(executionId, requestId, sceneCode, versionId, status, nodeResults,
+                trace, errorCode, businessResult);
     }
 }

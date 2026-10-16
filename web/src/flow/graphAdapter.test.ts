@@ -24,5 +24,9 @@ describe('toGraphDefinition', () => {
       layout: { check: { x: 140, y: 220 } },
     })
     expect(toGraphDefinition(graph, ['userId']).requiredInputs).toEqual(['userId'])
+    expect(toGraphDefinition(graph, ['userId'], [{ variableCode: 'decision', variableVersionId: 5,
+      nodeId: 'check', resultPath: 'value' }]).contextBindings).toEqual([
+      { variableCode: 'decision', variableVersionId: 5, nodeId: 'check', resultPath: 'value' },
+    ])
   })
 })

@@ -6,6 +6,7 @@ import java.util.Map;
 
 /** 同步决策响应。 */
 public class EvaluateDecisionResp {
+    private String executionId;
     private String requestId;
     private String sceneCode;
     private long versionId;
@@ -16,6 +17,14 @@ public class EvaluateDecisionResp {
     private String errorCode;
 
     public EvaluateDecisionResp() {
+    }
+
+    public String getExecutionId() {
+        return executionId;
+    }
+
+    public void setExecutionId(String executionId) {
+        this.executionId = executionId;
     }
 
     public String getRequestId() {

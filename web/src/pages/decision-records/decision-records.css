@@ -1,0 +1,15 @@
+.decision-record-outcome { padding: 16px 18px; border: 1px solid #dce9f8; border-radius: 9px; background: #f7faff; }
+.decision-record-outcome h3 { margin: 9px 0 4px; color: #24466b; font-size: 21px; }
+.decision-record-outcome p { margin: 0; color: #687b90; }
+.decision-trace-list, .decision-trace-children { display: grid; gap: 10px; }
+.decision-trace-children { margin: 12px 0 0 18px; padding-left: 16px; border-left: 2px solid #dce8f5; }
+.decision-trace-node { padding: 12px 14px; border: 1px solid #e0e9f2; border-radius: 8px; background: #fff; }
+.decision-trace-heading { display: flex; align-items: center; gap: 8px; }
+.decision-trace-heading strong { color: #2b4664; overflow-wrap: anywhere; }
+.decision-trace-index { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #eaf2ff; color: #246ab4; font-size: 11px; }
+.decision-trace-meta, .decision-trace-subflow { margin: 6px 0 0 30px; color: #7a889a; font-size: 12px; }
+.decision-trace-subflow { color: #3e6794; }
+.decision-trace-raw { margin: 10px 0 0 30px; color: #667890; font-size: 12px; }
+.decision-trace-raw summary { cursor: pointer; user-select: none; }
+.decision-trace-raw pre { max-height: 320px; overflow: auto; padding: 12px; border-radius: 6px; background: #f5f7fa; color: #33465e; font-size: 12px; }
+.decision-record-input { margin: 20px 0 0; }

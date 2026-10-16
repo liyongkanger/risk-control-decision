@@ -1,6 +1,7 @@
 package com.dmp.riskdecision.component.liteflow.context;
 
 import com.dmp.riskdecision.audit.NodeTrace;
+import com.dmp.riskdecision.orchestrator.graph.FlowContextBinding;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -18,9 +19,17 @@ public class ExecutionContext {
     private final ConcurrentMap<String, Object> nodeResults;
     private final Queue<NodeTrace> traces;
     private final Map<String, Map<String, Object>> nodeConfigs;
+    private final Map<String, FlowContextBinding> contextBindings;
     private final AtomicReference<Map<String, Object>> businessResultConfig = new AtomicReference<>();
 
     public ExecutionContext(String requestId, String sceneCode, long version, Map<String, Object> input, ConcurrentMap<String, Object> nodeResults, Queue<NodeTrace> traces, Map<String, Map<String, Object>> nodeConfigs) {
+        this(requestId, sceneCode, version, input, nodeResults, traces, nodeConfigs, Map.of());
+    }
+
+    public ExecutionContext(String requestId, String sceneCode, long version, Map<String, Object> input,
+                            ConcurrentMap<String, Object> nodeResults, Queue<NodeTrace> traces,
+                            Map<String, Map<String, Object>> nodeConfigs,
+                            Map<String, FlowContextBinding> contextBindings) {
         this.requestId = requestId;
         this.sceneCode = sceneCode;
         this.version = version;
@@ -28,6 +37,7 @@ public class ExecutionContext {
         this.nodeResults = nodeResults;
         this.traces = traces;
         this.nodeConfigs = nodeConfigs;
+        this.contextBindings = contextBindings;
     }
 
     public String getRequestId() {
@@ -56,6 +66,10 @@ public class ExecutionContext {
 
     public Map<String, Map<String, Object>> getNodeConfigs() {
         return nodeConfigs;
+    }
+
+    public Map<String, FlowContextBinding> getContextBindings() {
+        return contextBindings;
     }
 
     /** 本次运行只能写入一次最终业务结果配置。 */

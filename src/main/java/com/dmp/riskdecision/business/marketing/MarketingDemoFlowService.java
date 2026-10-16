@@ -9,8 +9,14 @@ import com.dmp.riskdecision.policy.model.SceneInfo;
 import com.dmp.riskdecision.rule.model.RuleDefinition;
 import com.dmp.riskdecision.rule.model.RuleSetSnapshot;
 import com.dmp.riskdecision.rule.model.RuleSetVersion;
+import com.dmp.riskdecision.rule.model.RuleVariableBinding;
 import com.dmp.riskdecision.rule.service.RuleSetService;
+import com.dmp.riskdecision.component.variable.model.VariableValueType;
+import com.dmp.riskdecision.component.variable.model.VariableVersion;
+import com.dmp.riskdecision.component.variable.service.VariableService;
 import jakarta.annotation.Resource;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
@@ -24,6 +30,8 @@ public class MarketingDemoFlowService {
     private SceneService scenes;
     @Resource
     private RuleSetService rules;
+    @Resource
+    private VariableService variables;
 
     private final MarketingDemoFlows definitions = new MarketingDemoFlows();
     private final ObjectMapper json = new ObjectMapper();
@@ -36,7 +44,20 @@ public class MarketingDemoFlowService {
      * @return 场景、外层流程及两个子流程的当前发布版本标识
      */
     public synchronized MarketingDemoSetup setup() {
-        RuleSetVersion rule = ensureRuleSet();
+        Map<String, Long> locators = Map.of(
+                "uid", ensureRequestVariable("uid").getId(),
+                "checkoutId", ensureRequestVariable("checkoutId").getId(),
+                "experimentId", ensureRequestVariable("experimentId").getId());
+        VariableVersion orderAmount = ensureVariable(MarketingDemoFlows.ORDER_AMOUNT_VARIABLE,
+                "演示订单金额", "marketing://checkout", "orderAmount",
+                List.of("uid", "checkoutId", "experimentId"), locators);
+        VariableVersion margin = ensureVariable(MarketingDemoFlows.MARGIN_VARIABLE,
+                "演示预计优惠后毛利", "marketing://checkout", "marginAfterMaxOffer",
+                List.of("uid", "checkoutId", "experimentId"), locators);
+        VariableVersion budget = ensureVariable(MarketingDemoFlows.BUDGET_VARIABLE,
+                "演示活动剩余预算", "marketing://budget", "remainingBudget",
+                List.of("uid", "checkoutId", "experimentId"), locators);
+        RuleSetVersion rule = ensureRuleSet(orderAmount, margin, budget);
         FlowVersion eligibility = ensurePublished(MarketingDemoFlows.ELIGIBILITY_CODE,
                 "演示优惠资格决策", definitions.eligibilityGraph(rule.getId()));
         FlowVersion selection = ensurePublished(MarketingDemoFlows.SELECTION_CODE,
@@ -63,8 +84,26 @@ public class MarketingDemoFlowService {
         if (!MarketingDemoFlows.OUTER_CODE.equals(scene.getFlowCode())) {
             throw new IllegalStateException("Marketing demo scene uses another entry flow");
         }
-        try { scenes.getSelectedFlowVersion(MarketingDemoFlows.SCENE_CODE); }
+        try {
+            FlowVersion selected = scenes.getSelectedFlowVersion(MarketingDemoFlows.SCENE_CODE);
+            if (selected.getGraph().getRequiredInputs().contains("orderAmount")
+                    || hasLegacyQualification(selected)) setup();
+        }
         catch (NoSuchElementException missingVersion) { setup(); }
+    }
+
+    /** 判断已选中外层流程是否仍固定旧金额直传资格流程或旧预算变量契约。 */
+    private boolean hasLegacyQualification(FlowVersion selectedOuter) {
+        if (selectedOuter.getGraph() == null || selectedOuter.getGraph().getNodes() == null) return false;
+        for (com.dmp.riskdecision.orchestrator.graph.GraphNode node : selectedOuter.getGraph().getNodes()) {
+            if (!"eligibilityCall".equals(node.getId()) || node.getConfig() == null
+                    || !(node.getConfig().get("versionId") instanceof Number)) continue;
+            FlowVersion eligibility = flows.getVersion(((Number) node.getConfig().get("versionId")).longValue());
+            return eligibility.getGraph().getRequiredInputs().contains("orderAmount")
+                    || eligibility.getGraph().getNodes().stream().anyMatch(item ->
+                    "get-variable".equals(item.getComponentKey()));
+        }
+        return false;
     }
 
     /**
@@ -80,10 +119,21 @@ public class MarketingDemoFlowService {
         try {
             FlowVersion current = flows.getPublished(code);
             boolean oldEligibility = MarketingDemoFlows.ELIGIBILITY_CODE.equals(code)
-                    && current.getGraph().getNodes().stream().noneMatch(node ->
-                    "execute-rule-set".equals(node.getComponentKey()));
+                    && (current.getGraph().getRequiredInputs().contains("orderAmount")
+                    || current.getGraph().getNodes().stream().noneMatch(node ->
+                    "execute-rule-set".equals(node.getComponentKey()))
+                    || current.getGraph().getNodes().stream().anyMatch(node ->
+                    "get-variable".equals(node.getComponentKey())
+                    || "execute-rule-set".equals(node.getComponentKey())
+                    && (node.getConfig().containsKey("inputMappings")
+                    || !sameNodeVersion(node, graph, "ruleVersionId"))));
             boolean oldOuter = MarketingDemoFlows.OUTER_CODE.equals(code)
-                    && current.getGraph().getRequiredInputs().contains("eligible");
+                    && (current.getGraph().getRequiredInputs().contains("eligible")
+                    || current.getGraph().getRequiredInputs().contains("orderAmount")
+                    || hasLegacyQualification(current)
+                    || current.getGraph().getNodes().stream().anyMatch(node ->
+                    "eligibilityCall".equals(node.getId())
+                    && !sameNodeVersion(node, graph, "versionId")));
             if (!oldEligibility && !oldOuter) return current;
             FlowDraft draft = flows.getDraft(code);
             if (!current.getGraph().equals(draft.getGraph())) {
@@ -102,22 +152,87 @@ public class MarketingDemoFlowService {
         }
     }
 
+    /** JSON 往返可能把较小版本 ID 解析为 Integer，按数值比较避免重复发布。 */
+    private boolean sameNodeVersion(com.dmp.riskdecision.orchestrator.graph.GraphNode current,
+                                    GraphDefinition expected, String field) {
+        Object value = current.getConfig().get(field);
+        return value instanceof Number && expected.getNodes().stream().anyMatch(node ->
+                current.getId().equals(node.getId()) && node.getConfig().get(field) instanceof Number
+                && ((Number) value).longValue() ==
+                ((Number) node.getConfig().get(field)).longValue());
+    }
+
     /** 初始化可供后台继续编辑的固定营销资格规则集。 */
-    private RuleSetVersion ensureRuleSet() {
-        try { return rules.currentVersion(MarketingDemoFlows.ELIGIBILITY_RULE_SET_CODE); }
+    private RuleSetVersion ensureRuleSet(VariableVersion order, VariableVersion margin, VariableVersion budget) {
+        try {
+            RuleSetVersion current = rules.currentVersion(MarketingDemoFlows.ELIGIBILITY_RULE_SET_CODE);
+            if (current.getDefinition() == null || current.getDefinition().getInputs().size() == 3
+                    && matchesBinding(current.getDefinition().getInputs().get(0), order)
+                    && matchesBinding(current.getDefinition().getInputs().get(1), margin)
+                    && matchesBinding(current.getDefinition().getInputs().get(2), budget)) {
+                return current;
+            }
+            RuleSetSnapshot draft = rules.get(current.getCode());
+            if (!json.writeValueAsString(draft.getDefinition())
+                    .equals(json.writeValueAsString(current.getDefinition()))) {
+                throw new IllegalStateException("Marketing demo rule draft has unpublished edits");
+            }
+            RuleSetSnapshot updated = rules.updateDraft(current.getCode(), draft.getDraftRevision(),
+                    sampleRules(order, margin, budget));
+            return rules.publish(current.getCode(), updated.getDraftRevision());
+        }
         catch (NoSuchElementException unpublished) {
             try {
                 rules.get(MarketingDemoFlows.ELIGIBILITY_RULE_SET_CODE);
                 throw new IllegalStateException("Marketing demo rule draft requires manual publication");
             } catch (NoSuchElementException missing) { /* 仅全新样板规则可自动初始化。 */ }
             RuleSetSnapshot draft = rules.create(MarketingDemoFlows.ELIGIBILITY_RULE_SET_CODE,
-                    "演示优惠资格规则", sampleRules());
+                    "演示优惠资格规则", sampleRules(order, margin, budget));
             return rules.publish(draft.getCode(), draft.getDraftRevision());
         }
     }
 
-    private RuleDefinition sampleRules() {
-        return json.readValue("""
+    /** 样板初次登记模拟来源变量；已有变量版本由后台维护，初始化不会覆盖。 */
+    private VariableVersion ensureRequestVariable(String code) {
+        try {
+            VariableVersion current = variables.current(code);
+            if (!"REQUEST_INPUT".equals(current.getSourceType())
+                    || current.getValueType() != VariableValueType.STRING) {
+                throw new IllegalStateException("Marketing locator variable conflicts with existing definition: " + code);
+            }
+            return current;
+        } catch (NoSuchElementException missing) {
+            return variables.create(code, code, VariableValueType.STRING, "REQUEST_INPUT",
+                    null, 0, List.of(), null, Map.of(),
+                    "uid".equals(code) ? "USER" : "checkoutId".equals(code) ? "TRANSACTION" : "CAMPAIGN");
+        }
+    }
+
+    private VariableVersion ensureVariable(String code, String name, String sourceUrl,
+                                           String resultPath, List<String> parameters,
+                                           Map<String, Long> dependencyVersionIds) {
+        try {
+            VariableVersion current = variables.current(code);
+            if ("DEMO_MARKETING".equals(current.getSourceType())
+                    && sourceUrl.equals(current.getUrl()) && resultPath.equals(current.getResultPath())
+                    && (current.getParameterNames().equals(parameters)
+                    || MarketingDemoFlows.BUDGET_VARIABLE.equals(code)
+                    && current.getParameterNames().equals(List.of("experimentId")))
+                    && !dependencyVersionIds.equals(current.getDependencyVersionIds())) {
+                return variables.update(code, current.getVersionNumber(), name, VariableValueType.DECIMAL,
+                        "DEMO_MARKETING", sourceUrl, 1000, parameters, resultPath, dependencyVersionIds);
+            }
+            return current;
+        }
+        catch (NoSuchElementException missing) {
+            return variables.create(code, name, VariableValueType.DECIMAL, "DEMO_MARKETING",
+                    sourceUrl, 1000, parameters, resultPath, dependencyVersionIds,
+                    MarketingDemoFlows.BUDGET_VARIABLE.equals(code) ? "BUDGET" : "TRANSACTION");
+        }
+    }
+
+    private RuleDefinition sampleRules(VariableVersion order, VariableVersion margin, VariableVersion budget) {
+        RuleDefinition definition = json.readValue("""
                 {"inputs":[{"name":"orderAmount","type":"DECIMAL"},
                            {"name":"marginAfterMaxOffer","type":"DECIMAL"},
                            {"name":"remainingBudget","type":"DECIMAL"}],
@@ -135,5 +250,23 @@ public class MarketingDemoFlowService {
                  ],
                  "defaultResult":{"resultCode":"ELIGIBLE","reasonCode":"QUALIFIED","reason":"满足优惠资格"}}
                 """, RuleDefinition.class);
+        definition.getInputs().get(0).setVariableBinding(binding(order));
+        definition.getInputs().get(1).setVariableBinding(binding(margin));
+        definition.getInputs().get(2).setVariableBinding(binding(budget));
+        return definition;
+    }
+
+    private RuleVariableBinding binding(VariableVersion version) {
+        RuleVariableBinding binding = new RuleVariableBinding();
+        binding.setVariableCode(version.getVariableCode());
+        binding.setVariableVersionId(version.getId());
+        return binding;
+    }
+
+    private boolean matchesBinding(com.dmp.riskdecision.rule.model.RuleInput input, VariableVersion version) {
+        RuleVariableBinding binding = input.getVariableBinding();
+        return binding != null && version.getVariableCode().equals(binding.getVariableCode())
+                && binding.getVariableVersionId() != null
+                && version.getId() == binding.getVariableVersionId();
     }
 }

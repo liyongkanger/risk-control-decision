@@ -2,6 +2,7 @@ package com.dmp.riskdecision.component.variable.vo.req;
 
 import com.dmp.riskdecision.component.variable.model.VariableValueType;
 import java.util.List;
+import java.util.Map;
 import lombok.Data;
 
 /** 基于当前版本号创建新变量版本的 HTTP 请求。 */
@@ -14,5 +15,6 @@ public class UpdateVariableReq {
     private String url;
     private int timeoutMs;
     private List<String> parameterNames;
+    private Map<String, Long> dependencyVersionIds;
     private String resultPath;
 }

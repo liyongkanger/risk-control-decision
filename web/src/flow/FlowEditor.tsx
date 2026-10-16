@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { Graph } from '@antv/x6'
 import { history } from '@umijs/max'
 import { evaluateFlow, loadTargetDraft, publishTargetFlow, saveTargetDraft, validateTargetFlow } from './api'
@@ -16,14 +16,24 @@ import CompareVariableInspector from './CompareVariableInspector'
 import RuleSetNodeInspector from './RuleSetNodeInspector'
 import RuleResultInspector from './RuleResultInspector'
 import DecisionRunResult from './DecisionRunResult'
-import type { FlowEdge, FlowNode, FlowValidation, GraphDefinition, NodeKind } from './types'
+import type { ContextBinding, FlowEdge, FlowNode, FlowValidation, GraphDefinition, NodeKind } from './types'
 import { getScene } from '../services/scene'
 import { getFlow } from '../services/flow'
 import { listComponentDefinitions } from '../services/componentCatalog'
 import type { ComponentDefinition } from '../services/componentCatalog'
+import { listVariables } from '../services/variableCenter'
+import type { VariableVersion } from '../services/variableCenter'
 import './editor.css'
 
 const kinds: NodeKind[] = ['START', 'END', 'COMPONENT', 'PARALLEL_SPLIT', 'PARALLEL_JOIN', 'CONDITION', 'CONDITION_JOIN', 'SUBFLOW', 'RESULT']
+const paletteGroups: { title: string; note: string; items: NodeKind[] }[] = [
+  { title: '主路径', note: '从开始进入，经过处理，最后返回业务结果并结束。',
+    items: ['START', 'COMPONENT', 'RESULT', 'END'] },
+  { title: '判断与复用', note: '条件分出“满足 / 不满足”两条线；子流程调用固定发布版本。',
+    items: ['CONDITION', 'CONDITION_JOIN', 'SUBFLOW'] },
+  { title: '并行处理', note: '同时运行多条分支，汇合后再继续。',
+    items: ['PARALLEL_SPLIT', 'PARALLEL_JOIN'] },
+]
 const labels: Record<NodeKind, string> = {
   START: '开始', END: '结束', COMPONENT: '组件', PARALLEL_SPLIT: '并行拆分',
   PARALLEL_JOIN: '并行汇合', CONDITION: '条件', CONDITION_JOIN: '条件汇合',
@@ -51,6 +61,7 @@ const kindHints: Record<NodeKind, string> = {
   RESULT: '明确返回业务结论和原因；同一执行路径只能产生一个结果。',
   SUBFLOW: '调用固定版本的已发布决策流程；配置需包含流程码、版本 ID 和输入映射。',
 }
+const branchLabel = (branch: FlowEdge['branch']) => branch === 'true' ? '满足' : branch === 'false' ? '不满足' : ''
 
 function nodeTypeLabel(node: FlowNode): string {
   if (node.componentKey === 'get-variable') return '获取变量'
@@ -96,8 +107,8 @@ function drawNode(graph: Graph, node: FlowNode, position: { x: number; y: number
     },
     ports: {
       groups: {
-        in: { position: vertical ? 'top' : 'left', attrs: { circle: { r: 5, magnet: true, stroke: colors[node.kind], fill: '#fff' } } },
-        out: { position: vertical ? 'bottom' : 'right', attrs: { circle: { r: 5, magnet: true, stroke: colors[node.kind], fill: '#fff' } } },
+        in: { position: vertical ? 'top' : 'left', attrs: { circle: { r: 7, magnet: true, strokeWidth: 2, stroke: colors[node.kind], fill: '#fff' } } },
+        out: { position: vertical ? 'bottom' : 'right', attrs: { circle: { r: 7, magnet: true, strokeWidth: 2, stroke: colors[node.kind], fill: '#fff' } } },
       },
       items: [
         ...(node.kind === 'START' ? [] : [{ id: 'in', group: 'in' }]),
@@ -110,7 +121,7 @@ function drawNode(graph: Graph, node: FlowNode, position: { x: number; y: number
 function drawEdge(graph: Graph, edge: FlowEdge) {
   graph.addEdge({
     id: edge.id, source: { cell: edge.source, port: 'out' }, target: { cell: edge.target, port: 'in' },
-    data: { branch: edge.branch }, labels: edge.branch ? [edge.branch] : [],
+    data: { branch: edge.branch }, labels: edge.branch ? [branchLabel(edge.branch)] : [],
     attrs: { line: { stroke: '#8292a8', strokeWidth: 2, targetMarker: 'classic' } },
   })
 }
@@ -123,6 +134,7 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
   const graphRef = useRef<Graph | null>(null)
   const baselineSnapshot = useRef<string | null>(null)
   const requiredInputsRef = useRef<string[] | undefined>(undefined)
+  const contextBindingsRef = useRef<ContextBinding[] | undefined>(undefined)
   const nextId = useRef(4)
   const [ownerName, setOwnerName] = useState('')
   const [ownerFlowCode, setOwnerFlowCode] = useState('')
@@ -142,13 +154,15 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
   const [canvasHeight, setCanvasHeight] = useState<number | null>(null)
   const [requiredInputsText, setRequiredInputsText] = useState('')
   const [requiredInputsError, setRequiredInputsError] = useState<string | null>(null)
+  const [contextBindings, setContextBindings] = useState<ContextBinding[]>([])
+  const [contextVariables, setContextVariables] = useState<VariableVersion[]>([])
   const [runInputText, setRunInputText] = useState('{"positive": true}')
   const [runResult, setRunResult] = useState<RunResult | null>(null)
   const [, forceRender] = useState(0)
 
   const recalculateDirty = (current: Graph) => {
     setIsDirty(baselineSnapshot.current !== null
-      && JSON.stringify(toGraphDefinition(current, requiredInputsRef.current)) !== baselineSnapshot.current)
+      && JSON.stringify(toGraphDefinition(current, requiredInputsRef.current, contextBindingsRef.current)) !== baselineSnapshot.current)
   }
 
   const refresh = (graph: Graph) => {
@@ -161,6 +175,8 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
 
   const render = (graph: Graph, definition: GraphDefinition) => {
     requiredInputsRef.current = definition.requiredInputs
+    contextBindingsRef.current = definition.contextBindings
+    setContextBindings(definition.contextBindings ?? [])
     setRequiredInputsText((definition.requiredInputs ?? []).join(', '))
     setRequiredInputsError(null)
     setRunResult(null)
@@ -196,6 +212,18 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
   }, [])
 
   useEffect(() => {
+    let active = true
+    void (async () => {
+      const first = await listVariables('', 1, 100)
+      const pages = await Promise.all(Array.from({ length: Math.ceil(first.total / 100) - 1 },
+        (_, index) => listVariables('', index + 2, 100)))
+      if (active) setContextVariables([first, ...pages].flatMap((page) => page.records)
+        .filter((variable) => variable.sourceType === 'FLOW_CONTEXT'))
+    })().catch((error) => { if (active) setMessage(error instanceof Error ? error.message : '上下文变量读取失败') })
+    return () => { active = false }
+  }, [])
+
+  useEffect(() => {
     if (!canvasRef.current) return
     const graph = new Graph({
       container: canvasRef.current, background: { color: '#f8fafc' }, grid: { size: 12, visible: true },
@@ -211,8 +239,16 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
       setSelected({ id: cell.id, type })
       setConfigText(type === 'node' ? JSON.stringify((cell.getData() as FlowNode)?.config ?? {}, null, 2) : '{}')
     })
+    graph.on('edge:connected', ({ edge, isNew }) => {
+      if (!isNew || !edge.getSourceCellId() || !edge.getTargetCellId()) return
+      setSelected({ id: edge.id, type: 'edge' })
+      const source = graph.getCellById(edge.getSourceCellId() ?? '')
+      setMessage(source?.isNode() && (source.getData() as FlowNode).kind === 'CONDITION'
+        ? '条件连线已创建：在右侧选择“满足”或“不满足”，两条分支各需一条。'
+        : '连线已创建。右侧可核对来源与去向。')
+    })
     render(graph, emptyFlow())
-    baselineSnapshot.current = JSON.stringify(toGraphDefinition(graph, requiredInputsRef.current))
+    baselineSnapshot.current = JSON.stringify(toGraphDefinition(graph, requiredInputsRef.current, contextBindingsRef.current))
     setIsDirty(false)
     const observer = new ResizeObserver(() => {
       if (canvasRef.current) graph.resize(canvasRef.current.clientWidth, canvasRef.current.clientHeight)
@@ -235,7 +271,7 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
         if (!active || !graphRef.current) return
         render(graphRef.current, draft?.graph ?? emptyFlow())
         setRevision(draft?.revision ?? 0)
-        const snapshot = JSON.stringify(toGraphDefinition(graphRef.current, requiredInputsRef.current))
+        const snapshot = JSON.stringify(toGraphDefinition(graphRef.current, requiredInputsRef.current, contextBindingsRef.current))
         baselineSnapshot.current = snapshot
         setIsDirty(false)
         setSavedSnapshot(draft ? snapshot : null)
@@ -254,7 +290,7 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
   useEffect(() => {
     if (!isDirty) return
     const hasUnsavedChanges = () => graphRef.current && baselineSnapshot.current !== null
-      && JSON.stringify(toGraphDefinition(graphRef.current, requiredInputsRef.current)) !== baselineSnapshot.current
+      && JSON.stringify(toGraphDefinition(graphRef.current, requiredInputsRef.current, contextBindingsRef.current)) !== baselineSnapshot.current
     const unblock = history.block((transition) => {
       if (hasUnsavedChanges() && !window.confirm('当前流程有未保存的修改，确定离开吗？')) return
       unblock()
@@ -284,6 +320,11 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
   }
 
   const addKind = (kind: NodeKind, componentKey?: string) => {
+    if ((kind === 'START' || kind === 'END') && graph().getNodes().some((cell) =>
+      (cell.getData() as FlowNode).kind === kind)) {
+      setMessage(`${labels[kind]}节点每条流程只能有一个`)
+      return
+    }
     const prefix = kind.toLowerCase().replaceAll('_', '')
     let id = `${prefix}${nextId.current++}`
     while (graph().getCellById(id)) id = `${prefix}${nextId.current++}`
@@ -292,18 +333,29 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
     const initialConfig = selectedKey
       ? componentCatalog?.find((item) => item.key === selectedKey)?.defaultConfig
       : undefined
+    const vertical = (isAsset && code === 'demoCheckoutDecision')
+      || isVerticalLayout(toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current))
+    const anchor = selected?.type === 'node' ? graph().getCellById(selected.id) : null
+    const anchorPosition = anchor?.isNode() ? anchor.getPosition() : null
+    const position = { x: anchorPosition ? anchorPosition.x + (vertical ? 0 : 210) : 160,
+      y: anchorPosition ? anchorPosition.y + (vertical ? 120 : 0) : 120 }
+    for (let attempt = 0; attempt < 40 && graph().getNodes().some((cell) => {
+      const other = cell.getPosition()
+      return Math.abs(other.x - position.x) < 170 && Math.abs(other.y - position.y) < 78
+    }); attempt++) {
+      if (vertical) position.x += 195
+      else position.y += 95
+    }
     drawNode(graph(), {
       id, kind, componentKey: selectedKey,
       failurePolicy: kind === 'COMPONENT' || kind === 'CONDITION' || kind === 'SUBFLOW' ? 'FAIL_FAST' : null,
       config: initialConfig ?? (kind === 'COMPONENT' ? { value: 'demo' }
         : kind === 'CONDITION' ? { inputKey: 'positive' } : {}),
-    }, { x: 190 + (nextId.current % 4) * 85, y: 80 + (nextId.current % 5) * 90 },
-    (isAsset && code === 'demoCheckoutDecision')
-      || isVerticalLayout(toGraphDefinition(graph(), requiredInputsRef.current)))
-    if (componentKey) {
-      setSelected({ id, type: 'node' })
-      setConfigText(JSON.stringify(initialConfig ?? {}, null, 2))
-    }
+    }, position, vertical)
+    setSelected({ id, type: 'node' })
+    setConfigText(JSON.stringify(initialConfig ?? {}, null, 2))
+    setMessage(`已添加“${componentKey ? nodeTypeLabel({ id, kind, componentKey, failurePolicy: null, config: {} }) : labels[kind]}”，在右侧完成配置，再从输出连接点拖到下一节点。`)
+    window.requestAnimationFrame(() => canvasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
   }
 
   const updateNode = (changes: Partial<FlowNode>) => {
@@ -326,7 +378,7 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
     const cell = graph().getCellById(selected.id)
     if (!cell?.isEdge()) return
     cell.setData({ branch })
-    cell.setLabels(branch ? [branch] : [])
+    cell.setLabels(branch ? [branchLabel(branch)] : [])
     setValidation(null)
     setValidatedSnapshot(null)
     forceRender((value) => value + 1)
@@ -346,9 +398,29 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
     }
   }
 
+  const changeContextBindings = (next: ContextBinding[]) => {
+    contextBindingsRef.current = next
+    setContextBindings(next)
+    setValidation(null)
+    setValidatedSnapshot(null)
+    if (graphRef.current) recalculateDirty(graphRef.current)
+  }
+
   const cell = selected ? graphRef.current?.getCellById(selected.id) : null
   const selectedNode = cell?.isNode() ? cell.getData() as FlowNode : null
   const selectedEdge = cell?.isEdge() ? cell.getData() as { branch: FlowEdge['branch'] } : null
+  const selectedEdgeCell = cell?.isEdge() ? cell : null
+  const edgeSourceId = selectedEdgeCell?.getSourceCellId() ?? ''
+  const edgeTargetId = selectedEdgeCell?.getTargetCellId() ?? ''
+  const sourceCell = edgeSourceId ? graphRef.current?.getCellById(edgeSourceId) : null
+  const sourceIsCondition = sourceCell?.isNode() && (sourceCell.getData() as FlowNode).kind === 'CONDITION'
+  const siblingBranches = graphRef.current?.getEdges().filter((edge) => edge.id !== selected?.id
+    && edge.getSourceCellId() === edgeSourceId).map((edge) =>
+    ((edge.getData() ?? {}) as { branch?: FlowEdge['branch'] }).branch) ?? []
+  const selectedNodeEdges = selectedNode ? graphRef.current?.getEdges().filter((edge) =>
+    edge.getSourceCellId() === selectedNode.id || edge.getTargetCellId() === selectedNode.id) ?? [] : []
+  const selectedIncoming = selectedNodeEdges.filter((edge) => edge.getTargetCellId() === selectedNode?.id).length
+  const selectedOutgoing = selectedNodeEdges.filter((edge) => edge.getSourceCellId() === selectedNode?.id).length
 
   if (ownerError) return <main className="flow-editor"><p role="alert">{ownerError}</p><button onClick={() => history.push(isAsset ? '/flows' : '/scenes')}>返回{isAsset ? '流程资产' : '场景管理'}</button></main>
 
@@ -356,17 +428,17 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
     <header className="header"><div><p className="eyebrow">RISK CONTROL DECISION</p><h1>{ownerName || (isAsset ? '流程' : '场景')} · 流程设计</h1><p className="subtitle">X6 编辑 · LiteFlow 执行</p></div>
       <div className="scene"><label htmlFor="ownerCode">{isAsset ? '流程码' : '场景码'}</label><input id="ownerCode" value={code} readOnly /></div></header>
     <section className="toolbar"><div className="actions">
-      <button disabled={busy} onClick={() => run(async () => { const draft = await loadTargetDraft(target); if (!draft) { setMessage('该流程没有草稿'); return }; if (baselineSnapshot.current !== JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current)) && !window.confirm('当前流程有未保存的修改，确定加载草稿吗？')) return; render(graph(), draft.graph); setRevision(draft.revision); const snapshot = JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current)); baselineSnapshot.current = snapshot; setIsDirty(false); setSavedSnapshot(snapshot); setMessage(`已加载草稿 r${draft.revision}`) })}>加载草稿</button>
-      <button disabled={busy || !!requiredInputsError} onClick={() => run(async () => { const current = toGraphDefinition(graph(), requiredInputsRef.current); const snapshot = JSON.stringify(current); const saved = await saveTargetDraft(target, current, revision); setRevision(saved.revision); setSavedSnapshot(snapshot); baselineSnapshot.current = snapshot; setIsDirty(false); if (validatedSnapshot !== snapshot) setValidation(null); setMessage(`已保存草稿 r${saved.revision}`) })}>保存草稿</button>
-      <button disabled={busy} onClick={() => { if (baselineSnapshot.current !== JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current)) && !window.confirm('当前流程有未保存的修改，确定替换为示例吗？')) return; render(graph(), demoFlow()); setMessage('已载入示例模板，请保存后再发布。') }}>载入示例模板</button>
-      <button disabled={busy} onClick={() => { if (baselineSnapshot.current !== JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current)) && !window.confirm('当前流程有未保存的修改，确定替换为全节点示例吗？')) return; render(graph(), allNodeFlow()); setMessage('已载入全节点示例：先并行执行两条分支，再按 positive 选择条件分支。') }}>载入全节点示例</button>
-      <button disabled={busy || !!requiredInputsError} onClick={() => run(async () => { const current = toGraphDefinition(graph(), requiredInputsRef.current); const result = await validateTargetFlow(target, current); setValidatedSnapshot(JSON.stringify(current)); setValidation(result); highlight(result); setMessage(result.valid ? '图校验通过' : `发现 ${result.issues.length} 个问题`) })}>校验流程</button>
-      <button disabled={busy || !validation?.valid || revision === 0 || savedSnapshot !== validatedSnapshot} onClick={() => run(async () => { if (JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current)) !== savedSnapshot) throw new Error('当前画布与已保存草稿不同，请先保存并重新校验'); const published = await publishTargetFlow(target, revision); setMessage(`已发布版本 ${published.versionNumber} · ${published.chainId}`) })}>发布版本</button>
+      <button disabled={busy} onClick={() => run(async () => { const draft = await loadTargetDraft(target); if (!draft) { setMessage('该流程没有草稿'); return }; if (baselineSnapshot.current !== JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current)) && !window.confirm('当前流程有未保存的修改，确定加载草稿吗？')) return; render(graph(), draft.graph); setRevision(draft.revision); const snapshot = JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current)); baselineSnapshot.current = snapshot; setIsDirty(false); setSavedSnapshot(snapshot); setMessage(`已加载草稿 r${draft.revision}`) })}>加载草稿</button>
+      <button disabled={busy || !!requiredInputsError} onClick={() => run(async () => { const current = toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current); const snapshot = JSON.stringify(current); const saved = await saveTargetDraft(target, current, revision); setRevision(saved.revision); setSavedSnapshot(snapshot); baselineSnapshot.current = snapshot; setIsDirty(false); if (validatedSnapshot !== snapshot) setValidation(null); setMessage(`已保存草稿 r${saved.revision}`) })}>保存草稿</button>
+      <button disabled={busy} onClick={() => { if (baselineSnapshot.current !== JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current)) && !window.confirm('当前流程有未保存的修改，确定替换为示例吗？')) return; render(graph(), demoFlow()); setMessage('已载入示例模板，请保存后再发布。') }}>载入示例模板</button>
+      <button disabled={busy} onClick={() => { if (baselineSnapshot.current !== JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current)) && !window.confirm('当前流程有未保存的修改，确定替换为全节点示例吗？')) return; render(graph(), allNodeFlow()); setMessage('已载入全节点示例：先并行执行两条分支，再按 positive 选择条件分支。') }}>载入全节点示例</button>
+      <button disabled={busy || !!requiredInputsError} onClick={() => run(async () => { const current = toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current); const result = await validateTargetFlow(target, current); setValidatedSnapshot(JSON.stringify(current)); setValidation(result); highlight(result); setMessage(result.valid ? '图校验通过' : `发现 ${result.issues.length} 个问题`) })}>校验流程</button>
+      <button disabled={busy || !validation?.valid || revision === 0 || savedSnapshot !== validatedSnapshot} onClick={() => run(async () => { if (JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current)) !== savedSnapshot) throw new Error('当前画布与已保存草稿不同，请先保存并重新校验'); const published = await publishTargetFlow(target, revision); setMessage(`已发布版本 ${published.versionNumber} · ${published.chainId}`) })}>发布版本</button>
       <button type="button" onClick={() => graph().zoom(0.15, { maxScale: 2 })}>放大</button>
       <button type="button" onClick={() => graph().zoom(-0.15, { minScale: 0.25 })}>缩小</button>
       <button type="button" onClick={() => { graph().zoomToFit({ padding: 24, maxScale: 1 }); graph().centerContent() }}>适应画布</button>
       <button type="button" disabled={busy || nodeCount === 0} onClick={() => run(async () => {
-        const current = toGraphDefinition(graph(), requiredInputsRef.current)
+        const current = toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current)
         render(graph(), { ...current, layout: arrangeGraph(current) })
         setMessage('已按连线整理节点；检查效果后可保存草稿。')
       })}>一键整理</button>
@@ -377,13 +449,49 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
         setMessage(`试运行 ${result.status} · 版本 ID ${result.versionId}`)
       })}>执行试运行</button>}
     </div><span className="stats">草稿 r{revision} · {nodeCount} 节点 · {edgeCount} 连线</span></section>
+    <details className="flow-settings-toggle"><summary>流程输入与上下文变量
+      <span>{requiredInputsRef.current?.length ?? 0} 个输入字段 · {contextBindings.length} 个上下文绑定
+        {requiredInputsError ? ' · 输入有误' : ''}</span></summary>
     <section className="flow-settings"><label>本流程必需输入字段（逗号或换行分隔）
       <textarea value={requiredInputsText} rows={2} placeholder="如 userId, orderAmount"
         onChange={(event) => changeRequiredInputs(event.target.value)} /></label>
       {requiredInputsError && <p className="form-error" role="alert">{requiredInputsError}</p>}
+      <div className="node-config-block"><h3>流程上下文变量绑定</h3>
+        <p className="form-note">每个变量在本流程绑定一个上游生产节点。标量节点结果的路径留空；对象结果填写字段路径。</p>
+        {contextBindings.map((binding, index) => <div key={index} className="flow-pick-row">
+          <label>变量<select aria-label={`上下文变量 ${index + 1}`} value={binding.variableVersionId}
+            onChange={(event) => {
+              const variable = contextVariables.find((item) => item.id === Number(event.target.value))
+              if (variable) changeContextBindings(contextBindings.map((item, i) => i === index
+                ? { ...item, variableCode: variable.variableCode, variableVersionId: variable.id } : item))
+            }}>
+            <option value={0}>请选择</option>
+            {binding.variableVersionId > 0 && !contextVariables.some((item) => item.id === binding.variableVersionId)
+              && <option value={binding.variableVersionId}>{binding.variableCode} · 固定版本 ID {binding.variableVersionId}</option>}
+            {contextVariables.map((item) => <option key={item.id} value={item.id}
+              disabled={contextBindings.some((other, otherIndex) => otherIndex !== index
+                && other.variableCode === item.variableCode)}>
+              {item.variableName} ({item.variableCode}) · v{item.versionNumber}</option>)}
+          </select></label>
+          <label>生产节点<select aria-label={`生产节点 ${index + 1}`} value={binding.nodeId}
+            onChange={(event) => changeContextBindings(contextBindings.map((item, i) => i === index
+              ? { ...item, nodeId: event.target.value } : item))}>
+            <option value="">请选择</option>{graphRef.current?.getNodes().map((cell) =>
+              <option key={cell.id} value={cell.id}>{cell.id}</option>)}
+          </select></label>
+          <label>结果路径<input aria-label={`结果路径 ${index + 1}`} value={binding.resultPath}
+            placeholder="标量留空，或如 businessResult.conclusion"
+            onChange={(event) => changeContextBindings(contextBindings.map((item, i) => i === index
+              ? { ...item, resultPath: event.target.value } : item))} /></label>
+          <button type="button" className="danger" onClick={() => changeContextBindings(
+            contextBindings.filter((_, i) => i !== index))}>删除</button>
+        </div>)}
+        <button type="button" onClick={() => changeContextBindings([...contextBindings,
+          { variableCode: '', variableVersionId: 0, nodeId: '', resultPath: '' }])}>添加上下文绑定</button>
+      </div>
       {!isAsset && <label>试运行输入 JSON<textarea value={runInputText} rows={2}
         onChange={(event) => setRunInputText(event.target.value)} /></label>}
-    </section>
+    </section></details>
     <div className="workspace">
       <aside className="panel palette"><h2>节点类型</h2><p>图中使用相同符号和颜色；点击添加节点。</p>{kinds.map((kind) => <button key={kind} className="palette-item" title={kindHints[kind]} onClick={() => addKind(kind)}><span className="palette-mark" style={{ color: colors[kind] }} aria-hidden="true">{marks[kind]}</span><span>{labels[kind]}</span></button>)}
         {componentCatalog?.filter((item) => !item.condition && item.key !== 'emit-value').map((item) =>
@@ -411,8 +519,6 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
                 onChange={(config) => updateNode({ config })} />}
             {selectedNode.kind === 'COMPONENT' && selectedNode.componentKey === 'execute-rule-set' &&
               <RuleSetNodeInspector key={selectedNode.id} node={selectedNode}
-                requiredInputs={requiredInputsRef.current ?? []}
-                candidates={graph().getNodes().map((item) => item.getData() as FlowNode)}
                 onChange={(config) => updateNode({ config })} />}
             {selectedNode.kind === 'COMPONENT' && !['get-variable', 'execute-rule-set'].includes(selectedNode.componentKey ?? '') && <><label>节点配置 JSON<textarea value={configText} onChange={(event) => setConfigText(event.target.value)} rows={6} /></label>
               <button onClick={() => { try { updateNode({ config: parseJsonObject(configText) }); setMessage('节点配置已更新') } catch (error) { setMessage(error instanceof Error ? error.message : 'JSON 格式错误') } }}>应用配置</button></>}

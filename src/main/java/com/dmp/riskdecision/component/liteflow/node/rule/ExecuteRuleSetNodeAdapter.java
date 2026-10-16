@@ -8,7 +8,6 @@ import com.yomahub.liteflow.annotation.LiteflowComponent;
 import com.yomahub.liteflow.core.NodeComponent;
 import jakarta.annotation.Resource;
 import java.time.Instant;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** 将已发布规则集版本应用于当前流程输入，并保存可追溯结果。 */
@@ -23,21 +22,9 @@ public class ExecuteRuleSetNodeAdapter extends NodeComponent {
         Instant started = Instant.now();
         try {
             Map<String, Object> config = context.getNodeConfigs().get(nodeId);
-            Map<?, ?> mappings = (Map<?, ?>) config.get("inputMappings");
-            Map<String, Object> input = new LinkedHashMap<>();
-            for (Map.Entry<?, ?> entry : mappings.entrySet()) {
-                Map<?, ?> source = (Map<?, ?>) entry.getValue();
-                Object value;
-                if ("INPUT".equals(source.get("source"))) {
-                    value = context.getInput().get(source.get("key"));
-                } else {
-                    value = context.getNodeResults().get(source.get("nodeId"));
-                }
-                if (value == null) throw new IllegalArgumentException("Rule input is missing: " + entry.getKey());
-                input.put((String) entry.getKey(), value);
-            }
-            RuleEvaluation result = rules.evaluateVersion(((Number) config.get("ruleVersionId")).longValue(), input);
-            Map<String, Object> output = new LinkedHashMap<>();
+            RuleEvaluation result = rules.evaluateVersion(((Number) config.get("ruleVersionId")).longValue(),
+                    context.getInput(), context.getNodeResults(), context.getContextBindings());
+            Map<String, Object> output = new java.util.LinkedHashMap<>();
             output.put("resultCode", result.getResultCode());
             output.put("reasonCode", result.getReasonCode());
             output.put("reason", result.getReason());

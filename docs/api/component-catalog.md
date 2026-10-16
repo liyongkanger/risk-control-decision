@@ -22,7 +22,7 @@
 示例节选：
 
 ```json
-{"code":"SUCCESS","message":"成功","data":[{"key":"get-variable","displayName":"获取变量","description":"引用变量中心的固定版本，映射流程输入并输出一个强类型变量值。变量定义在变量中心维护。","condition":false,"category":"DATA","outputType":"VARIABLE_VALUE","configFields":[{"name":"variableCode","label":"变量码","type":"STRING","required":true}],"defaultConfig":{"variableCode":"","versionId":0,"inputMappings":{}}}]}
+{"code":"SUCCESS","message":"成功","data":[{"key":"get-variable","displayName":"获取变量","description":"引用变量中心的固定版本，按变量依赖取值并输出一个强类型值。","condition":false,"category":"DATA","outputType":"VARIABLE_VALUE","configFields":[{"name":"variableCode","label":"变量码","type":"STRING","required":true}],"defaultConfig":{"variableCode":"","versionId":0}}]}
 ```
 
 示例只展示一项和一个配置字段；实际接口会返回完整的 7 项和每项全部字段。规则能力包括 `execute-rule-set`（普通组件，输出 `RULE_RESULT`）和 `rule-result-equals`（条件组件，输出 `BOOLEAN`）；具体规则集在[规则中心](rule-center.md)维护。

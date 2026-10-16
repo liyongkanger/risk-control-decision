@@ -29,12 +29,16 @@ class VariableResolutionTest {
         remote.createContext("/failure", exchange -> respond(exchange, 503, "{}"));
         remote.start();
         try {
+            String locatorCode = "userId" + System.nanoTime();
+            VariableVersion locator = variables.create(locatorCode, "用户标识", VariableValueType.STRING,
+                    "REQUEST_INPUT", null, 0, List.of(), null);
             for (String path : List.of("missing", "wrong", "failure")) {
                 String code = path + System.nanoTime();
                 VariableVersion version = variables.create(code, "错误样例", VariableValueType.DECIMAL,
                         "HTTP_GET", "http://localhost:" + remote.getAddress().getPort() + "/" + path,
-                        1000, List.of("userId"), "value");
-                assertThatThrownBy(() -> variables.resolve(version.getId(), code, Map.of("userId", "u1")))
+                        1000, List.of(locatorCode), "value", Map.of(locatorCode, locator.getId()));
+                assertThatThrownBy(() -> variables.resolveInFlow(version.getId(), code,
+                        Map.of(locatorCode, "u1"), Map.of(), Map.of()))
                         .isInstanceOf(VariableResolutionException.class);
             }
         } finally { remote.stop(0); }

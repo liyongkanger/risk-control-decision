@@ -8,9 +8,9 @@ export function parseRuleTestInput(raw: string, definition: RuleDefinition): Rec
   }
   const input = parsed as Record<string, unknown>
   for (const field of definition.inputs) {
-    const value = input[field.name]
+    const value = input[field.variableBinding.variableCode]
     if (field.type === 'DECIMAL' && typeof value === 'number' && !Number.isSafeInteger(value)) {
-      throw new Error(`DECIMAL 输入 ${field.name} 请用字符串表示精确小数`)
+      throw new Error(`DECIMAL 输入 ${field.variableBinding.variableCode} 请用字符串表示精确小数`)
     }
   }
   return input

@@ -18,6 +18,7 @@ class RuleSetApiTest {
     @Value("${local.server.port}") private int port;
     private final HttpClient client = HttpClient.newHttpClient();
     private final ObjectMapper json = new ObjectMapper();
+    private Long requestAmountVersionId;
 
     @Test
     void keepsPublishedVersionWhenDraftChanges() throws Exception {
@@ -98,8 +99,40 @@ class RuleSetApiTest {
         assertThat(quotedResult.get("resultCode").asText()).isEqualTo("INELIGIBLE");
     }
 
-    private String definition(int threshold) {
-        return "{\"inputs\":[{\"name\":\"amount\",\"type\":\"DECIMAL\"}],"
+    @Test
+    void testsFlowContextWithAnExplicitTemporarySample() throws Exception {
+        String variableCode = "flowAmount" + System.nanoTime();
+        JsonNode variable = data(send("POST", "/api/variables", "{\"variableCode\":\""
+                + variableCode + "\",\"variableName\":\"临时上下文金额\",\"valueType\":\"DECIMAL\","
+                + "\"sourceType\":\"FLOW_CONTEXT\",\"parameterNames\":[]}"));
+        String source = definition(100).replace("\"variableCode\":\"amount\"",
+                "\"variableCode\":\"" + variableCode + "\"")
+                .replace("\"variableVersionId\":" + requestAmountVersionId,
+                        "\"variableVersionId\":" + variable.get("id").asLong());
+        String code = "contextTest" + System.nanoTime();
+        data(send("POST", "/api/rule-sets", "{\"code\":\"" + code
+                + "\",\"name\":\"上下文试算\",\"definition\":" + source + "}"));
+
+        JsonNode result = data(send("POST", "/api/rule-sets/" + code + "/test",
+                "{\"input\":{},\"contextValues\":{\"" + variableCode + "\":80}}"));
+        assertThat(result.get("resultCode").asText()).isEqualTo("INELIGIBLE");
+        assertThat(send("POST", "/api/rule-sets/" + code + "/test",
+                "{\"input\":{\"" + variableCode + "\":80},\"contextValues\":{}}")
+                .statusCode()).isEqualTo(502);
+    }
+
+    private String definition(int threshold) throws Exception {
+        if (requestAmountVersionId == null) {
+            HttpResponse<String> existing = send("GET", "/api/variables/amount", null);
+            JsonNode variable = existing.statusCode() == 200 ? data(existing)
+                    : data(send("POST", "/api/variables", "{\"variableCode\":\"amount\","
+                    + "\"variableName\":\"规则试算金额\",\"valueType\":\"DECIMAL\","
+                    + "\"sourceType\":\"REQUEST_INPUT\",\"parameterNames\":[]}"));
+            requestAmountVersionId = variable.get("id").asLong();
+        }
+        return "{\"inputs\":[{\"name\":\"amount\",\"type\":\"DECIMAL\","
+                + "\"variableBinding\":{\"variableCode\":\"amount\","
+                + "\"variableVersionId\":" + requestAmountVersionId + "}}],"
                 + "\"resultCodes\":[\"ELIGIBLE\",\"INELIGIBLE\"],"
                 + "\"rows\":[{\"id\":\"min-order\",\"priority\":10,\"conditions\":[{\"input\":\"amount\","
                 + "\"operator\":\"LT\",\"expected\":" + threshold + "}],\"result\":{\"resultCode\":\"INELIGIBLE\","

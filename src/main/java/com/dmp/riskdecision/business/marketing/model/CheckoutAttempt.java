@@ -12,6 +12,7 @@ public class CheckoutAttempt {
     private final String checkoutId;
     private final String userId;
     private final DemoGroup group;
+    private final String executionId;
     private final String requestId;
     private final Instant decidedAt;
     private final long outerVersionId;
@@ -37,10 +38,22 @@ public class CheckoutAttempt {
                            String decisionStatus, String decisionConclusion, String decisionReason,
                            String recommendedOfferCode, boolean eligible, BigDecimal orderAmount,
                            BigDecimal preDiscountMargin, BigDecimal existingOfferAmount) {
+        this(experimentId, checkoutId, userId, group, null, requestId, outerVersionId, subflowVersionIds,
+                ruleTrace, decisionStatus, decisionConclusion, decisionReason, recommendedOfferCode,
+                eligible, orderAmount, preDiscountMargin, existingOfferAmount);
+    }
+
+    public CheckoutAttempt(String experimentId, String checkoutId, String userId, DemoGroup group,
+                           String executionId, String requestId, long outerVersionId,
+                           Map<String, Long> subflowVersionIds, MarketingRuleTrace ruleTrace,
+                           String decisionStatus, String decisionConclusion, String decisionReason,
+                           String recommendedOfferCode, boolean eligible, BigDecimal orderAmount,
+                           BigDecimal preDiscountMargin, BigDecimal existingOfferAmount) {
         this.experimentId = experimentId;
         this.checkoutId = checkoutId;
         this.userId = userId;
         this.group = group;
+        this.executionId = executionId;
         this.requestId = requestId;
         this.decidedAt = Instant.now();
         this.outerVersionId = outerVersionId;

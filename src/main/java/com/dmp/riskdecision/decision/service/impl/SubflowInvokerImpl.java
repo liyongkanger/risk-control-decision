@@ -42,6 +42,7 @@ public class SubflowInvokerImpl implements SubflowInvoker {
         call.put("status", result.getStatus());
         call.put("businessResult", toMap(result.getBusinessResult()));
         call.put("trace", result.getTrace());
+        call.put("nodeResults", result.getNodeResults());
         return Map.copyOf(call);
     }
 

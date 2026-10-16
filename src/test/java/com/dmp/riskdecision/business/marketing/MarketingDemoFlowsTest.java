@@ -29,7 +29,7 @@ class MarketingDemoFlowsTest {
         assertThat(compiler.compile("outer", 1, outer).getEl())
                 .contains("decisionSubflow.tag(\"eligibilityCall\")")
                 .contains("decisionSubflow.tag(\"selectionCall\")");
-        assertThat(outer.getRequiredInputs()).containsExactly("orderAmount", "marginAfterMaxOffer",
-                "remainingBudget", "inExperiment", "highGroup");
+        assertThat(outer.getRequiredInputs()).containsExactly("uid", "checkoutId", "experimentId",
+                "inExperiment", "highGroup");
     }
 }

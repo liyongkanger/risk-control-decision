@@ -20,7 +20,7 @@ Content-Type: application/json
 
 | 字段 | 类型 | 必填与限制 | 语义 |
 | --- | --- | --- | --- |
-| `requestId` | string | 可省略或为空；当前没有额外长度校验 | 为空时由服务端生成 UUID；非空时沿用原值。 |
+| `requestId` | string | 可省略或为空；非空最多 191 位 | 为空时由服务端生成 UUID；非空时沿用原值。 |
 | `sceneCode` | string | 必填且不能空白；需指向已创建且绑定已发布版本的场景 | 选择本次执行的场景与入口版本。创建场景时的编码规则为字母开头、只含字母数字下划线连字符、最长 64 位。 |
 | `input` | JSON object | DTO 未声明必填校验；调用方应传 `{}` 或节点需要的字段 | 提供本次执行的输入。具体字段由已发布流程的节点配置决定。 |
 
@@ -32,6 +32,7 @@ Content-Type: application/json
 
 | `data` 字段 | 类型 | 含义 |
 | --- | --- | --- |
+| `executionId` | string | 单次执行标识 UUID，与可重复的 `requestId` 独立；可用于事后查询执行记录。 |
 | `requestId` | string | 本次请求标识。 |
 | `sceneCode` | string | 本次执行的场景码。 |
 | `versionId` | number | 本次固定选中的外层流程发布版本数据库 ID；不是版本号。 |
@@ -184,5 +185,16 @@ Content-Type: application/json
 }
 ```
 
-`versionId` 是本次真正执行的子流程不可变版本 ID。子流程结果归属调用节点，不直接改变外层 `data.businessResult`；外层最终结论仍由外层的 `RESULT` 节点配置决定。子流程业务上正常返回“不新增优惠”等结论时，外层可以继续执行。若输入映射缺值或子流程运行失败，外层返回 `data.status=FAILED`、`data.businessResult=null`、`data.errorCode=FLOW_EXECUTION_FAILED`；失败调用节点的 `nodeResults` 至少保留 `flowCode`、`versionId`、`status=FAILED` 和失败 `errorCode`，`trace` 中也标出调用节点。子流程已开始执行时，该调用结果另含 `childTrace`，可定位子流程内的失败节点；映射值缺失发生在子流程开始前，不会有 `childTrace`。当前没有独立的决策详情查询接口，结果与轨迹只随本次同步响应返回。
+`versionId` 是本次真正执行的子流程不可变版本 ID。子流程结果归属调用节点，不直接改变外层 `data.businessResult`；外层最终结论仍由外层的 `RESULT` 节点配置决定。子流程业务上正常返回“不新增优惠”等结论时，外层可以继续执行；成功调用结果还包含该子流程的 `nodeResults` 和 `trace`。若输入映射缺值或子流程运行失败，外层返回 `data.status=FAILED`、`data.businessResult=null`、`data.errorCode=FLOW_EXECUTION_FAILED`；失败调用节点的 `nodeResults` 至少保留 `flowCode`、`versionId`、`status=FAILED` 和失败 `errorCode`，`trace` 中也标出调用节点。子流程已开始执行时，该调用结果另含 `childTrace`，可定位子流程内的失败节点；映射值缺失发生在子流程开始前，不会有 `childTrace`。
+
+## 通用执行记录查询
+
+场景入口决策完成执行后，在返回同步响应前保存固定快照。相同 `requestId` 的重复调用会生成不同的 `executionId` 和记录；子流程调用保存在父记录的节点结果中，不单独创建顶层记录。执行前校验失败（如场景不存在）不产生记录。快照包括本次请求输入和节点输出，当前开发阶段未设置自动清理或字段脱敏。
+
+| 方法 | 路径 | 参数 / 返回 |
+| --- | --- | --- |
+| `GET` | `/api/decision-records` | 可选 `sceneCode`、`requestId`、`status=SUCCEEDED\|FAILED` 精确筛选；必按 `page>=1`、`1<=pageSize<=100` 分页，默认 1 / 10。返回 `{records,total,page,pageSize}`，按记录 ID 倒序。列表项含 `executionId,requestId,sceneCode,versionId,status,conclusion,errorCode,createdAt`；`input` 与 `result` 为 `null`。 |
+| `GET` | `/api/decision-records/{executionId}` | 返回上述元数据及 `input` 请求快照、`result` 执行响应快照；另含未经浏览器数字解析的 `inputJson`、`resultJson` 原始 JSON 文本，供精确核对。不存在返回 HTTP 404 `NOT_FOUND`。 |
+
+`result` 保留 `businessResult`、`nodeResults`、`trace` 和错误码。节点轨迹的 `flowVersion` 是版本号；列表与详情的 `versionId` 是入口版本数据库 ID。请求输入超过约定长度、非法状态或分页参数返回 HTTP 422 `INVALID_REQUEST`。
 子流程没有建议动作时，调用节点下的 `businessResult` 省略 `suggestedAction`；外层响应的 `data.businessResult.suggestedAction` 按 T1 契约可为 `null`。

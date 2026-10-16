@@ -1,6 +1,7 @@
 package com.dmp.riskdecision.component.variable.mapper;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -13,6 +14,8 @@ import lombok.Data;
 public class VariableVersionRow {
     @TableId(value = "id", type = IdType.AUTO) private Long id;
     private String variableCode;
+    @TableField(exist = false)
+    private String categoryCode;
     private String variableName;
     private Long versionNumber;
     private String valueType;
@@ -20,6 +23,7 @@ public class VariableVersionRow {
     private String url;
     private Integer timeoutMs;
     private String parameterNamesJson;
+    private String dependencyVersionIdsJson;
     private String resultPath;
     private LocalDateTime inserttime;
     private LocalDateTime updatetime;

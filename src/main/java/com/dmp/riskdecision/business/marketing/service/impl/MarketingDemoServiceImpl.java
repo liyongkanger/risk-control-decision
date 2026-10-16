@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
 public class MarketingDemoServiceImpl implements MarketingDemoService {
     private static final BigDecimal HIGH_DISCOUNT = new BigDecimal("18.00");
     private static final BigDecimal LOW_DISCOUNT = new BigDecimal("5.00");
-    private static final BigDecimal BUDGET = new BigDecimal("2000.00");
     private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(2);
 
     @Resource private MarketingDemoFlowService flows;
@@ -71,20 +70,19 @@ public class MarketingDemoServiceImpl implements MarketingDemoService {
     }
 
     /**
-     * 准备订单事实与预算快照，交给资格规则集和稳定实验组流程决策。
-     * 预算是当前进程反馈状态的样板快照，规则执行器不修改该状态。
+     * 先登记本次模拟结算事实；决策流程只接收业务标识，由变量中心取资格数据。
      */
     private CheckoutAttempt evaluateCheckout(String experimentId, String checkoutId, String userId,
                                              BigDecimal orderAmount, BigDecimal margin,
                                              BigDecimal existingOfferAmount) {
         DemoGroup group = groupFor(experimentId, userId);
-        BigDecimal marginAfterMaxOffer = margin.subtract(HIGH_DISCOUNT);
-        BigDecimal remainingBudget = BUDGET.subtract(store.actualDiscountSpent(experimentId));
+        store.stageCheckout(experimentId, checkoutId, userId, orderAmount, margin, existingOfferAmount);
         String requestId = experimentId + ":" + checkoutId;
-        ExecutionResult result = decisions.evaluate(requestId, MarketingDemoFlows.SCENE_CODE,
-                Map.of("orderAmount", orderAmount, "marginAfterMaxOffer", marginAfterMaxOffer,
-                        "remainingBudget", remainingBudget, "inExperiment", group != DemoGroup.CONTROL,
-                        "highGroup", group == DemoGroup.HIGH));
+        ExecutionResult result = store.withCurrentFacts(() -> decisions.evaluate(requestId,
+                MarketingDemoFlows.SCENE_CODE,
+                Map.of("uid", userId, "checkoutId", checkoutId, "experimentId", experimentId,
+                        "inExperiment", group != DemoGroup.CONTROL,
+                        "highGroup", group == DemoGroup.HIGH)));
         boolean eligible = eligibilityFrom(result);
         BusinessResult conclusion = result.getBusinessResult();
         String recommended = conclusion == null ? "NONE" : offerForConclusion(conclusion.getConclusion());
@@ -96,7 +94,8 @@ public class MarketingDemoServiceImpl implements MarketingDemoService {
             }
         }
         CheckoutAttempt attempt = new CheckoutAttempt(experimentId, checkoutId, userId, group,
-                result.getRequestId(), result.getVersionId(), childVersions, ruleTraceFrom(result),
+                result.getExecutionId(), result.getRequestId(), result.getVersionId(), childVersions,
+                ruleTraceFrom(result),
                 result.getStatus(), conclusion == null ? null : conclusion.getConclusion(),
                 conclusion == null ? null : eligible ? conclusion.getReason()
                         : eligibilityReason(result, conclusion.getReason()), recommended, eligible,

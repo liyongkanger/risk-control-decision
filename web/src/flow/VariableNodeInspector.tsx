@@ -3,16 +3,14 @@ import { getVariable, getVariableVersion, listVariables } from '../services/vari
 import type { VariablePage, VariableVersion } from '../services/variableCenter'
 import type { FlowNode } from './types'
 
-export type VariableNodeConfig = { variableCode: string; versionId: number; inputMappings: Record<string, string> }
+export type VariableNodeConfig = { variableCode: string; versionId: number }
 type Props = { node: FlowNode; onChange: (config: VariableNodeConfig) => void }
 
-/** 从变量中心选择固定版本并映射流程输入。 */
+/** 从变量中心选择固定版本；依赖由变量中心解析。 */
 export default function VariableNodeInspector({ node, onChange }: Props) {
   const config: VariableNodeConfig = {
     variableCode: typeof node.config.variableCode === 'string' ? node.config.variableCode : '',
     versionId: typeof node.config.versionId === 'number' ? node.config.versionId : 0,
-    inputMappings: node.config.inputMappings && typeof node.config.inputMappings === 'object'
-      ? node.config.inputMappings as Record<string, string> : {},
   }
   const [query, setQuery] = useState('')
   const [keyword, setKeyword] = useState('')
@@ -43,9 +41,7 @@ export default function VariableNodeInspector({ node, onChange }: Props) {
   const choose = (variable: VariableVersion) => {
     setSelectedVersion(variable)
     setCurrentVersion(variable)
-    onChange({ variableCode: variable.variableCode, versionId: variable.id,
-      inputMappings: Object.fromEntries(variable.parameterNames.map((name) =>
-        [name, config.inputMappings[name] ?? name])) })
+    onChange({ variableCode: variable.variableCode, versionId: variable.id })
   }
 
   return <div className="node-config-block">
@@ -73,12 +69,6 @@ export default function VariableNodeInspector({ node, onChange }: Props) {
         <p className="form-warning">变量已有新版本。重新发布前需要显式升级。</p>
         <button type="button" onClick={() => choose(currentVersion)}>升级到当前版本</button>
       </>}
-      {(selectedVersion?.parameterNames ?? Object.keys(config.inputMappings)).map((name) =>
-        <label key={name}>查询参数 {name} ← 流程输入字段
-          <input value={config.inputMappings[name] ?? ''} onChange={(event) => onChange({
-            ...config, inputMappings: { ...config.inputMappings, [name]: event.target.value },
-          })} />
-        </label>)}
     </div>}
   </div>
 }

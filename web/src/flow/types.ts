@@ -16,9 +16,17 @@ export type FlowEdge = {
   branch: 'true' | 'false' | null
 }
 
+export type ContextBinding = {
+  variableCode: string
+  variableVersionId: number
+  nodeId: string
+  resultPath: string
+}
+
 export type GraphDefinition = {
   schemaVersion: 1
   requiredInputs?: string[]
+  contextBindings?: ContextBinding[]
   nodes: FlowNode[]
   edges: FlowEdge[]
   layout: Record<string, { x: number; y: number }>

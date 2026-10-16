@@ -1,0 +1,149 @@
+- generic [ref=f7e1]:
+  - generic [ref=f7e4]:
+    - complementary [ref=f7e6]:
+      - generic [ref=f7e7]:
+        - heading "风控决策平台" [level=1] [ref=f7e21] [cursor=pointer]
+        - menu [ref=f7e23]:
+          - menuitem [ref=f7e24] [cursor=pointer]:
+            - link "appstore 场景管理" [ref=f7e26]:
+              - /url: /scenes
+              - generic [ref=f7e27]:
+                - img "appstore" [ref=f7e29]
+                - generic [ref=f7e32]: 场景管理
+          - menuitem [ref=f7e33] [cursor=pointer]:
+            - link "apartment 流程资产" [ref=f7e35]:
+              - /url: /flows
+              - generic [ref=f7e36]:
+                - img "apartment" [ref=f7e38]
+                - generic [ref=f7e41]: 流程资产
+          - menuitem "api 组件管理" [ref=f7e42] [cursor=pointer]:
+            - generic [ref=f7e44]:
+              - img "api" [ref=f7e46]
+              - generic [ref=f7e49]: 组件管理
+          - menuitem [ref=f7e50] [cursor=pointer]:
+            - link "database 变量中心" [ref=f7e52]:
+              - /url: /variable-center
+              - generic [ref=f7e53]:
+                - img "database" [ref=f7e55]
+                - generic [ref=f7e58]: 变量中心
+          - menuitem "deployment-unit 规则中心" [ref=f7e59] [cursor=pointer]:
+            - generic [ref=f7e61]:
+              - img "deployment-unit" [ref=f7e63]
+              - generic [ref=f7e66]: 规则中心
+          - menuitem [ref=f7e67] [cursor=pointer]:
+            - link "experiment 营销闭环演示" [ref=f7e69]:
+              - /url: /marketing-demo
+              - generic [ref=f7e70]:
+                - img "experiment" [ref=f7e72]
+                - generic [ref=f7e75]: 营销闭环演示
+          - menuitem [ref=f7e76] [cursor=pointer]:
+            - link "partition 流程设计" [ref=f7e78]:
+              - /url: /flow-design
+              - generic [ref=f7e79]:
+                - img "partition" [ref=f7e81]
+                - generic [ref=f7e84]: 流程设计
+        - generic [ref=f7e85]: 演示用户
+        - generic [ref=f7e88] [cursor=pointer]
+    - main [ref=f7e92]:
+      - generic [ref=f7e93]:
+        - generic "规则中心" [ref=f7e97]
+        - generic [ref=f7e100]:
+          - generic [ref=f7e101]:
+            - generic [ref=f7e103]:
+              - searchbox "搜索规则集" [ref=f7e104]
+              - button [ref=f7e105] [cursor=pointer]:
+                - img "search" [ref=f7e107]
+            - button "新建规则集" [ref=f7e111] [cursor=pointer]
+          - generic [ref=f7e115]:
+            - table [ref=f7e119]:
+              - rowgroup [ref=f7e120]:
+                - row [ref=f7e121]:
+                  - columnheader "规则集码" [ref=f7e122]
+                  - columnheader "名称" [ref=f7e123]
+                  - columnheader "草稿修订号" [ref=f7e124]
+                  - columnheader "当前发布版本 ID" [ref=f7e125]
+                  - columnheader "操作" [ref=f7e126]
+              - rowgroup [ref=f7e127]:
+                - row [ref=f7e128]:
+                  - cell "demoOfferEligibilityRules" [ref=f7e129]
+                  - cell "演示优惠资格规则" [ref=f7e130]
+                  - cell "1" [ref=f7e131]
+                  - cell "1" [ref=f7e132]
+                  - cell [ref=f7e133]:
+                    - button "编辑 / 试算" [ref=f7e134] [cursor=pointer]
+            - list [ref=f7e136]:
+              - listitem [ref=f7e137]: 共 1 条
+              - listitem "上一页" [ref=f7e138]:
+                - button [disabled] [ref=f7e139]:
+                  - img "left" [ref=f7e140]
+              - listitem "1" [ref=f7e143] [cursor=pointer]
+              - listitem "下一页" [ref=f7e145]:
+                - button [disabled] [ref=f7e146]:
+                  - img "right" [ref=f7e147]
+              - listitem [ref=f7e150]:
+                - generic [ref=f7e151]:
+                  - generic "10 条/页" [ref=f7e152]:
+                    - text: 10 条/页
+                    - combobox "页码" [ref=f7e153]
+                  - img "down" [ref=f7e155]
+  - generic [ref=f7e158]:
+    - dialog "新建规则集":
+      - generic [ref=f7e159]:
+        - button "关闭" [active] [ref=f7e160] [cursor=pointer]:
+          - generic "关闭" [ref=f7e161]:
+            - img "close" [ref=f7e162]
+        - generic [ref=f7e165]: 新建规则集
+        - generic [ref=f7e167]:
+          - generic [ref=f7e168]:
+            - generic [ref=f7e169]:
+              - generic [ref=f7e171]:
+                - text: 规则集码
+                - textbox "规则集码" [ref=f7e172]
+              - generic [ref=f7e174]:
+                - text: 名称
+                - textbox "规则集名称" [ref=f7e175]
+              - generic [ref=f7e176]: 发布版本 ID：未发布
+            - generic [ref=f7e178]:
+              - generic [ref=f7e180]:
+                - generic [ref=f7e181]: 规则使用的变量
+                - button "搜索添加变量" [ref=f7e183] [cursor=pointer]
+              - generic [ref=f7e185]: 先从变量中心选择变量，再添加规则行和比较条件。
+            - generic [ref=f7e186]:
+              - generic [ref=f7e187]: 业务结果码
+              - textbox "结果码列表" [ref=f7e191]:
+                - /placeholder: PASS, REJECT
+                - text: PASS, REJECT
+            - generic [ref=f7e194]:
+              - generic [ref=f7e195]: 规则行（优先级小的先判断）
+              - button "添加规则行" [ref=f7e197] [cursor=pointer]
+            - generic [ref=f7e199]:
+              - generic [ref=f7e200]: 兜底结果
+              - generic [ref=f7e204]:
+                - generic [ref=f7e206] [cursor=pointer]:
+                  - generic "PASS" [ref=f7e207]:
+                    - text: PASS
+                    - combobox "兜底结果码" [ref=f7e208]
+                  - img "down" [ref=f7e210]
+                - textbox "兜底原因码" [ref=f7e214]: DEFAULT
+                - textbox "兜底原因" [ref=f7e216]: 符合规则
+            - generic [ref=f7e217]:
+              - generic [ref=f7e218]: 模拟试算
+              - generic [ref=f7e221]:
+                - generic [ref=f7e222]: "DECIMAL 小数请用 JSON 字符串输入，如 {\"amount\":\"0.10000000000000001\"}，避免浏览器舍入。"
+                - textbox "试算输入 JSON" [ref=f7e223]: "{}"
+                - generic [ref=f7e224]: 流程上下文变量临时样例 JSON（按变量码填写，仅用于本次试算）
+                - textbox "临时流程上下文样例 JSON" [ref=f7e225]: "{}"
+                - generic [ref=f7e226]:
+                  - button "试算草稿" [disabled] [ref=f7e228]
+                  - generic [ref=f7e230]:
+                    - spinbutton "试算发布版本 ID" [ref=f7e231]
+                    - generic:
+                      - button "Increase Value" [ref=f7e232] [cursor=pointer]:
+                        - img "up" [ref=f7e233]
+                      - button "Decrease Value" [ref=f7e236] [cursor=pointer]:
+                        - img "down" [ref=f7e237]
+                  - button "试算发布版本" [disabled] [ref=f7e241]
+          - generic [ref=f7e242]:
+            - button "保存草稿" [ref=f7e244] [cursor=pointer]
+            - button "发布版本" [disabled] [ref=f7e247]
+            - generic [ref=f7e248]: 当前有未保存修改

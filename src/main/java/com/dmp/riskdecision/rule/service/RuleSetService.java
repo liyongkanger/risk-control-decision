@@ -5,6 +5,7 @@ import com.dmp.riskdecision.rule.model.RuleEvaluation;
 import com.dmp.riskdecision.rule.model.RuleSetPage;
 import com.dmp.riskdecision.rule.model.RuleSetSnapshot;
 import com.dmp.riskdecision.rule.model.RuleSetVersion;
+import com.dmp.riskdecision.orchestrator.graph.FlowContextBinding;
 import java.util.Map;
 
 /** 管理规则集草稿及不可变版本，并对流程提供纯计算规则执行。 */
@@ -33,6 +34,19 @@ public interface RuleSetService {
     /** 对某个不可变版本和输入快照执行规则。 */
     RuleEvaluation evaluateVersion(long id, Map<String, Object> input);
 
+    /** 在当前流程执行上下文中解析规则所引用的变量。 */
+    RuleEvaluation evaluateVersion(long id, Map<String, Object> input,
+                                   Map<String, Object> nodeResults,
+                                   Map<String, FlowContextBinding> contextBindings);
+
     /** 用当前草稿和输入快照试算，不修改草稿或发布指针。 */
     RuleEvaluation testDraft(String code, Map<String, Object> input);
+
+    /** 使用临时上下文样例试算草稿；样例不会写入变量中心。 */
+    RuleEvaluation testDraft(String code, Map<String, Object> input,
+                             Map<String, Object> contextValues);
+
+    /** 使用临时上下文样例试算固定版本。 */
+    RuleEvaluation testVersion(long id, Map<String, Object> input,
+                               Map<String, Object> contextValues);
 }

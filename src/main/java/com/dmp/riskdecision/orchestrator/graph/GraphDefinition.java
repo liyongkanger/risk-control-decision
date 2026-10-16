@@ -13,6 +13,7 @@ public class GraphDefinition {
     private List<GraphEdge> edges;
     private Map<String, Point> layout;
     private List<String> requiredInputs = List.of();
+    private List<FlowContextBinding> contextBindings = List.of();
 
     public GraphDefinition() {
     }
@@ -65,6 +66,16 @@ public class GraphDefinition {
                 : Collections.unmodifiableList(new ArrayList<>(requiredInputs));
     }
 
+    /** 当前流程使用的上下文变量生产者绑定。 */
+    public List<FlowContextBinding> getContextBindings() {
+        return contextBindings;
+    }
+
+    public void setContextBindings(List<FlowContextBinding> contextBindings) {
+        this.contextBindings = contextBindings == null ? List.of()
+                : Collections.unmodifiableList(new ArrayList<>(contextBindings));
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -78,11 +89,12 @@ public class GraphDefinition {
                 && Objects.equals(nodes, that.nodes)
                 && Objects.equals(edges, that.edges)
                 && Objects.equals(layout, that.layout)
-                && Objects.equals(requiredInputs, that.requiredInputs);
+                && Objects.equals(requiredInputs, that.requiredInputs)
+                && Objects.equals(contextBindings, that.contextBindings);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(schemaVersion, nodes, edges, layout, requiredInputs);
+        return Objects.hash(schemaVersion, nodes, edges, layout, requiredInputs, contextBindings);
     }
 }

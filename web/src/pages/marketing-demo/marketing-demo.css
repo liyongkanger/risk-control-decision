@@ -1,0 +1,97 @@
+.marketing-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(330px, 1fr);
+  gap: 24px;
+  align-items: center;
+  padding: 24px 28px;
+  border: 1px solid #d7e6fa;
+  border-radius: 12px;
+  background: linear-gradient(120deg, #f4f9ff 0%, #fff 72%);
+}
+.marketing-hero-copy h2 { margin: 10px 0 6px; color: #1d3555; font-size: 23px; }
+.marketing-hero-copy p { margin: 0; color: #586a80; font-size: 14px; }
+.marketing-hero-status { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 17px; }
+.marketing-hero-status span { color: #75869b; font-size: 12px; }
+.marketing-hero-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.marketing-hero-steps > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 15px 12px;
+  border: 1px solid #e0eaf7;
+  border-radius: 9px;
+  background: #fff;
+}
+.marketing-hero-steps strong { color: #7ca8db; font-size: 12px; }
+.marketing-hero-steps span { color: #294565; font-weight: 600; }
+.marketing-hero-steps small { color: #8492a4; font-size: 11px; }
+.marketing-report-intro { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.marketing-report-intro p { margin: 4px 0 0; color: #718199; font-size: 12px; }
+.marketing-report-summary { margin-bottom: 14px; padding: 14px 16px; border-radius: 8px; background: #f5f9ff; }
+.marketing-report-summary strong { color: #254d7d; }
+.marketing-feedback-current { padding: 12px 14px; border-radius: 8px; background: #f6f9fc; }
+.marketing-feedback-current strong { color: #244d7b; }
+.marketing-detail-heading { margin: 16px 0 10px; color: #304761; font-weight: 600; }
+.marketing-chain-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 20px;
+  border: 1px solid #dbe9f8;
+  border-radius: 10px;
+  background: linear-gradient(115deg, #f5f9ff, #fff);
+}
+.marketing-chain-summary strong { color: #1d3b62; font-size: 20px; }
+.marketing-chain-summary span { color: #718199; font-size: 12px; }
+.marketing-chain-intro { margin: 14px 0 20px !important; font-size: 12px; }
+.marketing-chain-timeline { padding-left: 3px; }
+.marketing-chain-step { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr); column-gap: 14px; }
+.marketing-chain-marker {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e8f2ff;
+  color: #1768bd;
+  font-weight: 700;
+}
+.marketing-chain-step:not(:last-child)::before {
+  position: absolute;
+  top: 32px;
+  bottom: 0;
+  left: 15px;
+  width: 2px;
+  background: #dbe7f5;
+  content: '';
+}
+.marketing-chain-content { margin-bottom: 18px; padding: 1px 0 17px; border-bottom: 1px solid #edf1f6; }
+.marketing-chain-step-title { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.marketing-chain-step-title strong { color: #263f5e; font-size: 15px; }
+.marketing-chain-content p { margin: 9px 0 0; color: #526278; line-height: 1.6; }
+.marketing-chain-content p strong { color: #254c78; }
+.marketing-chain-values { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.marketing-chain-values span { padding: 7px 10px; border-radius: 6px; background: #f5f7fa; color: #68788b; font-size: 12px; }
+.marketing-chain-values strong { color: #304962; }
+.marketing-chain-technical { margin-top: 12px; color: #75849a; font-size: 12px; }
+.marketing-chain-technical summary { cursor: pointer; user-select: none; }
+.marketing-chain-technical p { margin: 6px 0 0; font-size: 12px; overflow-wrap: anywhere; }
+.marketing-chain-feedback { margin: 4px 0 16px 48px; padding: 17px 18px; border: 1px solid #e3e9f2; border-radius: 9px; background: #fafbfd; }
+.marketing-chain-feedback-heading { display: flex; align-items: center; gap: 8px; }
+.marketing-chain-feedback-heading span { padding: 3px 7px; border-radius: 4px; background: #edf1f6; color: #6e7e91; font-size: 11px; }
+.marketing-chain-feedback-heading strong { color: #304962; }
+.marketing-chain-feedback p { margin: 10px 0; color: #617187; line-height: 1.6; }
+.marketing-chain-profit { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin: 10px 0; }
+.marketing-chain-profit span { color: #6d7f93; font-size: 12px; }
+.marketing-chain-profit strong { color: #1b5d3c; font-size: 20px; }
+.marketing-chain-profit small { flex-basis: 100%; color: #73839a; }
+@media (max-width: 900px) {
+  .marketing-hero { grid-template-columns: 1fr; }
+  .marketing-report-intro { align-items: flex-start; flex-direction: column; }
+}
+@media (max-width: 560px) {
+  .marketing-hero-steps { grid-template-columns: 1fr; }
+}

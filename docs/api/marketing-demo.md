@@ -40,11 +40,14 @@
 
 所有字段必填。三个金额均不得为负，`existingOfferAmount` 可为 0。相同实验内重复 `checkoutId` 且请求内容相同会返回原决策及最新反馈；内容不同返回 HTTP 409。
 
+这三个金额是模拟结算页面登记的数据，不直接进入决策流程输入。后端先按 `uid=userId + checkoutId + experimentId` 登记结算事实，再只把这些定位标识及实验组布尔值传给外层流程。`uid`、`checkoutId`、`experimentId` 均在变量中心登记为请求输入变量；资格子流程的规则直接绑定三个固定营销变量版本，营销变量的参数依赖固定到上述请求变量版本。变量来源失败使决策运行失败，不返回正常“不合格”。变量契约见[变量中心](variable-center.md)。
+
 响应 `data` 示例：
 
 ```json
 {
   "experimentId":"demoA","checkoutId":"order001","userId":"user001","group":"LOW",
+  "executionId":"e36325d8-5a8e-4ec2-89ac-cfdbf76fc2c8",
   "requestId":"demoA:order001","decidedAt":"2026-10-14T07:00:00Z","outerVersionId":3,
   "subflowVersionIds":{"eligibilityCall":1,"selectionCall":2},
   "ruleSetCode":"demoOfferEligibilityRules","ruleVersionId":1,
@@ -58,6 +61,8 @@
 ```
 
 `group` 为 `CONTROL`、`LOW`、`HIGH`，按 `experimentId:userId` 稳定分组。`decisionConclusion` 为 `NO_NEW_OFFER`、`LOW_VALUE_OFFER` 或 `HIGH_VALUE_OFFER`；决策失败时可为 `null`。`recommendedOfferCode` 为 `NONE`、`LOW_5_OFF_100` 或 `HIGH_18_OFF_100`。`subflowVersionIds` 记录本次实际执行的子流程版本。`ruleSetCode`、`ruleVersionId`、`matchedRuleId` 和 `ruleReasonCode` 来自资格子流程实际结果；兜底规则的 `matchedRuleId=null`，旧版或失败决策缺少规则明细时四项可为 `null`。外层流程发布后固定引用子流程版本；若子流程重新发布，需在外层草稿重新选择子流程版本并发布。
+
+`executionId` 指向平台级决策执行记录，可在 `GET /api/decision-records/{executionId}` 查看本次输入、节点输出和子流程轨迹。营销订单的实际支付、用券、退款与利润仍由本接口的订单反馈快照提供，不写入通用执行记录。
 
 直接调用结算或固定样本接口时，仅在演示场景尚未初始化的情况下自动执行首次 `setup`。场景已有选中版本时，结算和样本**不会**把它隐式切换为外层当前发布版本。需要应用外层新版时显式调用 `POST /setup`，或使用场景绑定接口选中外层当前版。旧结算记录仍保留原 `outerVersionId`。
 

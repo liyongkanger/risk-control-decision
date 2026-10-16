@@ -1,5 +1,5 @@
 import { PageContainer } from '@ant-design/pro-components'
-import { Alert, Button, Card, Input, Space, Typography, message } from 'antd'
+import { Alert, Button, Card, Input, Space, Tag, Typography, message } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { checkoutMarketingDemo, feedbackMarketingDemo, getMarketingDemoStatus,
   getMarketingReport, runMarketingFixture, setupMarketingDemo } from '../../services/marketingDemo'
@@ -9,6 +9,8 @@ import DecisionRecordsPanel from './DecisionRecordsPanel'
 import ExperimentReportPanel from './ExperimentReportPanel'
 import StrategyStatusPanel from './StrategyStatusPanel'
 import { pendingStrategySteps } from './strategyState'
+import { reportHeadline } from './demoPresentation'
+import './marketing-demo.css'
 
 /** 固定营销样板的版本准备、试决策、反馈和增量复盘工作台。 */
 export default function MarketingDemoPage() {
@@ -108,12 +110,28 @@ export default function MarketingDemoPage() {
     notice.success(input.eventType === 'REFUNDED' ? '退款已回传，利润已冲回' : '实际结算反馈已记录')
   })
   const pending = status ? pendingStrategySteps(status) : []
+  const headline = reportHeadline(report)
 
   return <PageContainer title="结算优惠营销工作台">
     {holder}
     <Space orientation="vertical" size="large" style={{ width: '100%' }}>
-      <Alert type="info" showIcon title="可运行模拟场景"
-        description="规则、流程发布和决策执行使用真实平台能力；订单、支付与退款反馈保存在当前服务进程，重启后清空。" />
+      <div className="marketing-hero">
+        <div className="marketing-hero-copy">
+          <Tag color="blue">结算优惠 · 核心演示</Tag>
+          <h2>{headline.title}</h2>
+          <p>{headline.detail}</p>
+          <div className="marketing-hero-status">
+            <Tag color={status?.initialized ? 'green' : 'orange'}>
+              {status?.initialized ? '决策链可运行' : '决策链待准备'}</Tag>
+            <span>真实规则与流程执行；结算、支付和退款为本机模拟数据，服务重启后清空。</span>
+          </div>
+        </div>
+        <div className="marketing-hero-steps" aria-label="营销闭环步骤">
+          <div><strong>01</strong><span>决策建议</span><small>资格判断与优惠推荐</small></div>
+          <div><strong>02</strong><span>实际反馈</span><small>支付、用券与退款</small></div>
+          <div><strong>03</strong><span>利润复盘</span><small>对照三组人均贡献</small></div>
+        </div>
+      </div>
       <Card title="当前实验">
         <Space wrap><Typography.Text>实验 ID</Typography.Text>
           <Input.Search aria-label="实验 ID" value={experimentInput} disabled={busy}
@@ -123,14 +141,17 @@ export default function MarketingDemoPage() {
         </Space>
       </Card>
       {statusError && <Alert type="error" showIcon title="策略状态读取失败" description={statusError} />}
-      <StrategyStatusPanel status={status} loading={statusLoading} busy={busy}
-        onRefresh={() => void refreshStatus()} onActivate={activate} />
+      {status && !status.initialized && <StrategyStatusPanel status={status} loading={statusLoading} busy={busy}
+        onRefresh={() => void refreshStatus()} onActivate={activate} />}
+      <ExperimentReportPanel report={report} loading={reportLoading} busy={busy}
+        ready={status?.initialized === true} onFixture={fixture} />
       <DecisionFeedbackPanel experimentId={experimentId} selected={selected} busy={busy}
-        ready={status?.initialized === true} onFixture={fixture} onCheckout={checkout} onFeedback={feedback} />
-      <ExperimentReportPanel report={report} loading={reportLoading} />
+        ready={status?.initialized === true} onCheckout={checkout} onFeedback={feedback} />
       <DecisionRecordsPanel report={report} loading={reportLoading} selectedId={selectedId}
         onSelect={(item: DemoCheckout) => setSelectedId(item.checkoutId)} />
-      <Card title="5. 准备下一版">
+      {status?.initialized && <StrategyStatusPanel status={status} loading={statusLoading} busy={busy}
+        onRefresh={() => void refreshStatus()} onActivate={activate} />}
+      <Card title="6. 准备下一版">
         {pending.length === 0 ? <Typography.Paragraph>当前运行链已对齐。查看上方利润差值后，可在规则中心调整下一版资格规则。</Typography.Paragraph>
           : <Typography.Paragraph>按顶部策略卡的待处理顺序更新版本；现有结算继续使用场景选中的版本。</Typography.Paragraph>}
         <Space wrap>

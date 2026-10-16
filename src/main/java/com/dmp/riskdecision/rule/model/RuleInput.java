@@ -7,4 +7,5 @@ import lombok.Data;
 public class RuleInput {
     private String name;
     private String type;
+    private RuleVariableBinding variableBinding;
 }

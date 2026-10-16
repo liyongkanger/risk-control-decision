@@ -170,7 +170,7 @@ class DecisionExecutionServiceTest {
             assertThat(proceed.await(5, TimeUnit.SECONDS)).isTrue();
             return response;
         }).when(flowExecutor).execute(eq(first.getChainId()), eq("pin-request"), eq("pin"),
-                eq(1L), any(Map.class), any(Map.class));
+                eq(1L), any(Map.class), any(Map.class), any(Map.class));
         DecisionExecutionService service = new DecisionExecutionServiceImpl(storage, chainRegistry, flowExecutor);
 
         CompletableFuture<ExecutionResult> pending = CompletableFuture.supplyAsync(
@@ -194,7 +194,7 @@ class DecisionExecutionServiceTest {
         when(storage.findPublished("failureScene")).thenReturn(Optional.of(version));
         when(chainRegistry.contains(version.getChainId())).thenReturn(true);
         when(flowExecutor.execute(eq(version.getChainId()), eq("failed-request"), eq("failureScene"),
-                eq(2L), any(Map.class), any(Map.class))).thenReturn(failed);
+                eq(2L), any(Map.class), any(Map.class), any(Map.class))).thenReturn(failed);
 
         ExecutionResult result = new DecisionExecutionServiceImpl(storage, chainRegistry, flowExecutor)
                 .evaluate("failed-request", "failureScene", Map.of());
