@@ -1,0 +1,180 @@
+- generic [ref=e4]:
+  - complementary [ref=e6]:
+    - generic [ref=e7]:
+      - heading "风控决策平台" [level=1] [ref=e21] [cursor=pointer]
+      - menu [ref=e23]:
+        - menuitem [ref=e24] [cursor=pointer]:
+          - link "appstore 场景管理" [ref=e188]:
+            - /url: /scenes
+            - generic [ref=e189]:
+              - img "appstore" [ref=e191]
+              - generic [ref=e194]: 场景管理
+        - menuitem [ref=e32] [cursor=pointer]:
+          - link "apartment 流程资产" [ref=e306]:
+            - /url: /flows
+            - generic [ref=e307]:
+              - img "apartment" [ref=e309]
+              - generic [ref=e312]: 流程资产
+        - menuitem "api 组件管理" [ref=e41] [cursor=pointer]:
+          - generic [ref=e43]:
+            - img "api" [ref=e45]
+            - generic [ref=e48]: 组件管理
+        - menuitem [ref=e49] [cursor=pointer]:
+          - link "database 变量中心" [ref=e51]:
+            - /url: /variable-center
+            - generic [ref=e52]:
+              - img "database" [ref=e54]
+              - generic [ref=e57]: 变量中心
+        - menuitem [ref=e58] [cursor=pointer]:
+          - link "deployment-unit 规则中心" [ref=e60]:
+            - /url: /rule-center
+            - generic [ref=e61]:
+              - img "deployment-unit" [ref=e63]
+              - generic [ref=e66]: 规则中心
+        - menuitem [ref=e67] [cursor=pointer]:
+          - link "profile 决策记录" [ref=e69]:
+            - /url: /decision-records
+            - generic [ref=e70]:
+              - img "profile" [ref=e72]
+              - generic [ref=e75]: 决策记录
+        - menuitem [ref=e76] [cursor=pointer]:
+          - link "experiment 营销闭环演示" [ref=e78]:
+            - /url: /marketing-demo
+            - generic [ref=e79]:
+              - img "experiment" [ref=e81]
+              - generic [ref=e84]: 营销闭环演示
+        - menuitem [ref=e85] [cursor=pointer]:
+          - link "partition 流程设计" [ref=e87]:
+            - /url: /flow-design
+            - generic [ref=e88]:
+              - img "partition" [ref=e90]
+              - generic [ref=e93]: 流程设计
+      - generic [ref=e94]: 演示用户
+      - generic [ref=e97] [cursor=pointer]
+  - main [ref=e101]:
+    - generic [ref=e313]:
+      - generic [ref=e314]:
+        - navigation [ref=e315]:
+          - list [ref=e316]:
+            - listitem [ref=e317]:
+              - link "流程资产" [ref=e319] [cursor=pointer]:
+                - /url: /flows
+            - listitem [aria-hidden] [ref=e320]: /
+            - listitem [ref=e321]: 流程设计
+        - generic "流程设计" [ref=e324]
+      - main [ref=e734]:
+        - generic [ref=e735]:
+          - generic [ref=e736]:
+            - generic [ref=e737]:
+              - paragraph [ref=e738]: RISK CONTROL DECISION
+              - heading "演示结算优惠决策 · 流程设计" [level=1] [ref=e739]
+              - paragraph [ref=e740]: X6 编辑 · LiteFlow 执行
+            - generic [ref=e741]:
+              - generic [ref=e742]: 流程码
+              - textbox "流程码" [ref=e743]: demoCheckoutDecision
+          - generic [ref=e744]:
+            - generic [ref=e745]:
+              - button "加载草稿" [ref=e746] [cursor=pointer]
+              - button "保存草稿" [ref=e747] [cursor=pointer]
+              - button "载入示例模板" [ref=e748] [cursor=pointer]
+              - button "载入全节点示例" [ref=e749] [cursor=pointer]
+              - button "校验流程" [ref=e750] [cursor=pointer]
+              - button "发布版本" [disabled] [ref=e751]
+              - button "放大" [ref=e752] [cursor=pointer]
+              - button "缩小" [ref=e753] [cursor=pointer]
+              - button "适应画布" [ref=e754] [cursor=pointer]
+              - button "一键整理" [ref=e755] [cursor=pointer]
+            - generic [ref=e756]: 草稿 r1 · 11 节点 · 12 连线
+          - group [ref=e757]:
+            - generic "流程输入与上下文变量 5 个输入字段 · 0 个上下文绑定" [ref=e758] [cursor=pointer]:
+              - text: 流程输入与上下文变量
+              - generic [ref=e759]: 5 个输入字段 · 0 个上下文绑定
+          - generic [ref=e760]:
+            - group [ref=e761]:
+              - generic "添加节点 按用途选择节点；新增后自动打开右侧配置" [ref=e762] [cursor=pointer]:
+                - strong [ref=e763]: 添加节点
+                - generic [ref=e764]: 按用途选择节点；新增后自动打开右侧配置
+            - generic [ref=e765]:
+              - generic [ref=e766]:
+                - strong [ref=e767]: 画布操作
+                - generic [ref=e768]: 从节点输出圆点拖到下一节点输入圆点 · 点击线设置条件分支 · Ctrl + 滚轮缩放
+                - button "＋ 添加节点" [ref=e769] [cursor=pointer]
+              - img [ref=e773]:
+                - generic [ref=e775]:
+                  - generic [ref=e776]:
+                    - generic [ref=e778]: ▶ 开始
+                    - generic [ref=e779]: 开始
+                  - generic [ref=e782]:
+                    - generic [ref=e784]: ↳ 决策子流程
+                    - generic [ref=e785]: "优惠资格 · #1"
+                  - generic [ref=e790]:
+                    - generic [ref=e792]: ↳ 决策子流程
+                    - generic [ref=e793]: "优惠选择 · #2"
+                  - generic [ref=e798]:
+                    - generic [ref=e800]: ◇ 条件
+                    - generic [ref=e801]: 建议高额券？
+                  - generic [ref=e806]:
+                    - generic [ref=e808]: ✓ 业务结果
+                    - generic [ref=e809]: 推荐 18 元券
+                  - generic [ref=e814]:
+                    - generic [ref=e816]: ◇ 条件
+                    - generic [ref=e817]: 建议低额券？
+                  - generic [ref=e822]:
+                    - generic [ref=e824]: ✓ 业务结果
+                    - generic [ref=e825]: 推荐 5 元券
+                  - generic [ref=e830]:
+                    - generic [ref=e832]: ✓ 业务结果
+                    - generic [ref=e833]: 不新增优惠
+                  - generic [ref=e838]:
+                    - generic [ref=e840]: ◆ 条件汇合
+                    - generic [ref=e841]: 低额分支汇合
+                  - generic [ref=e846]:
+                    - generic [ref=e848]: ◆ 条件汇合
+                    - generic [ref=e849]: 最终结果汇合
+                  - generic [ref=e854]:
+                    - generic [ref=e856]: ■ 结束
+                    - generic [ref=e857]: 结束
+                  - generic [ref=e861] [cursor=pointer]
+                  - generic [ref=e863] [cursor=pointer]
+                  - generic [ref=e865] [cursor=pointer]
+                  - generic [ref=e866]:
+                    - generic [ref=e867] [cursor=pointer]
+                    - generic [ref=e868]: 满足
+                  - generic [ref=e871]:
+                    - generic [ref=e872] [cursor=pointer]
+                    - generic [ref=e873]: 不满足
+                  - generic [ref=e876]:
+                    - generic [ref=e877] [cursor=pointer]
+                    - generic [ref=e878]: 满足
+                  - generic [ref=e881]:
+                    - generic [ref=e882] [cursor=pointer]
+                    - generic [ref=e883]: 不满足
+                  - generic [ref=e887] [cursor=pointer]
+                  - generic [ref=e889] [cursor=pointer]
+                  - generic [ref=e891] [cursor=pointer]
+                  - generic [ref=e893] [cursor=pointer]
+                  - generic [ref=e895] [cursor=pointer]
+            - complementary [ref=e896]:
+              - heading "节点与连线" [level=2] [ref=e897]
+              - generic [ref=e1006]:
+                - generic [ref=e1007]:
+                  - strong [ref=e1008]: lowCheck → lowResult
+                  - generic [ref=e1009]: 条件分支连线
+                - generic [ref=e1010]:
+                  - text: 连线 ID
+                  - textbox "连线 ID" [ref=e1011]: f
+                - paragraph [ref=e1012]: 条件节点必须有两条出线：一条“满足”，一条“不满足”。标签决定实际执行哪条路径。
+                - generic [ref=e1013]:
+                  - text: 条件成立时走哪条线
+                  - combobox "条件分支标签" [ref=e1014]:
+                    - option "请选择分支"
+                    - option "满足（true）" [selected]
+                    - option "不满足（false）" [disabled]
+                - generic [ref=e1015]:
+                  - button "查看起点节点" [ref=e1016] [cursor=pointer]
+                  - button "查看终点节点" [ref=e1017] [cursor=pointer]
+              - button "删除选中项" [ref=e1018] [cursor=pointer]
+              - generic [ref=e901]:
+                - heading "校验结果" [level=2] [ref=e902]
+                - paragraph [ref=e903]: 校验后会在这里列出问题；点击问题可定位节点或连线。
+          - status [ref=e904]: 已添加“组件”，在右侧完成配置，再从输出连接点拖到下一节点。

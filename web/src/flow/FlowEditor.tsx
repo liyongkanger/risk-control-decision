@@ -25,7 +25,6 @@ import { listVariables } from '../services/variableCenter'
 import type { VariableVersion } from '../services/variableCenter'
 import './editor.css'
 
-const kinds: NodeKind[] = ['START', 'END', 'COMPONENT', 'PARALLEL_SPLIT', 'PARALLEL_JOIN', 'CONDITION', 'CONDITION_JOIN', 'SUBFLOW', 'RESULT']
 const paletteGroups: { title: string; note: string; items: NodeKind[] }[] = [
   { title: '主路径', note: '从开始进入，经过处理，最后返回业务结果并结束。',
     items: ['START', 'COMPONENT', 'RESULT', 'END'] },
@@ -35,7 +34,7 @@ const paletteGroups: { title: string; note: string; items: NodeKind[] }[] = [
     items: ['PARALLEL_SPLIT', 'PARALLEL_JOIN'] },
 ]
 const labels: Record<NodeKind, string> = {
-  START: '开始', END: '结束', COMPONENT: '组件', PARALLEL_SPLIT: '并行拆分',
+  START: '开始', END: '结束', COMPONENT: '处理组件', PARALLEL_SPLIT: '并行拆分',
   PARALLEL_JOIN: '并行汇合', CONDITION: '条件', CONDITION_JOIN: '条件汇合',
   RESULT: '业务结果',
   SUBFLOW: '决策子流程',
@@ -53,7 +52,7 @@ const marks: Record<NodeKind, string> = {
 const kindHints: Record<NodeKind, string> = {
   START: '流程入口，每条流程只有一个。',
   END: '流程出口，每条流程只有一个；当前不负责计算业务决策结论。',
-  COMPONENT: '调用一个已注册组件并保存它的节点结果。',
+  COMPONENT: '选择已注册能力执行并保存结果；默认示例值仅用于演示。',
   PARALLEL_SPLIT: '同时启动所有后续分支。',
   PARALLEL_JOIN: '等待所有并行分支结束后继续；当前只负责结构汇合。',
   CONDITION: '根据条件组件的 true／false 结果选择一条分支。',
@@ -62,6 +61,15 @@ const kindHints: Record<NodeKind, string> = {
   SUBFLOW: '调用固定版本的已发布决策流程；配置需包含流程码、版本 ID 和输入映射。',
 }
 const branchLabel = (branch: FlowEdge['branch']) => branch === 'true' ? '满足' : branch === 'false' ? '不满足' : ''
+const issueHints: Record<string, string> = {
+  START_COUNT: '流程需要且只能有一个开始节点。',
+  END_COUNT: '流程需要且只能有一个结束节点。',
+  INVALID_DEGREE: '检查该节点的输入线和输出线数量。',
+  CONDITION_BRANCHES: '条件节点的两条输出线须分别设为“满足”和“不满足”。',
+  PARALLEL_BRANCHES: '并行分支连线不使用条件标签。',
+  RESULT_MISSING: '每条可执行结束路径都需要业务结果节点。',
+  RESULT_DUPLICATE: '同一执行路径只能经过一个业务结果节点。',
+}
 
 function nodeTypeLabel(node: FlowNode): string {
   if (node.componentKey === 'get-variable') return '获取变量'
@@ -131,6 +139,7 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
   const code = target.code
   const isAsset = target.kind === 'flow'
   const canvasRef = useRef<HTMLDivElement>(null)
+  const paletteRef = useRef<HTMLDetailsElement>(null)
   const graphRef = useRef<Graph | null>(null)
   const baselineSnapshot = useRef<string | null>(null)
   const requiredInputsRef = useRef<string[] | undefined>(undefined)
@@ -352,9 +361,12 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
       config: initialConfig ?? (kind === 'COMPONENT' ? { value: 'demo' }
         : kind === 'CONDITION' ? { inputKey: 'positive' } : {}),
     }, position, vertical)
+    const added = graph().getCellById(id)
+    if (added) graph().centerCell(added)
     setSelected({ id, type: 'node' })
     setConfigText(JSON.stringify(initialConfig ?? {}, null, 2))
     setMessage(`已添加“${componentKey ? nodeTypeLabel({ id, kind, componentKey, failurePolicy: null, config: {} }) : labels[kind]}”，在右侧完成配置，再从输出连接点拖到下一节点。`)
+    if (paletteRef.current) paletteRef.current.open = false
     window.requestAnimationFrame(() => canvasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
   }
 
@@ -421,19 +433,34 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
     edge.getSourceCellId() === selectedNode.id || edge.getTargetCellId() === selectedNode.id) ?? [] : []
   const selectedIncoming = selectedNodeEdges.filter((edge) => edge.getTargetCellId() === selectedNode?.id).length
   const selectedOutgoing = selectedNodeEdges.filter((edge) => edge.getSourceCellId() === selectedNode?.id).length
+  const displayNode = (id: string) => {
+    const nodeCell = graphRef.current?.getCellById(id)
+    if (!nodeCell?.isNode()) return id || '未连接'
+    const node = nodeCell.getData() as FlowNode
+    const caption = marketingNodeCaption(code, node) ?? nodeCaption(node)
+    return caption === id ? id : `${caption}（${id}）`
+  }
+  const focusCell = (id: string) => {
+    const targetCell = graph().getCellById(id)
+    if (!targetCell) return
+    setSelected({ id, type: targetCell.isNode() ? 'node' : 'edge' })
+    setConfigText(targetCell.isNode() ? JSON.stringify((targetCell.getData() as FlowNode).config, null, 2) : '{}')
+    graph().centerCell(targetCell)
+    canvasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   if (ownerError) return <main className="flow-editor"><p role="alert">{ownerError}</p><button onClick={() => history.push(isAsset ? '/flows' : '/scenes')}>返回{isAsset ? '流程资产' : '场景管理'}</button></main>
 
   return <main className="flow-editor"><div className="page">
-    <header className="header"><div><p className="eyebrow">RISK CONTROL DECISION</p><h1>{ownerName || (isAsset ? '流程' : '场景')} · 流程设计</h1><p className="subtitle">X6 编辑 · LiteFlow 执行</p></div>
+    <header className="header"><div><p className="eyebrow">RISK CONTROL DECISION</p><h1>{ownerName || (isAsset ? '流程' : '场景')} · 流程设计</h1><p className="subtitle">添加节点、连接路径、校验后发布</p></div>
       <div className="scene"><label htmlFor="ownerCode">{isAsset ? '流程码' : '场景码'}</label><input id="ownerCode" value={code} readOnly /></div></header>
     <section className="toolbar"><div className="actions">
       <button disabled={busy} onClick={() => run(async () => { const draft = await loadTargetDraft(target); if (!draft) { setMessage('该流程没有草稿'); return }; if (baselineSnapshot.current !== JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current)) && !window.confirm('当前流程有未保存的修改，确定加载草稿吗？')) return; render(graph(), draft.graph); setRevision(draft.revision); const snapshot = JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current)); baselineSnapshot.current = snapshot; setIsDirty(false); setSavedSnapshot(snapshot); setMessage(`已加载草稿 r${draft.revision}`) })}>加载草稿</button>
-      <button disabled={busy || !!requiredInputsError} onClick={() => run(async () => { const current = toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current); const snapshot = JSON.stringify(current); const saved = await saveTargetDraft(target, current, revision); setRevision(saved.revision); setSavedSnapshot(snapshot); baselineSnapshot.current = snapshot; setIsDirty(false); if (validatedSnapshot !== snapshot) setValidation(null); setMessage(`已保存草稿 r${saved.revision}`) })}>保存草稿</button>
+      <button className="primary-action" disabled={busy || !!requiredInputsError} onClick={() => run(async () => { const current = toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current); const snapshot = JSON.stringify(current); const saved = await saveTargetDraft(target, current, revision); setRevision(saved.revision); setSavedSnapshot(snapshot); baselineSnapshot.current = snapshot; setIsDirty(false); if (validatedSnapshot !== snapshot) setValidation(null); setMessage(`已保存草稿 r${saved.revision}`) })}>保存草稿</button>
       <button disabled={busy} onClick={() => { if (baselineSnapshot.current !== JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current)) && !window.confirm('当前流程有未保存的修改，确定替换为示例吗？')) return; render(graph(), demoFlow()); setMessage('已载入示例模板，请保存后再发布。') }}>载入示例模板</button>
       <button disabled={busy} onClick={() => { if (baselineSnapshot.current !== JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current)) && !window.confirm('当前流程有未保存的修改，确定替换为全节点示例吗？')) return; render(graph(), allNodeFlow()); setMessage('已载入全节点示例：先并行执行两条分支，再按 positive 选择条件分支。') }}>载入全节点示例</button>
-      <button disabled={busy || !!requiredInputsError} onClick={() => run(async () => { const current = toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current); const result = await validateTargetFlow(target, current); setValidatedSnapshot(JSON.stringify(current)); setValidation(result); highlight(result); setMessage(result.valid ? '图校验通过' : `发现 ${result.issues.length} 个问题`) })}>校验流程</button>
-      <button disabled={busy || !validation?.valid || revision === 0 || savedSnapshot !== validatedSnapshot} onClick={() => run(async () => { if (JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current)) !== savedSnapshot) throw new Error('当前画布与已保存草稿不同，请先保存并重新校验'); const published = await publishTargetFlow(target, revision); setMessage(`已发布版本 ${published.versionNumber} · ${published.chainId}`) })}>发布版本</button>
+      <button className="primary-action" disabled={busy || !!requiredInputsError} onClick={() => run(async () => { const current = toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current); const result = await validateTargetFlow(target, current); setValidatedSnapshot(JSON.stringify(current)); setValidation(result); highlight(result); setMessage(result.valid ? '图校验通过' : `发现 ${result.issues.length} 个问题`) })}>校验流程</button>
+      <button className="primary-action" disabled={busy || !validation?.valid || revision === 0 || savedSnapshot !== validatedSnapshot} onClick={() => run(async () => { if (JSON.stringify(toGraphDefinition(graph(), requiredInputsRef.current, contextBindingsRef.current)) !== savedSnapshot) throw new Error('当前画布与已保存草稿不同，请先保存并重新校验'); const published = await publishTargetFlow(target, revision); setMessage(`已发布版本 ${published.versionNumber} · ${published.chainId}`) })}>发布版本</button>
       <button type="button" onClick={() => graph().zoom(0.15, { maxScale: 2 })}>放大</button>
       <button type="button" onClick={() => graph().zoom(-0.15, { minScale: 0.25 })}>缩小</button>
       <button type="button" onClick={() => { graph().zoomToFit({ padding: 24, maxScale: 1 }); graph().centerContent() }}>适应画布</button>
@@ -493,14 +520,45 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
         onChange={(event) => setRunInputText(event.target.value)} /></label>}
     </section></details>
     <div className="workspace">
-      <aside className="panel palette"><h2>节点类型</h2><p>图中使用相同符号和颜色；点击添加节点。</p>{kinds.map((kind) => <button key={kind} className="palette-item" title={kindHints[kind]} onClick={() => addKind(kind)}><span className="palette-mark" style={{ color: colors[kind] }} aria-hidden="true">{marks[kind]}</span><span>{labels[kind]}</span></button>)}
-        {componentCatalog?.filter((item) => !item.condition && item.key !== 'emit-value').map((item) =>
-          <button key={item.key} className="palette-item" title={`添加${item.displayName}组件`}
-            onClick={() => addKind('COMPONENT', item.key)}><span className="palette-mark" style={{ color: colors.COMPONENT }} aria-hidden="true">↗</span><span>{item.displayName}</span></button>)}</aside>
-      <section className="panel canvas-panel"><div className={isAsset && code === 'demoCheckoutDecision' ? 'canvas marketing-canvas' : 'canvas'}
+      <details className="panel palette" ref={paletteRef}><summary><strong>添加节点</strong>
+        <span>按用途选择节点；新增后自动打开右侧配置</span></summary><div className="palette-content">
+        <p>先选用途，添加后在右侧配置；开始和结束各只能有一个。</p>
+        <div className="palette-groups">{paletteGroups.map((group) => <section key={group.title} className="palette-group">
+          <h3>{group.title}</h3><p>{group.note}</p><div className="palette-options">
+          {group.items.map((kind) => <button key={kind} className="palette-item" title={kindHints[kind]}
+            disabled={(kind === 'START' || kind === 'END') && graphRef.current?.getNodes().some((cell) =>
+              (cell.getData() as FlowNode).kind === kind)} onClick={() => addKind(kind)}>
+            <span className="palette-mark" style={{ color: colors[kind] }} aria-hidden="true">{marks[kind]}</span>
+            <span><strong>{labels[kind]}</strong><small>{kindHints[kind]}</small></span></button>)}
+          </div></section>)}
+          {componentCatalog?.some((item) => !item.condition && !['emit-value', 'get-variable', 'execute-rule-set'].includes(item.key))
+            && <section className="palette-group"><h3>其他取值组件</h3><p>选择已注册的可复用能力。</p>
+              <div className="palette-options">{componentCatalog.filter((item) => !item.condition
+                && !['emit-value', 'get-variable', 'execute-rule-set'].includes(item.key)).map((item) =>
+                <button key={item.key} className="palette-item" onClick={() => addKind('COMPONENT', item.key)}>
+                  <span className="palette-mark" style={{ color: colors.COMPONENT }} aria-hidden="true">↗</span>
+                  <span><strong>{item.displayName}</strong><small>{item.key}</small></span></button>)}</div></section>}
+          <section className="palette-group"><h3>常用能力</h3><p>配置固定版本后参与当前流程。</p>
+            <div className="palette-options">{componentCatalog?.filter((item) =>
+              ['execute-rule-set', 'get-variable'].includes(item.key)).map((item) =>
+              <button key={item.key} className="palette-item" onClick={() => addKind('COMPONENT', item.key)}>
+                <span className="palette-mark" style={{ color: colors.COMPONENT }} aria-hidden="true">↗</span>
+                <span><strong>{item.displayName}</strong><small>{item.key === 'execute-rule-set'
+                  ? '选规则集发布版本' : '选变量中心版本'}</small></span></button>)}</div></section>
+        </div></div></details>
+      <section className="panel canvas-panel"><div className="canvas-guide">
+        <strong>画布操作</strong><span>从节点输出圆点拖到下一节点输入圆点 · 点击线设置条件分支 · Ctrl + 滚轮缩放</span>
+        <button type="button" onClick={() => {
+          if (paletteRef.current) { paletteRef.current.open = true; paletteRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
+        }}>＋ 添加节点</button>
+      </div><div className={isAsset && code === 'demoCheckoutDecision' ? 'canvas marketing-canvas' : 'canvas'}
         style={canvasHeight === null ? undefined : { height: canvasHeight }} ref={canvasRef} /></section>
       <aside className="panel inspector"><h2>节点与连线</h2>
-        {selectedNode && <div className="fields"><p className="kind-hint">{kindHints[selectedNode.kind]}</p><label>节点 ID<input value={selectedNode.id} readOnly /></label><label>类型<input value={labels[selectedNode.kind]} readOnly /></label>
+        {selectedNode && <div className="fields"><p className="kind-hint">{kindHints[selectedNode.kind]}</p>
+          <div className="connection-summary"><strong>{nodeTypeLabel(selectedNode)}</strong>
+            <span>输入 {selectedIncoming} 条 · 输出 {selectedOutgoing} 条</span>
+            <small>从输出圆点拖线，连接到下一节点的输入圆点。</small></div>
+          <label>节点 ID<input value={selectedNode.id} readOnly /></label><label>类型<input value={labels[selectedNode.kind]} readOnly /></label>
           {(selectedNode.kind === 'COMPONENT' || selectedNode.kind === 'CONDITION') && <><label>组件<select value={selectedNode.componentKey ?? ''} onChange={(event) => {
             const componentKey = event.target.value
             const config = componentCatalog?.find((item) => item.key === componentKey)?.defaultConfig
@@ -545,10 +603,35 @@ export default function FlowEditor({ target }: { target: FlowTarget }) {
           {selectedNode.kind === 'SUBFLOW' && <SubflowNodeInspector key={selectedNode.id} node={selectedNode}
             ownerFlowCode={ownerFlowCode} onChange={(config) => updateNode({ config })} />}
         </div>}
-        {selectedEdge && <div className="fields"><label>连线 ID<input value={selected?.id ?? ''} readOnly /></label><label>分支标签<select value={selectedEdge.branch ?? ''} onChange={(event) => updateBranch((event.target.value || null) as FlowEdge['branch'])}><option value="">无</option><option value="true">true</option><option value="false">false</option></select></label></div>}
+        {selectedEdge && <div className="fields"><div className="connection-summary">
+          <strong>{displayNode(edgeSourceId)} → {displayNode(edgeTargetId)}</strong>
+          <span>{sourceIsCondition ? '条件分支连线' : '普通执行连线'}</span>
+        </div><label>连线 ID<input value={selected?.id ?? ''} readOnly /></label>
+          {sourceIsCondition ? <><p className="kind-hint">条件节点必须有两条出线：一条“满足”，一条“不满足”。标签决定实际执行哪条路径。</p>
+            <label>当前连线代表<select aria-label="条件分支标签" value={selectedEdge.branch ?? ''}
+              onChange={(event) => updateBranch((event.target.value || null) as FlowEdge['branch'])}>
+              <option value="">请选择分支</option>
+              <option value="true" disabled={siblingBranches.includes('true')}>满足（true）</option>
+              <option value="false" disabled={siblingBranches.includes('false')}>不满足（false）</option>
+            </select></label></>
+            : <><p className="kind-hint">普通连线按箭头方向依次执行，不需要分支标签。</p>
+              {selectedEdge.branch && <button type="button" onClick={() => updateBranch(null)}>
+                清除无效分支标签</button>}</>}
+          <div className="edge-navigation"><button type="button" onClick={() => focusCell(edgeSourceId)}
+            disabled={!edgeSourceId}>查看起点节点</button>
+            <button type="button" onClick={() => focusCell(edgeTargetId)} disabled={!edgeTargetId}>
+              查看终点节点</button></div>
+        </div>}
         {selected && <button className="danger" onClick={() => { graph().removeCell(selected.id); setSelected(null) }}>删除选中项</button>}
-        {!selected && <p>点击画布中的节点或连线，可编辑配置与分支标签。</p>}
-        <div className="issues"><h2>校验结果</h2>{validation?.issues.length ? validation.issues.map((issue, i) => <p key={i} className="issue">{issue.code} · {issue.nodeId ?? issue.edgeId ?? '流程'}<br />{issue.message}</p>) : <p>尚无问题</p>}</div>
+        {!selected && <div className="inspector-empty"><strong>先选中画布内容</strong>
+          <p>点击节点配置执行能力；点击连线核对方向。条件节点的两条出线需分别标为“满足”和“不满足”。</p></div>}
+        <div className="issues"><h2>校验结果</h2>{validation?.issues.length ? validation.issues.map((issue, i) =>
+          <button key={i} type="button" className="issue" onClick={() => {
+            const id = issue.nodeId ?? issue.edgeId
+            if (id) focusCell(id)
+          }}>{issue.code} · {issue.nodeId ?? issue.edgeId ?? '流程'}<br />{issueHints[issue.code] ?? issue.message}
+            {(issue.nodeId || issue.edgeId) && <span>点击定位</span>}</button>) :
+          <p>{validation?.valid ? '校验通过，可以保存并发布。' : '校验后会在这里列出问题；点击问题可定位节点或连线。'}</p>}</div>
       </aside>
     </div>
     {runResult && <DecisionRunResult result={runResult} />}

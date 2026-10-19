@@ -1,0 +1,150 @@
+- generic [ref=f1e4]:
+  - complementary [ref=f1e6]:
+    - generic [ref=f1e7]:
+      - heading "风控决策平台" [level=1] [ref=f1e21] [cursor=pointer]
+      - menu [ref=f1e23]:
+        - menuitem [ref=f1e24] [cursor=pointer]:
+          - link "appstore 场景管理" [ref=f1e26]:
+            - /url: /scenes
+            - generic [ref=f1e27]:
+              - img "appstore" [ref=f1e29]
+              - generic [ref=f1e32]: 场景管理
+        - menuitem [ref=f1e33] [cursor=pointer]:
+          - link "apartment 流程资产" [ref=f1e198]:
+            - /url: /flows
+            - generic [ref=f1e199]:
+              - img "apartment" [ref=f1e201]
+              - generic [ref=f1e204]: 流程资产
+        - menuitem "api 组件管理" [ref=f1e41] [cursor=pointer]:
+          - generic [ref=f1e43]:
+            - img "api" [ref=f1e45]
+            - generic [ref=f1e48]: 组件管理
+        - menuitem [ref=f1e49] [cursor=pointer]:
+          - link "database 变量中心" [ref=f1e51]:
+            - /url: /variable-center
+            - generic [ref=f1e52]:
+              - img "database" [ref=f1e54]
+              - generic [ref=f1e57]: 变量中心
+        - menuitem [ref=f1e58] [cursor=pointer]:
+          - link "deployment-unit 规则中心" [ref=f1e60]:
+            - /url: /rule-center
+            - generic [ref=f1e61]:
+              - img "deployment-unit" [ref=f1e63]
+              - generic [ref=f1e66]: 规则中心
+        - menuitem [ref=f1e67] [cursor=pointer]:
+          - link "experiment 营销闭环演示" [ref=f1e69]:
+            - /url: /marketing-demo
+            - generic [ref=f1e70]:
+              - img "experiment" [ref=f1e72]
+              - generic [ref=f1e75]: 营销闭环演示
+        - menuitem [ref=f1e76] [cursor=pointer]:
+          - link "partition 流程设计" [ref=f1e78]:
+            - /url: /flow-design
+            - generic [ref=f1e79]:
+              - img "partition" [ref=f1e81]
+              - generic [ref=f1e84]: 流程设计
+      - generic [ref=f1e85]: 演示用户
+      - generic [ref=f1e88] [cursor=pointer]
+  - main [ref=f1e92]:
+    - generic [ref=f1e205]:
+      - generic [ref=f1e206]:
+        - navigation [ref=f1e207]:
+          - list [ref=f1e208]:
+            - listitem [ref=f1e209]:
+              - link "流程资产" [ref=f1e211] [cursor=pointer]:
+                - /url: /flows
+            - listitem [aria-hidden] [ref=f1e212]: /
+            - listitem [ref=f1e213]: 流程设计
+        - generic "流程设计" [ref=f1e216]
+      - main [ref=f1e220]:
+        - generic [ref=f1e221]:
+          - generic [ref=f1e222]:
+            - generic [ref=f1e223]:
+              - paragraph [ref=f1e224]: RISK CONTROL DECISION
+              - heading "演示优惠资格决策 · 流程设计" [level=1] [ref=f1e225]
+              - paragraph [ref=f1e226]: X6 编辑 · LiteFlow 执行
+            - generic [ref=f1e227]:
+              - generic [ref=f1e228]: 流程码
+              - textbox "流程码" [ref=f1e229]: demoOfferEligibility
+          - generic [ref=f1e230]:
+            - generic [ref=f1e231]:
+              - button "加载草稿" [ref=f1e232] [cursor=pointer]
+              - button "保存草稿" [ref=f1e233] [cursor=pointer]
+              - button "载入示例模板" [ref=f1e234] [cursor=pointer]
+              - button "载入全节点示例" [ref=f1e235] [cursor=pointer]
+              - button "校验流程" [ref=f1e236] [cursor=pointer]
+              - button "发布版本" [disabled] [ref=f1e237]
+              - button "放大" [ref=f1e238] [cursor=pointer]
+              - button "缩小" [ref=f1e239] [cursor=pointer]
+              - button "适应画布" [ref=f1e240] [cursor=pointer]
+              - button "一键整理" [ref=f1e241] [cursor=pointer]
+            - generic [ref=f1e242]: 草稿 r1 · 7 节点 · 7 连线
+          - generic [ref=f1e244]:
+            - text: 本流程必需输入字段（逗号或换行分隔）
+            - textbox "本流程必需输入字段（逗号或换行分隔）" [ref=f1e245]:
+              - /placeholder: 如 userId, orderAmount
+              - text: uid, checkoutId, experimentId
+          - generic [ref=f1e246]:
+            - complementary [ref=f1e247]:
+              - heading "节点类型" [level=2] [ref=f1e248]
+              - paragraph [ref=f1e249]: 图中使用相同符号和颜色；点击添加节点。
+              - button "开始" [ref=f1e250] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f1e251]: ▶
+              - button "结束" [ref=f1e253] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f1e254]: ■
+              - button "组件" [ref=f1e256] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f1e257]: ●
+              - button "并行拆分" [ref=f1e259] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f1e260]: ⇉
+              - button "并行汇合" [ref=f1e262] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f1e263]: ⇇
+              - button "条件" [ref=f1e265] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f1e266]: ◇
+              - button "条件汇合" [ref=f1e268] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f1e269]: ◆
+              - button "决策子流程" [ref=f1e271] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f1e272]: ↳
+              - button "业务结果" [ref=f1e274] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f1e275]: ✓
+              - button "执行规则集" [ref=f1e277] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f1e278]: ↗
+              - button "获取变量" [ref=f1e280] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f1e281]: ↗
+            - img [ref=f1e287]:
+              - generic [ref=f1e289]:
+                - generic [ref=f1e290]:
+                  - generic [ref=f1e292]: ▶ 开始
+                  - generic [ref=f1e293]: start
+                - generic [ref=f1e296]:
+                  - generic [ref=f1e298]: ● 执行规则集
+                  - generic [ref=f1e299]: demoOfferEligibilityRules
+                - generic [ref=f1e304]:
+                  - generic [ref=f1e306]: ◇ 规则结果判断
+                  - generic [ref=f1e307]: = ELIGIBLE
+                - generic [ref=f1e312]:
+                  - generic [ref=f1e314]: ✓ 业务结果
+                  - generic [ref=f1e315]: eligibleResult
+                - generic [ref=f1e320]:
+                  - generic [ref=f1e322]: ✓ 业务结果
+                  - generic [ref=f1e323]: ineligibleResult
+                - generic [ref=f1e328]:
+                  - generic [ref=f1e330]: ◆ 条件汇合
+                  - generic [ref=f1e331]: eligibilityJoin
+                - generic [ref=f1e336]:
+                  - generic [ref=f1e338]: ■ 结束
+                  - generic [ref=f1e339]: end
+                - generic [ref=f1e343] [cursor=pointer]
+                - generic [ref=f1e345] [cursor=pointer]
+                - generic [ref=f1e346]:
+                  - generic [ref=f1e347] [cursor=pointer]
+                  - generic [ref=f1e348]: "true"
+                - generic [ref=f1e351]: "false"
+                - generic [ref=f1e356] [cursor=pointer]
+                - generic [ref=f1e358] [cursor=pointer]
+            - complementary [ref=f1e359]:
+              - heading "节点与连线" [level=2] [ref=f1e360]
+              - paragraph [ref=f1e361]: 点击画布中的节点或连线，可编辑配置与分支标签。
+              - generic [ref=f1e362]:
+                - heading "校验结果" [level=2] [ref=f1e363]
+                - paragraph [ref=f1e364]: 尚无问题
+          - status [ref=f1e365]: 已加载草稿 r1

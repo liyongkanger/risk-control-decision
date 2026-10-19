@@ -90,3 +90,58 @@
   .flow-editor .flow-settings { grid-template-columns: 1fr; }
 }
 .flow-editor .marketing-canvas { height: 800px; }
+
+.flow-editor .toolbar .actions button { border: 1px solid #d6e0ec; background: #f8fafc; color: #40566f; }
+.flow-editor .toolbar .actions .primary-action { border-color: #1677ff; background: #1677ff; color: #fff; }
+.flow-editor .flow-settings-toggle { margin-bottom: 14px; border: 1px solid #dde3ed; border-radius: 10px; background: #fff; }
+.flow-editor .flow-settings-toggle > summary { display: flex; justify-content: space-between; gap: 12px; padding: 13px 16px; color: #2d415b; cursor: pointer; font-size: 13px; font-weight: 600; }
+.flow-editor .flow-settings-toggle > summary span { color: #79889c; font-size: 12px; font-weight: 400; }
+.flow-editor .flow-settings { margin: 0; border: 0; border-top: 1px solid #e9eef5; border-radius: 0 0 10px 10px; }
+.flow-editor .workspace { grid-template-columns: 220px minmax(0, 1fr) 340px; align-items: start; }
+.flow-editor .palette h2, .flow-editor .inspector h2 { color: #2d415b; }
+.flow-editor .palette { padding: 0; }
+.flow-editor .palette > summary { display: flex; align-items: center; gap: 10px; padding: 13px 16px; cursor: pointer; color: #2d415b; font-size: 13px; }
+.flow-editor .palette > summary span { color: #8290a3; font-size: 12px; }
+.flow-editor .palette-content { padding: 0 16px 16px; border-top: 1px solid #edf1f6; }
+.flow-editor .palette-content > p { margin: 10px 0 0; }
+.flow-editor .palette-groups { display: grid; gap: 16px; margin-top: 15px; }
+.flow-editor .palette-group { display: grid; align-content: start; gap: 6px; }
+.flow-editor .palette-group h3 { margin: 0; color: #344b65; font-size: 12px; }
+.flow-editor .palette-group p { margin: 0 0 3px; color: #8a98aa; font-size: 11px; }
+.flow-editor .palette-options { display: grid; gap: 6px; }
+.flow-editor .palette-item { align-items: flex-start; gap: 9px; margin: 0; padding: 9px; border: 1px solid #e4eaf2; background: #f9fbfe; }
+.flow-editor .palette-item:hover:not(:disabled) { border-color: #a9c9ef; background: #f3f8ff; }
+.flow-editor .palette-item > span:last-child { min-width: 0; }
+.flow-editor .palette-item strong { display: block; font-size: 12px; font-weight: 600; }
+.flow-editor .palette-item small { display: block; margin-top: 3px; color: #8290a2; font-size: 10px; font-weight: 400; line-height: 1.35; }
+.flow-editor .canvas-guide { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 9px 12px; border-bottom: 1px solid #e8edf4; background: #f7faff; color: #728299; font-size: 11px; }
+.flow-editor .canvas-guide strong { color: #2e5f9d; font-size: 11px; }
+.flow-editor .canvas-guide button { margin-left: auto; padding: 5px 8px; background: #e6f0fc; color: #2665a9; font-size: 11px; }
+.flow-editor .inspector { position: sticky; top: 14px; }
+.flow-editor .connection-summary { display: grid; gap: 5px; padding: 11px; border: 1px solid #dce9f8; border-radius: 7px; background: #f6faff; font-size: 12px; }
+.flow-editor .connection-summary strong { color: #28527d; overflow-wrap: anywhere; }
+.flow-editor .connection-summary span, .flow-editor .connection-summary small { color: #73859a; }
+.flow-editor .edge-navigation { display: flex; gap: 7px; }
+.flow-editor .edge-navigation button { padding: 7px 9px; background: #e8f1fc; color: #285f9b; font-size: 12px; }
+.flow-editor .inspector-empty { margin-top: 16px; padding: 16px; border: 1px dashed #c8d8e9; border-radius: 8px; background: #f8fbff; }
+.flow-editor .inspector-empty strong { color: #385574; font-size: 13px; }
+.flow-editor .inspector-empty p { margin: 7px 0 0; }
+.flow-editor .issues .issue { display: block; width: 100%; margin: 8px 0; border: 1px solid #f2d6d3; text-align: left; line-height: 1.5; }
+.flow-editor .issues .issue span { display: block; margin-top: 5px; font-size: 11px; text-decoration: underline; }
+@media (max-width: 1450px) {
+  .flow-editor .workspace { grid-template-columns: minmax(0, 1fr) 320px; }
+  .flow-editor .palette { grid-column: 1 / -1; display: block; }
+  .flow-editor .palette h2, .flow-editor .palette > p { width: auto; }
+  .flow-editor .palette-groups { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+  .flow-editor .palette-options { grid-template-columns: 1fr; }
+  .flow-editor .canvas { height: 600px; }
+}
+@media (max-width: 950px) {
+  .flow-editor .workspace { grid-template-columns: minmax(0, 1fr); }
+  .flow-editor .palette { grid-column: auto; }
+  .flow-editor .inspector { position: static; max-height: none; }
+}
+@media (max-width: 600px) {
+  .flow-editor .flow-settings-toggle > summary { flex-direction: column; }
+  .flow-editor .palette-groups { grid-template-columns: 1fr; }
+}
