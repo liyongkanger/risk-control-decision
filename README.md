@@ -2,6 +2,16 @@
 
 项目使用 Java 21、Spring Boot 4.1、MyBatis-Plus、LiteFlow 和 React/X6。当前可编辑结构化场景流程、保存草稿、发布版本并同步执行示例组件。
 
+## 前端页面截图
+
+截图来自本地实际页面；[查看全部截图与对应路由](docs/screenshots/frontend/README.md)。
+
+![流程设计画布](docs/screenshots/frontend/03-flow-editor.png)
+
+- 场景与流程：[场景管理](docs/screenshots/frontend/01-scenes.png) · [流程资产](docs/screenshots/frontend/02-flows.png) · [流程设计入口](docs/screenshots/frontend/10-flow-design.png) · [场景流程画布](docs/screenshots/frontend/11-scene-flow-editor.png)
+- 组件与配置：[取值组件](docs/screenshots/frontend/12-components-data.png) · [判断组件](docs/screenshots/frontend/13-components-condition.png) · [规则组件](docs/screenshots/frontend/14-components-rule.png) · [变量中心](docs/screenshots/frontend/04-variable-center.png) · [规则中心](docs/screenshots/frontend/05-rule-center.png) · [规则集编辑](docs/screenshots/frontend/06-rule-editor.png)
+- 运行与复盘：[营销闭环演示](docs/screenshots/frontend/09-marketing-demo.png) · [决策记录](docs/screenshots/frontend/07-decision-records.png) · [决策记录详情](docs/screenshots/frontend/08-decision-record-detail.png)
+
 ## 代码结构
 
 `policy`、`decision` 和 `business.marketing` 按业务领域划分，领域内分别组织 `controller`、`service`、`model`、`vo` 等职责；`business.marketing` 当前承载结算优惠的可运行模拟业务。`orchestrator.graph` 负责流程图定义与结构校验；`component.liteflow.compile` 生成 LiteFlow EL，节点、上下文和注册表也封装在 LiteFlow 组件包内，通过 `component.liteflow.service` 向业务模块提供能力。公共响应结构、结果码和全局异常处理放在 `common` 包。具体写法见[项目开发规范](docs/standards/project-conventions.md)和[分层开发规范](docs/standards/mvc-layer-conventions.md)。
